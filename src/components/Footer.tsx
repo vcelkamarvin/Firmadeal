@@ -79,7 +79,7 @@ export default function Footer() {
             © {new Date().getFullYear()} Firmadeal GmbH · {lang === "de" ? "Alle Rechte vorbehalten" : "All rights reserved"}
           </p>
           <p className="font-mono text-xs text-white/30">
-            🇩🇪 🇦🇹 🇨🇭 DACH-Marktplatz
+            DE · AT · CH &mdash; DACH-Marktplatz
           </p>
         </div>
       </div>
