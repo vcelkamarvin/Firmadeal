@@ -1,4 +1,4 @@
-export type ListingStatus = "draft" | "active" | "paused" | "expired";
+export type ListingStatus = "draft" | "active" | "paused" | "expired" | "cancelling";
 export type BusinessStatus = "active_profitable" | "in_development" | "restructuring";
 export type ListingPlan = "base" | "plus" | "premium";
 export type OperationType =
@@ -37,10 +37,15 @@ export interface Listing {
   status_business: BusinessStatus;
   plan: ListingPlan | null;
   plan_expires_at: string | null;
+  trial_ends_at?: string | null;
+  stripe_subscription_id?: string | null;
+  stripe_customer_id?: string | null;
   featured: boolean;
   views_count: number;
   inquiries_count: number;
   images: string[];
+  transferability_score?: number | null;
+  transferability_data?: Record<string, number> | null;
   created_at: string;
   updated_at: string;
 }
@@ -93,9 +98,25 @@ export interface WizardData {
   reason_for_sale: string;
   status_business: BusinessStatus | "";
   business_model: string;
+  business_model_chips: string[];
   competition: string;
+  competition_chips: string[];
   assets_included: string;
+  assets_checklist: string[];
+  reason_for_sale_notes: string;
+  // Financial fields
+  annual_revenue: string;
+  ebitda: string;
+  employees: string;
   // Step 3 - review only
+  // Transferability sliders
+  transferability_data: {
+    independence: number;
+    customers: number;
+    stability: number;
+    costs: number;
+    processes: number;
+  };
   // Step 4 - plan selection
   plan: ListingPlan | "";
 }
@@ -118,38 +139,24 @@ export const CATEGORIES = [
   "Energie",
 ];
 
+export const REGIONS_BY_COUNTRY: Record<string, string[]> = {
+  DE: [
+    "Baden-Württemberg", "Bayern", "Berlin", "Brandenburg", "Bremen",
+    "Hamburg", "Hessen", "Mecklenburg-Vorpommern", "Niedersachsen",
+    "Nordrhein-Westfalen", "Rheinland-Pfalz", "Saarland", "Sachsen",
+    "Sachsen-Anhalt", "Schleswig-Holstein", "Thüringen",
+  ],
+  AT: [
+    "Wien", "Niederösterreich", "Oberösterreich", "Salzburg (AT)", "Tirol",
+    "Vorarlberg", "Steiermark", "Kärnten", "Burgenland",
+  ],
+  CH: [
+    "Zürich (CH)", "Bern (CH)", "Luzern (CH)", "Basel-Stadt (CH)", "Genf (CH)",
+  ],
+};
+
 export const DACH_REGIONS = [
-  // Germany
-  "Baden-Württemberg",
-  "Bayern",
-  "Berlin",
-  "Brandenburg",
-  "Bremen",
-  "Hamburg",
-  "Hessen",
-  "Mecklenburg-Vorpommern",
-  "Niedersachsen",
-  "Nordrhein-Westfalen",
-  "Rheinland-Pfalz",
-  "Saarland",
-  "Sachsen",
-  "Sachsen-Anhalt",
-  "Schleswig-Holstein",
-  "Thüringen",
-  // Austria
-  "Wien",
-  "Niederösterreich",
-  "Oberösterreich",
-  "Salzburg (AT)",
-  "Tirol",
-  "Vorarlberg",
-  "Steiermark",
-  "Kärnten",
-  "Burgenland",
-  // Switzerland
-  "Zürich (CH)",
-  "Bern (CH)",
-  "Luzern (CH)",
-  "Basel-Stadt (CH)",
-  "Genf (CH)",
+  ...REGIONS_BY_COUNTRY.DE,
+  ...REGIONS_BY_COUNTRY.AT,
+  ...REGIONS_BY_COUNTRY.CH,
 ];

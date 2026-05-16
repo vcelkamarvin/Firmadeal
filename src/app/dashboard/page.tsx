@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Eye,
   MessageSquare,
@@ -49,13 +49,16 @@ function PlanBadge({ plan }: { plan: string | null }) {
   );
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { lang } = useLanguage();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const trialStarted = searchParams.get("trial_started") === "true";
   const [user, setUser] = useState<{ id: string; email: string; user_metadata: Record<string, string> } | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -96,6 +99,18 @@ export default function DashboardPage() {
     setListings((prev) =>
       prev.map((l) => (l.id === listing.id ? { ...l, status: newStatus } : l))
     );
+  };
+
+  const handleCancelTrial = async (listingId: string) => {
+    if (!confirm(lang === "de" ? "Test wirklich kündigen? Ihr Inserat wird nach dem Testzeitraum deaktiviert." : "Really cancel? Your listing will be deactivated after the trial.")) return;
+    setCancellingId(listingId);
+    await fetch("/api/cancel-subscription", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ listingId }),
+    });
+    setListings((prev) => prev.map((l) => l.id === listingId ? { ...l, status: "cancelling" } : l));
+    setCancellingId(null);
   };
 
   const totalViews = listings.reduce((s, l) => s + l.views_count, 0);
@@ -177,6 +192,59 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
+
+        {/* Trial started success banner */}
+        {trialStarted && (
+          <div className="bg-[var(--accent-light)] border border-[var(--accent)]/25 rounded-xl px-5 py-4 flex items-center gap-3 mb-6">
+            <span className="text-xl flex-shrink-0">🎉</span>
+            <p className="font-sans text-[14px] text-[var(--ink)]">
+              {lang === "de"
+                ? "Ihr Inserat ist jetzt live! 7 Tage kostenlos — viel Erfolg beim Verkauf."
+                : "Your listing is now live! 7 days free — good luck with the sale."}
+            </p>
+          </div>
+        )}
+
+        {/* Per-listing trial banners */}
+        {listings.map((listing) => {
+          if (!listing.trial_ends_at) return null;
+          const daysLeft = Math.ceil((new Date(listing.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+          if (daysLeft <= 0) return null;
+          const urgent = daysLeft <= 2;
+          return (
+            <div
+              key={`trial-${listing.id}`}
+              className="rounded-xl px-5 py-4 mb-4 flex items-center justify-between gap-4"
+              style={{
+                background: urgent ? "#fef3cd" : "var(--accent-light)",
+                border: `1px solid ${urgent ? "#f59e0b" : "rgba(45,90,61,0.2)"}`,
+              }}
+            >
+              <div>
+                <p className="font-sans text-[14px] font-semibold text-[var(--ink)]">
+                  {urgent ? "⚠ " : "✓ "}
+                  {lang === "de"
+                    ? `Kostenloser Test — noch ${daysLeft} ${daysLeft === 1 ? "Tag" : "Tage"} · ${listing.title}`
+                    : `Free trial — ${daysLeft} ${daysLeft === 1 ? "day" : "days"} left · ${listing.title}`}
+                </p>
+                <p className="font-sans text-[12px] text-[var(--muted)]">
+                  {urgent
+                    ? lang === "de" ? "Kündigen Sie jetzt, um Kosten zu vermeiden." : "Cancel now to avoid charges."
+                    : lang === "de" ? "Ab Tag 8 wird Ihre Karte belastet." : "Your card will be charged on day 8."}
+                </p>
+              </div>
+              {urgent && (
+                <button
+                  onClick={() => handleCancelTrial(listing.id)}
+                  disabled={cancellingId === listing.id}
+                  className="flex-shrink-0 font-sans text-[13px] px-4 py-2 border border-amber-400 text-amber-700 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50"
+                >
+                  {lang === "de" ? "Kündigen" : "Cancel"}
+                </button>
+              )}
+            </div>
+          );
+        })}
 
         {/* Listings table / empty state */}
         {listings.length === 0 ? (
@@ -360,5 +428,13 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)]" />}>
+      <DashboardContent />
+    </Suspense>
   );
 }

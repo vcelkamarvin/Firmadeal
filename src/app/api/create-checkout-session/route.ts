@@ -1,55 +1,48 @@
-import { NextRequest, NextResponse } from "next/server";
-import { stripe, PLANS } from "@/lib/stripe";
+import { NextResponse } from "next/server";
+import { stripe } from "@/lib/stripe";
 
-export async function POST(request: NextRequest) {
+const PLAN_CONFIG = {
+  base:    { amount: 3900,  name: "Firmadeal Basic",    description: "Ø 89 Tage · 250 Aufrufe/Monat · 0% Provision"    },
+  plus:    { amount: 7900,  name: "Firmadeal Advanced",  description: "Ø 52 Tage · 1.000 Aufrufe/Monat · 0% Provision"  },
+  premium: { amount: 19900, name: "Firmadeal Premium",   description: "Ø 31 Tage · 5.000+ Aufrufe/Monat · 0% Provision" },
+};
+
+export async function POST(req: Request) {
+  const { plan, listingId } = await req.json();
+
+  const planData = PLAN_CONFIG[plan as keyof typeof PLAN_CONFIG];
+  if (!planData) {
+    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+  }
+
   try {
-    const { plan, listing_id } = await request.json();
-
-    if (!plan || !PLANS[plan as keyof typeof PLANS]) {
-      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
-    }
-
-    const planConfig = PLANS[plan as keyof typeof PLANS];
-    const siteUrl =
-      process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
     const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
       payment_method_types: ["card"],
       line_items: [
         {
           price_data: {
             currency: "eur",
-            product_data: {
-              name: `Firmadeal ${planConfig.name}`,
-              description: `${planConfig.description} – DACH-Marktplatz`,
-            },
-            unit_amount: planConfig.price,
+            product_data: { name: planData.name, description: planData.description },
+            unit_amount: planData.amount,
+            recurring: { interval: "month" },
           },
           quantity: 1,
         },
       ],
-      mode: "payment",
-      success_url: `${siteUrl}/dashboard?success=true&plan=${plan}`,
-      cancel_url: `${siteUrl}/sell`,
-      metadata: {
-        plan,
-        listing_id: listing_id ?? "",
+      subscription_data: {
+        trial_period_days: 7,
+        metadata: { listing_id: listingId ?? "", plan },
       },
-      payment_intent_data: {
-        metadata: {
-          plan,
-          listing_id: listing_id ?? "",
-        },
-      },
-      locale: "de",
+      metadata: { listing_id: listingId ?? "", plan },
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?trial_started=true&plan=${plan}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/sell?step=4`,
+      allow_promotion_codes: true,
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (error) {
-    console.error("Stripe session error:", error);
-    return NextResponse.json(
-      { error: "Failed to create checkout session" },
-      { status: 500 }
-    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

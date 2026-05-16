@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, PLANS } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe";
 import { createClient } from "@supabase/supabase-js";
 
-// Use service role for webhook (bypasses RLS)
-function createAdminClient() {
+function adminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY ??
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 
@@ -21,63 +19,75 @@ export async function POST(request: NextRequest) {
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
+    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as {
-      metadata: { plan?: string; listing_id?: string };
-      customer_details?: { email?: string };
-      amount_total?: number;
-      id: string;
-    };
+  const supabase = adminClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const obj = event.data.object as any;
 
-    const { plan, listing_id } = session.metadata;
+  switch (event.type) {
+    // Trial started — listing goes LIVE immediately
+    case "checkout.session.completed": {
+      const listingId = obj.metadata?.listing_id;
+      const plan = obj.metadata?.plan;
+      if (!listingId) break;
 
-    if (!plan || !listing_id) {
-      return NextResponse.json({ received: true });
-    }
+      const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const planExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const planConfig = PLANS[plan as keyof typeof PLANS];
-    if (!planConfig) {
-      return NextResponse.json({ received: true });
-    }
-
-    const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + planConfig.duration_months);
-
-    const supabase = createAdminClient();
-
-    // Update listing
-    await supabase
-      .from("listings")
-      .update({
+      await supabase.from("listings").update({
         status: "active",
         plan,
-        plan_expires_at: expiresAt.toISOString(),
+        trial_ends_at: trialEndsAt,
+        plan_expires_at: planExpiresAt,
+        stripe_subscription_id: obj.subscription ?? null,
+        stripe_customer_id: obj.customer ?? null,
         featured: plan === "plus" || plan === "premium",
-      })
-      .eq("id", listing_id);
+      }).eq("id", listingId);
+      break;
+    }
 
-    // Record payment
-    await supabase.from("payments").insert({
-      listing_id,
-      stripe_session_id: session.id,
-      plan,
-      amount: session.amount_total ?? planConfig.price,
-    });
+    // Trial ending soon (Stripe fires 3 days before)
+    case "customer.subscription.trial_will_end": {
+      console.log("Trial ending soon for subscription:", obj.id);
+      // TODO: Send reminder email via Resend
+      break;
+    }
+
+    // Payment succeeded after trial — clear trial marker
+    case "invoice.payment_succeeded": {
+      const subId = obj.subscription;
+      if (subId) {
+        await supabase.from("listings")
+          .update({ trial_ends_at: null })
+          .eq("stripe_subscription_id", subId);
+      }
+      break;
+    }
+
+    // Subscription cancelled or payment failed — pause listing
+    case "customer.subscription.deleted": {
+      await supabase.from("listings")
+        .update({ status: "expired" })
+        .eq("stripe_subscription_id", obj.id);
+      break;
+    }
+
+    case "invoice.payment_failed": {
+      if (obj.subscription) {
+        await supabase.from("listings")
+          .update({ status: "paused" })
+          .eq("stripe_subscription_id", obj.subscription);
+      }
+      break;
+    }
   }
 
   return NextResponse.json({ received: true });
 }
 
-export const config = {
-  api: { bodyParser: false },
-};
+export const preferredRegion = "auto";

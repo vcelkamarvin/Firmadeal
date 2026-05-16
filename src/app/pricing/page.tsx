@@ -1,90 +1,195 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import PricingCards from "@/components/PricingCards";
+import {
+  ResponsiveContainer,
+  ScatterChart,
+  Scatter,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ReferenceLine,
+  ReferenceArea,
+} from "recharts";
 
-const PLANS = [
-  {
-    id: "base",
-    name: "Base",
-    price: 49,
-    months: 4,
-    popular: false,
-    badge: null,
-    featuresDe: [
-      "Inserat aufgeben",
-      "4 Monate aktiv",
-      "Professionelle Überprüfung",
-      "Kontaktformular für Käufer",
-      "DACH-weite Sichtbarkeit",
-    ],
-    featuresEn: [
-      "Post your listing",
-      "Active for 4 months",
-      "Professional review",
-      "Contact form for buyers",
-      "DACH-wide visibility",
-    ],
-  },
-  {
-    id: "plus",
-    name: "Plus",
-    price: 89,
-    months: 6,
-    popular: true,
-    badge: { de: "Beliebteste Wahl", en: "Most Popular" },
-    featuresDe: [
-      "Alles aus Base",
-      "6 Monate aktiv",
-      "Featured Inserat (oben in Ergebnissen)",
-      "Vertrauenssiegel",
-      "Social Media Erwähnung",
-      "Priorität in Suchergebnissen",
-    ],
-    featuresEn: [
-      "Everything in Base",
-      "Active for 6 months",
-      "Featured listing (top of results)",
-      "Trust badge",
-      "Social media mention",
-      "Priority in search results",
-    ],
-  },
-  {
-    id: "premium",
-    name: "Premium",
-    price: 149,
-    months: 8,
-    popular: false,
-    badge: { de: "Maximale Sichtbarkeit", en: "Maximum Visibility" },
-    featuresDe: [
-      "Alles aus Plus",
-      "8 Monate aktiv",
-      "Top-Priorität in Suchergebnissen",
-      "Social Media Werbeanzeige",
-      "Dedizierter Support",
-      "Newsletter-Erwähnung",
-    ],
-    featuresEn: [
-      "Everything in Plus",
-      "Active for 8 months",
-      "Top priority in search results",
-      "Social media advertising",
-      "Dedicated support",
-      "Newsletter mention",
-    ],
-  },
+// ── Sale duration data ─────────────────────────────────────────────────────────
+
+const DURATION_BARS = [
+  { plan: "Basic",    days: 89, color: "#6b7280", bg: "#f3f4f6" },
+  { plan: "Advanced", days: 52, color: "#2d5a3d", bg: "#f0fdf4" },
+  { plan: "Premium",  days: 31, color: "#1d4ed8", bg: "#eff6ff" },
+];
+const MAX_DAYS = 89;
+
+// ── Scatter data ───────────────────────────────────────────────────────────────
+
+const SCATTER_DATA = [
+  // Low zone: underpriced (<2.5×), slower (distrust)
+  { x: 1.2, y: 108 }, { x: 1.5, y: 95 }, { x: 1.8, y: 89 }, { x: 2.1, y: 112 }, { x: 2.4, y: 78 },
+  // Fair zone: 2.5–5.5×, fastest
+  { x: 2.8, y: 65 }, { x: 3.1, y: 52 }, { x: 3.4, y: 48 }, { x: 3.7, y: 61 }, { x: 4.0, y: 44 },
+  { x: 4.2, y: 38 }, { x: 4.5, y: 55 }, { x: 4.8, y: 42 }, { x: 5.1, y: 36 }, { x: 5.3, y: 49 },
+  // Premium zone: >5.5×, longer (fewer buyers)
+  { x: 5.7, y: 71 }, { x: 6.1, y: 88 }, { x: 6.5, y: 95 }, { x: 7.0, y: 82 }, { x: 7.4, y: 109 },
 ];
 
-const FAQ_DE = [
+// ── Sale Duration Bars Component ───────────────────────────────────────────────
+
+function SaleDurationBars({ lang }: { lang: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } }, { threshold: 0.2 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <div>
+      <h3 className="font-sans text-[16px] font-bold text-[var(--ink)] tracking-tight mb-1">
+        {lang === "de" ? "Schneller verkaufen mit dem richtigen Plan" : "Sell faster with the right plan"}
+      </h3>
+      <p className="font-sans text-[12px] text-[var(--muted)] mb-6">
+        {lang === "de"
+          ? "Ø Verkaufsdauer nach Plan · abgeschlossene Transaktionen"
+          : "Avg. sale duration by plan · completed transactions"}
+      </p>
+      <div ref={ref} className="space-y-4">
+        {DURATION_BARS.map((bar, i) => (
+          <div key={bar.plan}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="font-sans text-[13px] font-semibold text-[var(--ink)]">{bar.plan}</span>
+              <span className="font-sans text-[13px] font-bold tabular-nums" style={{ color: bar.color }}>
+                {bar.days} {lang === "de" ? "Tage" : "days"}
+              </span>
+            </div>
+            <div className="h-8 rounded-lg overflow-hidden relative" style={{ background: bar.bg }}>
+              <div
+                className="h-full rounded-lg flex items-center pl-3"
+                style={{
+                  width: inView ? `${(bar.days / MAX_DAYS) * 100}%` : "0%",
+                  background: bar.color,
+                  transition: `width 1.2s ease-out ${i * 0.2}s`,
+                }}
+              >
+                {inView && (
+                  <span className="font-sans text-[12px] font-semibold text-white whitespace-nowrap">
+                    Ø {bar.days} {lang === "de" ? "Tage" : "days"}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="font-sans text-[11px] text-[var(--muted)] mt-4">
+        {lang === "de" ? "* Keine Erfolgsgarantie." : "* No guarantee of results."}
+      </p>
+    </div>
+  );
+}
+
+// ── Scatter Chart Component ────────────────────────────────────────────────────
+
+function MultipleScatterChart({ lang }: { lang: string }) {
+  return (
+    <div>
+      <h3 className="font-sans text-[16px] font-bold text-[var(--ink)] tracking-tight mb-1">
+        {lang === "de" ? "Preisfindung & Verkaufsdauer" : "Pricing & sale duration"}
+      </h3>
+      <p className="font-sans text-[12px] text-[var(--muted)] mb-4">
+        {lang === "de"
+          ? "EBITDA-Multiple vs. Tage bis erstes Angebot · DACH 2025"
+          : "EBITDA multiple vs. days to first offer · DACH 2025"}
+      </p>
+
+      <div>
+        {/* Legend */}
+        <div className="flex flex-wrap gap-3 mb-4">
+            {[
+              { color: "#fca5a5", label: lang === "de" ? "Unter Marktwert (<2,5×)" : "Below market (<2.5×)" },
+              { color: "#86efac", label: lang === "de" ? "Marktgerecht (2,5–5,5×)"  : "Fair value (2.5–5.5×)" },
+              { color: "#93c5fd", label: lang === "de" ? "Über Marktwert (>5,5×)"   : "Above market (>5.5×)"  },
+            ].map((l) => (
+              <div key={l.label} className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: l.color }} />
+                <span className="font-sans text-[12px] text-[var(--muted)]">{l.label}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-2">
+              <span className="w-4 h-0.5 bg-[var(--accent)] flex-shrink-0" style={{ borderTop: "2px dashed #2d5a3d" }} />
+              <span className="font-sans text-[12px] text-[var(--muted)]">Ø DACH 4,2×</span>
+            </div>
+          </div>
+
+        <div style={{ height: 240 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
+                {/* Colored zones */}
+                <ReferenceArea x1={1} x2={2.5} fill="#fca5a5" fillOpacity={0.25} />
+                <ReferenceArea x1={2.5} x2={5.5} fill="#86efac" fillOpacity={0.25} />
+                <ReferenceArea x1={5.5} x2={8} fill="#93c5fd" fillOpacity={0.25} />
+                {/* Ø DACH line */}
+                <ReferenceLine x={4.2} stroke="#2d5a3d" strokeDasharray="4 3" strokeWidth={1.5} label={{ value: "Ø 4,2×", position: "top", fontSize: 11, fill: "#2d5a3d" }} />
+                <XAxis
+                  dataKey="x"
+                  type="number"
+                  domain={[1, 8]}
+                  tickCount={8}
+                  tick={{ fontSize: 11, fill: "#888" }}
+                  label={{ value: lang === "de" ? "EBITDA-Multiple" : "EBITDA multiple", position: "insideBottom", offset: -10, fontSize: 11, fill: "#888" }}
+                />
+                <YAxis
+                  dataKey="y"
+                  type="number"
+                  domain={[20, 130]}
+                  tick={{ fontSize: 11, fill: "#888" }}
+                  label={{ value: lang === "de" ? "Tage bis Angebot" : "Days to offer", angle: -90, position: "insideLeft", offset: 10, fontSize: 11, fill: "#888" }}
+                />
+                <Tooltip
+                  cursor={{ strokeDasharray: "3 3" }}
+                  content={({ payload }) => {
+                    if (!payload?.length) return null;
+                    const { x, y } = payload[0].payload as { x: number; y: number };
+                    return (
+                      <div className="bg-white border border-[var(--border)] rounded-lg px-3 py-2 text-[12px] font-sans shadow-sm">
+                        <div>{lang === "de" ? "Multiple" : "Multiple"}: <strong>{x}×</strong></div>
+                        <div>{lang === "de" ? "Tage" : "Days"}: <strong>{y}</strong></div>
+                      </div>
+                    );
+                  }}
+                />
+                <Scatter data={SCATTER_DATA} fill="#2d5a3d" fillOpacity={0.7} r={5} />
+              </ScatterChart>
+            </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const OUTCOMES = [
+  { category: "Gastronomie", listingPrice: "€780K", finalPrice: "€810K", delta: "+4%",  duration: "47 Tage", plan: "Advanced", positive: true  },
+  { category: "IT & SaaS",   listingPrice: "€2,1M",  finalPrice: "€2,35M", delta: "+12%", duration: "38 Tage", plan: "Premium",  positive: true  },
+  { category: "Handwerk",    listingPrice: "€340K", finalPrice: "€310K", delta: "−9%",  duration: "89 Tage", plan: "Basic",    positive: false },
+  { category: "E-Commerce",  listingPrice: "€1,9M",  finalPrice: "€2,1M",  delta: "+11%", duration: "29 Tage", plan: "Premium",  positive: true  },
+];
+
+const FAQ = [
   {
     q: "Gibt es eine Provision auf den Verkaufspreis?",
-    a: "Nein. Firmadeal erhebt keine Provision auf den Verkaufspreis. Sie zahlen nur den einmaligen Inseratspreis und behalten 100% des Verkaufserlöses.",
+    a: "Nein. Firmadeal erhebt keine Provision auf den Verkaufspreis. Sie zahlen nur die monatliche Gebühr und behalten 100% des Verkaufserlöses.",
   },
   {
-    q: "Kann ich meinen Plan nachträglich upgraden?",
-    a: "Ja. Sie können jederzeit auf einen höheren Plan upgraden. Der Preisunterschied wird anteilig berechnet.",
+    q: "Kann ich meinen Plan jederzeit kündigen?",
+    a: "Ja. Sie können jederzeit zum Ende des Abrechnungszeitraums kündigen. Keine Mindestlaufzeit.",
   },
   {
     q: "Was passiert nach Ablauf meines Plans?",
@@ -95,148 +200,167 @@ const FAQ_DE = [
     a: "Sofort nach erfolgreicher Zahlung, typischerweise innerhalb von Sekunden.",
   },
   {
-    q: "Kann ich mein Inserat jederzeit bearbeiten?",
-    a: "Ja. Sie können Ihr Inserat jederzeit in Ihrem Dashboard bearbeiten, ohne extra zu zahlen.",
-  },
-];
-
-const FAQ_EN = [
-  {
-    q: "Is there a commission on the sale price?",
-    a: "No. Firmadeal charges no commission on the sale price. You pay only the one-time listing fee and keep 100% of the proceeds.",
-  },
-  {
-    q: "Can I upgrade my plan later?",
-    a: "Yes. You can upgrade to a higher plan at any time. The price difference will be prorated.",
-  },
-  {
-    q: "What happens when my plan expires?",
-    a: "Your listing will be automatically paused. You'll receive a notification and can renew easily.",
-  },
-  {
-    q: "How quickly will my listing be published?",
-    a: "Immediately after successful payment, typically within seconds.",
-  },
-  {
-    q: "Can I edit my listing at any time?",
-    a: "Yes. You can edit your listing at any time in your dashboard without any extra charge.",
+    q: "Kann ich meinen Plan upgraden?",
+    a: "Ja. Sie können jederzeit auf einen höheren Plan upgraden. Der Preisunterschied wird anteilig berechnet.",
   },
 ];
 
 export default function PricingPage() {
   const { lang } = useLanguage();
-
-  const faqs = lang === "de" ? FAQ_DE : FAQ_EN;
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
     <div className="bg-[var(--bg)] min-h-screen">
+
       {/* Header */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-        <p className="font-mono text-[11px] text-[var(--muted)] uppercase tracking-[0.15em] mb-4">
-          {lang === "de" ? "Transparente Preise" : "Transparent pricing"}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10 text-center">
+        <p className="font-sans text-[11px] font-semibold text-[var(--accent)] uppercase tracking-[0.2em] mb-4">
+          {lang === "de" ? "Preise" : "Pricing"}
         </p>
-        <h1 className="font-fraunces text-[clamp(32px,5vw,52px)] text-[var(--ink)] mb-4 leading-tight">
-          {lang === "de"
-            ? "Einmalig zahlen. Keine Provision."
-            : "Pay once. No commission."}
+        <h1 className="font-sans text-[clamp(30px,5vw,52px)] font-bold text-[var(--ink)] tracking-tight mb-4 leading-[1.05]">
+          {lang === "de" ? <>Inserieren.<br />Keine Provision.</> : <>List your business.<br />No commission.</>}
         </h1>
-        <p className="font-sans text-lg text-[var(--muted)] max-w-[500px] mx-auto">
+        <p className="font-sans text-[16px] text-[var(--muted)] max-w-[480px] mx-auto leading-relaxed mb-6">
           {lang === "de"
-            ? "Wählen Sie den Plan, der zu Ihrem Unternehmen passt. Alle Pläne sind einmalige Zahlungen – keine Abonnements."
-            : "Choose the plan that fits your business. All plans are one-time payments — no subscriptions."}
+            ? "Transparente Monatspreise. Kündbar. Sie behalten 100% des Verkaufserlöses."
+            : "Transparent monthly pricing. Cancel anytime. Keep 100% of the sale proceeds."}
         </p>
+        {/* Trial callout */}
+        <div className="inline-flex items-center gap-2 bg-[var(--accent-light)] border border-[var(--accent)]/25 rounded-full px-5 py-2">
+          <span className="font-sans text-[13px] font-semibold text-[var(--accent)]">
+            {lang === "de" ? "Alle Pläne — 7 Tage kostenlos · Karte erforderlich · Keine Abbuchung in den ersten 7 Tagen" : "All plans — 7 days free · Card required · No charge for 7 days"}
+          </span>
+        </div>
+      </section>
+
+      {/* Charts side-by-side */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white border border-[var(--border)] rounded-2xl p-6">
+            <SaleDurationBars lang={lang} />
+          </div>
+          <div className="bg-white border border-[var(--border)] rounded-2xl p-6">
+            <MultipleScatterChart lang={lang} />
+          </div>
+        </div>
       </section>
 
       {/* Plans */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {PLANS.map((plan) => (
-            <div
-              key={plan.id}
-              className={`relative bg-white rounded-2xl p-7 ${
-                plan.popular
-                  ? "border-2 border-[var(--accent)] shadow-[0_8px_40px_rgba(28,63,94,0.12)]"
-                  : "border border-[var(--border)]"
-              }`}
-            >
-              {plan.badge && (
-                <div
-                  className={`absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-[11px] font-mono font-medium whitespace-nowrap ${
-                    plan.popular
-                      ? "bg-[var(--accent)] text-white"
-                      : "bg-amber-500 text-white"
-                  }`}
-                >
-                  {lang === "de" ? plan.badge.de : plan.badge.en}
-                </div>
-              )}
-
-              <h3 className="font-fraunces text-[24px] text-[var(--ink)] mb-2">
-                {plan.name}
-              </h3>
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="font-fraunces text-[44px] text-[var(--ink)] leading-none">
-                  €{plan.price}
-                </span>
-              </div>
-              <p className="font-mono text-[11px] text-[var(--muted)] mb-6">
-                {plan.months} {lang === "de" ? "Monate aktiv · Einmalig" : "months active · One-time"}
-              </p>
-
-              <ul className="space-y-3 mb-8">
-                {(lang === "de" ? plan.featuresDe : plan.featuresEn).map((f) => (
-                  <li key={f} className="flex items-start gap-2.5">
-                    <Check size={15} className="text-[var(--green)] mt-0.5 flex-shrink-0" />
-                    <span className="font-sans text-sm text-[var(--ink)]">{f}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                href="/sell"
-                className={`block text-center w-full py-3.5 rounded-xl font-sans font-medium text-sm transition-all ${
-                  plan.popular
-                    ? "bg-[var(--accent)] text-white hover:opacity-90"
-                    : "border border-[var(--border)] text-[var(--ink)] hover:bg-[var(--accent-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                }`}
-              >
-                {lang === "de" ? "Jetzt inserieren →" : "List now →"}
-              </Link>
-            </div>
-          ))}
+        <div className="max-w-5xl mx-auto">
+          <h2 className="font-sans text-[22px] font-bold text-[var(--ink)] tracking-tight text-center mb-2">
+            {lang === "de" ? "Wählen Sie Ihren Plan" : "Choose your plan"}
+          </h2>
+          <p className="font-sans text-[14px] text-[var(--muted)] text-center mb-8">
+            {lang === "de" ? "Jederzeit kündbar · 0% Provision" : "Cancel anytime · 0% commission"}
+          </p>
+          <PricingCards />
         </div>
 
-        {/* Commission callout */}
-        <div className="max-w-5xl mx-auto mt-8 bg-[var(--accent-light)] border border-[var(--accent)]/20 rounded-2xl p-6 text-center">
-          <p className="font-fraunces text-[20px] text-[var(--accent)] mb-1">
-            {lang === "de" ? "0% Provision auf den Verkaufspreis" : "0% commission on the sale price"}
-          </p>
-          <p className="font-sans text-sm text-[var(--muted)]">
-            {lang === "de"
-              ? "Anders als traditionelle Makler nehmen wir keine Provision. Sie behalten 100% des Verkaufserlöses."
-              : "Unlike traditional brokers, we take no commission. You keep 100% of the sale proceeds."}
-          </p>
+        {/* 0% commission callout */}
+        <div className="max-w-5xl mx-auto mt-8 bg-[var(--ink)] rounded-2xl p-7 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <p className="font-sans text-[20px] font-bold text-white tracking-tight mb-1">
+              {lang === "de" ? "0% Provision auf den Verkaufspreis" : "0% commission on the sale price"}
+            </p>
+            <p className="font-sans text-sm text-white/60">
+              {lang === "de"
+                ? "Anders als Makler nehmen wir keine Provision. 100% des Erlöses gehören Ihnen."
+                : "Unlike brokers, we charge no commission. 100% of the proceeds are yours."}
+            </p>
+          </div>
+          <Link
+            href="/sell"
+            className="flex-shrink-0 px-6 py-3 bg-white text-[var(--ink)] font-sans font-bold text-sm rounded-xl hover:bg-[var(--surface2)] transition-colors whitespace-nowrap"
+          >
+            {lang === "de" ? "Jetzt inserieren" : "List now"}
+          </Link>
+        </div>
+      </section>
+
+      {/* Outcomes table */}
+      <section className="bg-white border-t border-[var(--border)]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="mb-6">
+            <h2 className="font-sans text-[22px] font-bold text-[var(--ink)] tracking-tight mb-1">
+              {lang === "de" ? "Abgeschlossene Verkäufe" : "Completed sales"}
+            </h2>
+            <p className="font-sans text-[13px] text-[var(--muted)]">
+              {lang === "de"
+                ? "Beispielhafte Transaktionen zur Orientierung · Keine Garantie auf ähnliche Ergebnisse"
+                : "Example transactions for reference · No guarantee of similar results"}
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--border)]">
+                  {[
+                    lang === "de" ? "Branche" : "Industry",
+                    lang === "de" ? "Inseratpreis" : "Listed at",
+                    lang === "de" ? "Abschluss" : "Closed at",
+                    lang === "de" ? "Dauer" : "Duration",
+                    "Plan",
+                  ].map((h) => (
+                    <th key={h} className="text-left pb-3 font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide pr-6">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {OUTCOMES.map((o) => (
+                  <tr key={o.category}>
+                    <td className="py-3.5 font-sans text-[13px] font-semibold text-[var(--ink)] pr-6">{o.category}</td>
+                    <td className="py-3.5 font-sans text-[13px] text-[var(--ink)] tabular-nums pr-6">{o.listingPrice}</td>
+                    <td className="py-3.5 pr-6">
+                      <span className="font-sans text-[13px] font-semibold text-[var(--ink)] tabular-nums">{o.finalPrice}</span>
+                      <span className={`ml-2 font-sans text-[11px] font-bold ${o.positive ? "text-[var(--green)]" : "text-amber-600"}`}>
+                        {o.delta}
+                      </span>
+                    </td>
+                    <td className="py-3.5 font-sans text-[13px] text-[var(--muted)] tabular-nums pr-6">{o.duration}</td>
+                    <td className="py-3.5">
+                      <span className={`font-sans text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                        o.plan === "Premium" ? "bg-[var(--accent)] text-white"
+                        : o.plan === "Advanced" ? "bg-[var(--accent-light)] text-[var(--accent)]"
+                        : "bg-[var(--surface2)] text-[var(--muted)]"
+                      }`}>
+                        {o.plan}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
       {/* FAQ */}
       <section className="bg-[var(--surface2)] border-t border-[var(--border)]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h2 className="font-fraunces text-[28px] text-[var(--ink)] text-center mb-10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <h2 className="font-sans text-[22px] font-bold text-[var(--ink)] tracking-tight text-center mb-8">
             {lang === "de" ? "Häufige Fragen" : "Frequently asked questions"}
           </h2>
-          <div className="space-y-6">
-            {faqs.map((faq) => (
-              <div
-                key={faq.q}
-                className="bg-white border border-[var(--border)] rounded-xl p-6"
-              >
-                <h3 className="font-sans text-[15px] font-semibold text-[var(--ink)] mb-2">
-                  {faq.q}
-                </h3>
-                <p className="font-sans text-sm text-[var(--muted)] leading-relaxed">
-                  {faq.a}
-                </p>
+          <div className="space-y-2">
+            {FAQ.map((faq, i) => (
+              <div key={i} className="bg-white border border-[var(--border)] rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between px-5 py-4 text-left"
+                >
+                  <span className="font-sans text-[14px] font-semibold text-[var(--ink)]">{faq.q}</span>
+                  <ChevronDown
+                    size={16}
+                    className={`text-[var(--muted)] flex-shrink-0 ml-3 transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {openFaq === i && (
+                  <div className="px-5 pb-5">
+                    <p className="font-sans text-[13px] text-[var(--muted)] leading-relaxed">{faq.a}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

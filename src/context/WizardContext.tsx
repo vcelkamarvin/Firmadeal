@@ -31,8 +31,16 @@ const defaultData: WizardData = {
   reason_for_sale: "",
   status_business: "",
   business_model: "",
+  business_model_chips: [],
   competition: "",
+  competition_chips: [],
   assets_included: "",
+  assets_checklist: [],
+  reason_for_sale_notes: "",
+  transferability_data: { independence: 5, customers: 5, stability: 5, costs: 5, processes: 5 },
+  annual_revenue: "",
+  ebitda: "",
+  employees: "",
   plan: "",
 };
 
