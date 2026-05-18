@@ -7,7 +7,6 @@ import { WizardProvider, useWizard } from "@/context/WizardContext";
 import { CATEGORIES, DACH_REGIONS, OperationType, BusinessStatus } from "@/lib/types";
 import PricingCards from "@/components/PricingCards";
 import TransferabilityWizard from "@/components/TransferabilityWizard";
-import { createClient } from "@/lib/supabase";
 
 // ── Progress bar ──────────────────────────────────────────────────────────────
 
@@ -726,16 +725,13 @@ function Step4() {
     setCheckoutError(null);
 
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
       // Save listing as draft if not already saved
       let id = listingId;
       if (!id) {
-        const { data: listing, error } = await supabase
-          .from("listings")
-          .insert({
-            user_id: user?.id ?? null,
+        const listingRes = await fetch("/api/listings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             title: data.title,
             category: data.category,
             city: data.city,
@@ -747,7 +743,6 @@ function Step4() {
             ebitda: data.ebitda ? Number(data.ebitda) : null,
             employees: data.employees ? Number(data.employees) : null,
             description: data.description,
-            status: "draft",
             status_business: data.status_business || "active_profitable",
             reason_for_sale: data.reason_for_sale,
             business_model_chips: data.business_model_chips,
@@ -755,13 +750,12 @@ function Step4() {
             assets_checklist: data.assets_checklist,
             transferability_data: data.transferability_data,
             plan: planId,
-          })
-          .select("id")
-          .single();
-
-        if (error || !listing) throw new Error(error?.message ?? "Listing konnte nicht gespeichert werden");
-        id = listing.id;
-        setListingId(listing.id);
+          }),
+        });
+        const listingJson = await listingRes.json();
+        if (!listingRes.ok || listingJson.error) throw new Error(listingJson.error ?? "Listing konnte nicht gespeichert werden");
+        id = listingJson.id;
+        setListingId(listingJson.id);
       }
 
       // Create Stripe checkout session
