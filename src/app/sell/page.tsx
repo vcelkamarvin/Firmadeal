@@ -7,6 +7,7 @@ import { WizardProvider, useWizard } from "@/context/WizardContext";
 import { CATEGORIES, DACH_REGIONS, OperationType, BusinessStatus } from "@/lib/types";
 import PricingCards from "@/components/PricingCards";
 import TransferabilityWizard from "@/components/TransferabilityWizard";
+import { createClient } from "@/lib/supabase";
 
 // ── Progress bar ──────────────────────────────────────────────────────────────
 
@@ -725,6 +726,14 @@ function Step4() {
     setCheckoutError(null);
 
     try {
+      // Require authentication before creating a listing
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        window.location.href = "/login?redirect=/sell";
+        return;
+      }
+
       // Save listing as draft if not already saved
       let id = listingId;
       if (!id) {

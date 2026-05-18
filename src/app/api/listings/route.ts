@@ -14,6 +14,10 @@ export async function POST(request: NextRequest) {
   const serverSupabase = createServerSupabaseClient();
   const { data: { user } } = await serverSupabase.auth.getUser();
 
+  if (!user) {
+    return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 });
+  }
+
   const body = await request.json();
 
   // Insert using service role key — bypasses RLS
@@ -22,7 +26,7 @@ export async function POST(request: NextRequest) {
     .from("listings")
     .insert({
       ...body,
-      user_id: user?.id ?? null,
+      user_id: user.id,
       status: "draft",
     })
     .select("id")
