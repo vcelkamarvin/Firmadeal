@@ -6,7 +6,6 @@ import { X, MapPin, Eye, MessageSquare, Send, Phone, CheckCircle, DollarSign } f
 import { Listing } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
 import ListingFinancials, { buildFinancialRows } from "./ListingFinancials";
-import { createClient } from "@/lib/supabase";
 import { MOCK_LISTINGS } from "@/lib/mockData";
 
 interface ListingModalProps {
@@ -138,16 +137,19 @@ export default function ListingModal({ listing, onClose }: ListingModalProps) {
     setCLoading(true);
     setCError("");
     try {
-      const supabase = createClient();
-      const { error: dbErr } = await supabase.from("inquiries").insert({
-        listing_id:    listing.id,
-        sender_name:   cName,
-        sender_email:  cEmail,
-        sender_phone:  cPhone || null,
-        message:       cMessage,
-        inquiry_type:  "inquiry",
+      const res = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          listing_id:   listing.id,
+          sender_name:  cName,
+          sender_email: cEmail,
+          sender_phone: cPhone || null,
+          message:      cMessage,
+          inquiry_type: "inquiry",
+        }),
       });
-      if (dbErr) throw dbErr;
+      if (!res.ok) throw new Error("server error");
       setCSent(true);
     } catch {
       setCError(lang === "de" ? "Fehler beim Senden. Bitte erneut versuchen." : "Error sending. Please try again.");
@@ -167,16 +169,19 @@ export default function ListingModal({ listing, onClose }: ListingModalProps) {
       return;
     }
     try {
-      const supabase = createClient();
-      const { error: dbErr } = await supabase.from("inquiries").insert({
-        listing_id:    listing.id,
-        sender_name:   offerName,
-        sender_email:  offerEmail,
-        message:       offerNote || `Angebot: ${fmtFull(amountNum)}`,
-        inquiry_type:  "offer",
-        offer_amount:  amountNum,
+      const res = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          listing_id:   listing.id,
+          sender_name:  offerName,
+          sender_email: offerEmail,
+          message:      offerNote || `Angebot: ${fmtFull(amountNum)}`,
+          inquiry_type: "offer",
+          offer_amount: amountNum,
+        }),
       });
-      if (dbErr) throw dbErr;
+      if (!res.ok) throw new Error("server error");
       setOfferSent(true);
     } catch {
       setOfferError(lang === "de" ? "Fehler beim Senden. Bitte erneut versuchen." : "Error sending. Please try again.");

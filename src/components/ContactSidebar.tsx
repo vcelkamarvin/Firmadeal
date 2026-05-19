@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Send, Phone, CheckCircle } from "lucide-react";
-import { createClient } from "@/lib/supabase";
 
 interface ContactSidebarProps {
   listingId: string;
@@ -33,17 +32,20 @@ export default function ContactSidebar({
     setLoading(true);
     setError("");
     try {
-      const supabase = createClient();
-      const { error: dbErr } = await supabase.from("inquiries").insert({
-        listing_id:   listingId,
-        sender_name:  name,
-        sender_email: email,
-        sender_phone: phone || null,
-        message,
+      const res = await fetch("/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          listing_id:   listingId,
+          sender_name:  name,
+          sender_email: email,
+          sender_phone: phone || null,
+          message,
+        }),
       });
-      if (dbErr) throw dbErr;
+      if (!res.ok) throw new Error("server error");
       setSent(true);
-    } catch (err) {
+    } catch {
       setError(lang === "de" ? "Fehler beim Senden. Bitte erneut versuchen." : "Error sending. Please try again.");
     } finally {
       setLoading(false);

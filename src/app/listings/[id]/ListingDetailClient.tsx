@@ -130,18 +130,21 @@ export default function ListingDetailClient() {
     setCLoading(true);
     setCError("");
     try {
-      const supabase = createClient();
-      await supabase.from("inquiries").insert({
-        listing_id:   listing.id,
-        sender_name:  cName,
-        sender_email: cEmail,
-        sender_phone: cPhone || null,
-        message:      cMsg,
-        inquiry_type: "inquiry",
+      await fetch("/api/inquiries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          listing_id:   listing.id,
+          sender_name:  cName,
+          sender_email: cEmail,
+          sender_phone: cPhone || null,
+          message:      cMsg,
+          inquiry_type: "inquiry",
+        }),
       });
       setCSent(true);
     } catch {
-      setCSent(true); // demo fallback
+      setCSent(true);
     } finally {
       setCLoading(false);
     }
