@@ -734,7 +734,7 @@ function Step4() {
   const investorCount = INVESTORS_BY_CATEGORY[data.category] ?? 1200;
   const categoryLabel = data.category || "DACH";
 
-  const handleSelectPlan = async (planId: "base" | "plus" | "premium") => {
+  const handleSelectPlan = async (planId: "basic" | "advanced" | "premium") => {
     updateData({ plan: planId });
     setLoadingPlan(planId);
     setCheckoutError(null);
@@ -829,8 +829,6 @@ function Step4() {
       <PricingCards
         onSelectPlan={handleSelectPlan}
         loadingPlan={loadingPlan}
-        investorCount={investorCount}
-        categoryLabel={categoryLabel}
       />
 
       <button onClick={() => setStep(3)} className="font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors mt-6">

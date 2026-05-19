@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         plan_expires_at: planExpiresAt,
         stripe_subscription_id: obj.subscription ?? null,
         stripe_customer_id: obj.customer ?? null,
-        featured: plan === "plus" || plan === "premium",
+        featured: plan === "advanced" || plan === "premium",
       }).eq("id", listingId);
       break;
     }

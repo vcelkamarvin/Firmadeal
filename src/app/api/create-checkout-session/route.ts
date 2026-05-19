@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 
 const PLAN_CONFIG = {
-  base:    { amount: 3900,  name: "Firmadeal Basic",    description: "Ø 89 Tage · 250 Aufrufe/Monat · 0% Provision"    },
-  plus:    { amount: 7900,  name: "Firmadeal Advanced",  description: "Ø 52 Tage · 1.000 Aufrufe/Monat · 0% Provision"  },
-  premium: { amount: 19900, name: "Firmadeal Premium",   description: "Ø 31 Tage · 5.000+ Aufrufe/Monat · 0% Provision" },
+  basic:    { amount: 3900,  name: "Markttest Starter", description: "Ø 90–180 Tage · 250 Käufer/Monat · 0% Provision"    },
+  advanced: { amount: 7900,  name: "Markttest Pro",     description: "Ø 60–120 Tage · 1.000 Käufer/Monat · 0% Provision"  },
+  premium:  { amount: 19900, name: "Markttest Maximum", description: "Ø 30–90 Tage · 5.000+ Käufer/Monat · 0% Provision"  },
 };
 
 export async function POST(req: Request) {

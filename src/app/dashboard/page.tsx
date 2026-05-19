@@ -40,9 +40,9 @@ function StatusBadge({ status }: { status: string }) {
 function PlanBadge({ plan }: { plan: string | null }) {
   if (!plan) return <span className="font-mono text-[10px] text-[var(--muted)]">—</span>;
   const colors: Record<string, string> = {
-    base: "bg-[var(--surface2)] text-[var(--muted)]",
-    plus: "bg-[var(--accent-light)] text-[var(--accent)]",
-    premium: "bg-amber-50 text-amber-700",
+    basic:    "bg-[var(--surface2)] text-[var(--muted)]",
+    advanced: "bg-[var(--accent-light)] text-[var(--accent)]",
+    premium:  "bg-amber-50 text-amber-700",
   };
   return (
     <span className={`font-mono text-[10px] px-2 py-1 rounded-full ${colors[plan] ?? ""}`}>

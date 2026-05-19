@@ -1,6 +1,6 @@
 export type ListingStatus = "draft" | "active" | "paused" | "expired" | "cancelling";
 export type BusinessStatus = "active_profitable" | "in_development" | "restructuring";
-export type ListingPlan = "base" | "plus" | "premium";
+export type ListingPlan = "basic" | "advanced" | "premium";
 export type OperationType =
   | "vollstaendige_uebertragung"
   | "unternehmensuebertragung"
