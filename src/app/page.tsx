@@ -572,9 +572,16 @@ export default function HomePage() {
               </div>
 
               {/* Trial note */}
-              <p className="font-sans text-[13px] mb-8" style={{ color: "rgba(255,255,255,0.55)" }}>
-                ✓ {lang === "de" ? "7 Tage kostenlos · Keine Provision · Jederzeit kündbar" : "7 days free · No commission · Cancel anytime"}
-              </p>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mb-8">
+                {(lang === "de"
+                  ? ["✓ 7 Tage Markttest kostenlos", "✓ Keine Provision", "✓ Jederzeit kündbar"]
+                  : ["✓ 7-day market test free", "✓ No commission", "✓ Cancel anytime"]
+                ).map((item) => (
+                  <span key={item} className="font-sans text-[13px]" style={{ color: "rgba(255,255,255,0.65)" }}>
+                    {item}
+                  </span>
+                ))}
+              </div>
 
               {/* Social proof */}
               <div className="flex items-center gap-3">

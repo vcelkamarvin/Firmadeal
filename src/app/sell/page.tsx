@@ -714,11 +714,25 @@ function Step3() {
 
 // ── Step 4 ────────────────────────────────────────────────────────────────────
 
+const INVESTORS_BY_CATEGORY: Record<string, number> = {
+  "Gastronomie & Lebensmittel": 847,
+  "IT & Software":              1203,
+  "Handwerk & Bau":             634,
+  "Gesundheit & Pflege":        921,
+  "E-Commerce & Retail":        1089,
+  "Produktion & Industrie":     412,
+  "Immobilien":                 756,
+  "Dienstleistungen":           538,
+};
+
 function Step4() {
   const { data, updateData, setStep, listingId, setListingId } = useWizard();
   const { lang } = useLanguage();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const investorCount = INVESTORS_BY_CATEGORY[data.category] ?? 1200;
+  const categoryLabel = data.category || "DACH";
 
   const handleSelectPlan = async (planId: "base" | "plus" | "premium") => {
     updateData({ plan: planId });
@@ -789,23 +803,21 @@ function Step4() {
       <h2 className="font-sans text-[26px] font-bold text-[var(--ink)] tracking-tight mb-2">
         {lang === "de" ? "Sichtbarkeit wählen" : "Choose visibility"}
       </h2>
-      <p className="font-sans text-[14px] text-[var(--muted)] mb-6">
-        {lang === "de" ? "Starten Sie kostenlos — kein Risiko, keine Verpflichtung für 7 Tage." : "Start free — no risk, no obligation for 7 days."}
-      </p>
 
-      {/* Trial banner */}
-      <div className="flex items-center gap-3 bg-[var(--accent-light)] border border-[var(--accent)]/25 rounded-xl p-4 mb-8">
-        <span className="text-[22px] flex-shrink-0">🎁</span>
-        <div>
-          <p className="font-sans text-[14px] font-bold text-[var(--ink)]">
-            {lang === "de" ? "7 Tage komplett kostenlos" : "7 days completely free"}
-          </p>
-          <p className="font-sans text-[12px] text-[var(--muted)]">
-            {lang === "de"
-              ? "Ihr Inserat geht sofort online. Karte wird erst nach 7 Tagen belastet. Jederzeit vorher kündbar."
-              : "Your listing goes live immediately. Card is charged after 7 days. Cancel anytime before."}
-          </p>
-        </div>
+      {/* Investor count banner */}
+      <div className="text-center mb-8 mt-4">
+        <p className="font-sans text-[22px] font-bold text-[var(--ink)] mb-2">
+          {lang === "de" ? "Ihr Inserat wird " : "Your listing will reach "}
+          <span className="text-[var(--green)]">
+            {investorCount.toLocaleString("de-DE")} aktiven {categoryLabel}-Investor{investorCount === 1 ? "" : "en"}
+          </span>
+          {lang === "de" ? " präsentiert." : "."}
+        </p>
+        <p className="font-sans text-[15px] text-[var(--muted)]">
+          {lang === "de"
+            ? "Wählen Sie Ihre Reichweite für den 7-tägigen Markttest:"
+            : "Choose your reach for the 7-day market test:"}
+        </p>
       </div>
 
       {checkoutError && (
@@ -814,7 +826,12 @@ function Step4() {
         </div>
       )}
 
-      <PricingCards onSelectPlan={handleSelectPlan} loadingPlan={loadingPlan} />
+      <PricingCards
+        onSelectPlan={handleSelectPlan}
+        loadingPlan={loadingPlan}
+        investorCount={investorCount}
+        categoryLabel={categoryLabel}
+      />
 
       <button onClick={() => setStep(3)} className="font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors mt-6">
         ← {lang === "de" ? "Zurück" : "Back"}

@@ -19,6 +19,8 @@ import { useLanguage } from "@/context/LanguageContext";
 import { createClient } from "@/lib/supabase";
 import { Listing } from "@/lib/types";
 import { MOCK_LISTINGS } from "@/lib/mockData";
+import { calcCompletionScore } from "@/lib/completionScore";
+import MilestoneBadges from "@/components/MilestoneBadges";
 
 function StatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string }> = {
@@ -320,6 +322,28 @@ function DashboardContent() {
                         <p className="font-mono text-[10px] text-[var(--muted)] mt-0.5">
                           {listing.city}, {listing.country}
                         </p>
+                        {(() => {
+                          const { score, topMissing } = calcCompletionScore(listing);
+                          const barColor = score >= 80 ? "#2d5a3d" : score >= 50 ? "#f59e0b" : "#e5e5e5";
+                          return (
+                            <div className="mt-2 max-w-[240px]">
+                              <div className="flex justify-between mb-1">
+                                <span className="font-sans text-[11px] text-[var(--muted)]">{score}% vollständig</span>
+                                {score >= 80 && <span className="font-sans text-[11px] font-semibold text-[var(--green)]">Sehr vollständig ✓</span>}
+                              </div>
+                              <div className="h-1.5 bg-[var(--surface2)] rounded-full overflow-hidden">
+                                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${score}%`, background: barColor }} />
+                              </div>
+                              {topMissing && score < 100 && (
+                                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                  <span className="font-sans text-[11px] text-[var(--muted)]">💡 {topMissing.hint}</span>
+                                  <span className="font-sans text-[10px] font-semibold text-[var(--green)] bg-[var(--accent-light)] px-2 py-0.5 rounded-full">{topMissing.impact}</span>
+                                </div>
+                              )}
+                              <MilestoneBadges listing={listing} completionScore={score} />
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4">
                         <StatusBadge status={listing.status} />
@@ -395,7 +419,7 @@ function DashboardContent() {
                     </Link>
                     <StatusBadge status={listing.status} />
                   </div>
-                  <div className="flex items-center gap-4 font-mono text-[11px] text-[var(--muted)] mb-3">
+                  <div className="flex items-center gap-4 font-mono text-[11px] text-[var(--muted)] mb-2">
                     <span className="flex items-center gap-1">
                       <Eye size={11} /> {listing.views_count}
                     </span>
@@ -404,6 +428,24 @@ function DashboardContent() {
                     </span>
                     <PlanBadge plan={listing.plan} />
                   </div>
+                  {(() => {
+                    const { score, topMissing } = calcCompletionScore(listing);
+                    const barColor = score >= 80 ? "#2d5a3d" : score >= 50 ? "#f59e0b" : "#e5e5e5";
+                    return (
+                      <div className="mb-3">
+                        <div className="flex justify-between mb-1">
+                          <span className="font-sans text-[11px] text-[var(--muted)]">{score}% vollständig</span>
+                        </div>
+                        <div className="h-1.5 bg-[var(--surface2)] rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${score}%`, background: barColor }} />
+                        </div>
+                        {topMissing && score < 100 && (
+                          <p className="font-sans text-[11px] text-[var(--muted)] mt-1">💡 {topMissing.hint} · <span className="text-[var(--green)] font-semibold">{topMissing.impact}</span></p>
+                        )}
+                        <MilestoneBadges listing={listing} completionScore={score} />
+                      </div>
+                    );
+                  })()}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleTogglePause(listing)}
