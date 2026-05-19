@@ -8,11 +8,11 @@ import ClarityScript from "@/components/ClarityScript";
 
 export const metadata: Metadata = {
   title: {
-    default: "Firmadeal – Der DACH-Marktplatz für Unternehmensverkäufe",
+    default: "Firmadeal.de – Unternehmen kaufen & verkaufen im DACH-Raum",
     template: "%s | Firmadeal",
   },
   description:
-    "Kaufen und verkaufen Sie Unternehmen in Deutschland, Österreich und der Schweiz. Keine Provision. Transparente Inserate. Direkte Kommunikation.",
+    "Der direkte Marktplatz für Unternehmensverkäufe in Deutschland, Österreich und der Schweiz. 0% Provision. Über 50 Inserate. Direkt vom Eigentümer.",
   keywords: [
     "Unternehmensverkauf",
     "Firmenkauf",
@@ -26,12 +26,14 @@ export const metadata: Metadata = {
     "Unternehmenstransaktion",
   ],
   openGraph: {
-    title: "Firmadeal – Der DACH-Marktplatz für Unternehmensverkäufe",
+    title: "Firmadeal.de – Unternehmen kaufen & verkaufen im DACH-Raum",
     description:
-      "Kaufen und verkaufen Sie Unternehmen in Deutschland, Österreich und der Schweiz. Keine Provision.",
+      "Der direkte Marktplatz für Unternehmensverkäufe in Deutschland, Österreich und der Schweiz. 0% Provision. Über 50 Inserate. Direkt vom Eigentümer.",
     locale: "de_DE",
-    type: "website",
+    type:   "website",
+    url:    "https://www.firmadeal.de",
   },
+  alternates: { canonical: "https://www.firmadeal.de" },
 };
 
 export default function RootLayout({
