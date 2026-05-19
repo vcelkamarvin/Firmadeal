@@ -3,6 +3,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import CookieBanner from "@/components/CookieBanner";
 
 export const metadata: Metadata = {
   title: {
@@ -44,6 +45,7 @@ export default function RootLayout({
           <Navbar />
           <main className="flex-1">{children}</main>
           <Footer />
+          <CookieBanner />
         </LanguageProvider>
       </body>
     </html>

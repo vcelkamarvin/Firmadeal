@@ -47,13 +47,12 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2">
               {[
-                { de: "Über uns",    en: "About us"       },
-                { de: "Datenschutz", en: "Privacy policy" },
-                { de: "AGB",         en: "Terms"          },
-                { de: "Impressum",   en: "Imprint"        },
+                { href: "/datenschutz", de: "Datenschutz", en: "Privacy policy" },
+                { href: "/agb",         de: "AGB",         en: "Terms"          },
+                { href: "/impressum",   de: "Impressum",   en: "Imprint"        },
               ].map((l) => (
-                <li key={l.de}>
-                  <Link href="#" className="font-sans text-[13px] text-white/50 hover:text-white transition-colors">
+                <li key={l.href}>
+                  <Link href={l.href} className="font-sans text-[13px] text-white/50 hover:text-white transition-colors">
                     {lang === "de" ? l.de : l.en}
                   </Link>
                 </li>
