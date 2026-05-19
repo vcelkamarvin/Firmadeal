@@ -23,10 +23,10 @@ export default function ImpressumPage() {
               Verantwortlich
             </h2>
             <p>
-              [YOUR FULL NAME]<br />
-              [YOUR ADDRESS]<br />
-              [PLZ CITY]<br />
-              Deutschland
+              Albert Laurin<br />
+              Prazskeho povstani 28<br />
+              466 04 Jablonec nad Nisou<br />
+              Tschechische Republik
             </p>
           </section>
 
