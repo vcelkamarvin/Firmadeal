@@ -341,6 +341,28 @@ function DashboardContent() {
                                 </div>
                               )}
                               <MilestoneBadges listing={listing} completionScore={score} />
+                              {(() => {
+                                const trialDaysLeft = listing.trial_ends_at
+                                  ? Math.ceil((new Date(listing.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                                  : null;
+                                if (!trialDaysLeft || trialDaysLeft <= 0) return null;
+                                return (
+                                  <div style={{
+                                    background: trialDaysLeft <= 2 ? "#fef3cd" : "#e8f5ed",
+                                    border: `1px solid ${trialDaysLeft <= 2 ? "#f59e0b" : "#c6e6d0"}`,
+                                    borderRadius: 8,
+                                    padding: "8px 12px",
+                                    marginTop: 8,
+                                    fontSize: 12,
+                                    fontFamily: "Helvetica Neue, Arial, sans-serif",
+                                    color: trialDaysLeft <= 2 ? "#92600a" : "#1a3329",
+                                  }}>
+                                    {trialDaysLeft <= 2
+                                      ? `⚠️ Testzeitraum endet in ${trialDaysLeft} Tag${trialDaysLeft === 1 ? "" : "en"}`
+                                      : `✓ Kostenloser Testzeitraum — noch ${trialDaysLeft} Tage`}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           );
                         })()}
@@ -443,6 +465,28 @@ function DashboardContent() {
                           <p className="font-sans text-[11px] text-[var(--muted)] mt-1">💡 {topMissing.hint} · <span className="text-[var(--green)] font-semibold">{topMissing.impact}</span></p>
                         )}
                         <MilestoneBadges listing={listing} completionScore={score} />
+                        {(() => {
+                          const trialDaysLeft = listing.trial_ends_at
+                            ? Math.ceil((new Date(listing.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                            : null;
+                          if (!trialDaysLeft || trialDaysLeft <= 0) return null;
+                          return (
+                            <div style={{
+                              background: trialDaysLeft <= 2 ? "#fef3cd" : "#e8f5ed",
+                              border: `1px solid ${trialDaysLeft <= 2 ? "#f59e0b" : "#c6e6d0"}`,
+                              borderRadius: 8,
+                              padding: "8px 12px",
+                              marginTop: 8,
+                              fontSize: 12,
+                              fontFamily: "Helvetica Neue, Arial, sans-serif",
+                              color: trialDaysLeft <= 2 ? "#92600a" : "#1a3329",
+                            }}>
+                              {trialDaysLeft <= 2
+                                ? `⚠️ Testzeitraum endet in ${trialDaysLeft} Tag${trialDaysLeft === 1 ? "" : "en"}`
+                                : `✓ Kostenloser Testzeitraum — noch ${trialDaysLeft} Tage`}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })()}

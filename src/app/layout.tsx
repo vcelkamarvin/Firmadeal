@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     template: "%s | Firmadeal",
   },
   description:
-    "Der direkte Marktplatz für Unternehmensverkäufe in Deutschland, Österreich und der Schweiz. 0% Provision. Über 50 Inserate. Direkt vom Eigentümer.",
+    "Der direkte Marktplatz für Unternehmensverkäufe in Deutschland. 60+ Inserate. 0% Provision. Direkt vom Eigentümer. Jetzt 7 Tage kostenlos inserieren.",
   keywords: [
     "Unternehmensverkauf",
     "Firmenkauf",
@@ -26,9 +26,9 @@ export const metadata: Metadata = {
     "Unternehmenstransaktion",
   ],
   openGraph: {
-    title: "Firmadeal.de – Unternehmen kaufen & verkaufen im DACH-Raum",
+    title: "Firmadeal.de – Unternehmen kaufen & verkaufen in Deutschland",
     description:
-      "Der direkte Marktplatz für Unternehmensverkäufe in Deutschland, Österreich und der Schweiz. 0% Provision. Über 50 Inserate. Direkt vom Eigentümer.",
+      "60+ Inserate. 0% Provision. Direkt vom Eigentümer.",
     locale: "de_DE",
     type:   "website",
     url:    "https://www.firmadeal.de",
