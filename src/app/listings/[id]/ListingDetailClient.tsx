@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,9 +8,9 @@ import {
   MapPin, Eye, MessageSquare, Clock, Phone, ChevronLeft,
   CheckCircle, DollarSign, Send, Flag, ArrowLeft,
 } from "lucide-react";
-import { MOCK_LISTINGS } from "@/lib/mockData";
 import { useLanguage } from "@/context/LanguageContext";
 import { createClient } from "@/lib/supabase";
+import type { Listing } from "@/lib/types";
 
 const INDUSTRY_MULTIPLES: Record<string, { lo: number; avg: number; hi: number }> = {
   "Gastronomie":      { lo: 2.0, avg: 3.0, hi: 4.5 },
@@ -75,6 +75,7 @@ function MetricRow({ label, value, tooltip, highlight }: {
 export default function ListingDetailClient() {
   const { id } = useParams<{ id: string }>();
   const { lang } = useLanguage();
+  const [listing, setListing] = useState<Listing | null | undefined>(undefined);
   const [selectedImage, setSelectedImage] = useState(0);
   const [phoneRevealed, setPhoneRevealed] = useState(false);
   const [offerOpen, setOfferOpen] = useState(false);
@@ -97,7 +98,30 @@ export default function ListingDetailClient() {
   const [oSent, setOSent]       = useState(false);
   const [oError, setOError]     = useState("");
 
-  const listing = MOCK_LISTINGS.find((l) => l.id === id);
+  const [similarListings, setSimilarListings] = useState<Listing[]>([]);
+
+  useEffect(() => {
+    createClient()
+      .from("listings")
+      .select("*")
+      .eq("id", id)
+      .single()
+      .then(({ data }) => { setListing(data ?? null); });
+  }, [id]);
+
+  useEffect(() => {
+    if (!listing) return;
+    createClient()
+      .from("listings")
+      .select("*")
+      .eq("status", "active")
+      .eq("category", listing.category)
+      .neq("id", listing.id)
+      .limit(3)
+      .then(({ data }) => { if (data) setSimilarListings(data); });
+  }, [listing?.id, listing?.category]);
+
+  if (listing === undefined) return <div style={{ minHeight: "100vh" }} />;
   if (!listing) return notFound();
 
   const margin = listing.ebitda && listing.annual_revenue && listing.annual_revenue > 0
@@ -557,17 +581,14 @@ export default function ListingDetailClient() {
 
             {/* Similar listings */}
             {(() => {
-              const similar = MOCK_LISTINGS.filter(
-                (l) => l.id !== listing.id && (l.category === listing.category || (l.asking_price && listing.asking_price && Math.abs(l.asking_price - listing.asking_price) / listing.asking_price < 0.4))
-              ).slice(0, 3);
-              if (!similar.length) return null;
+              if (!similarListings.length) return null;
               return (
                 <div>
                   <h2 className="font-sans text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--muted)] mb-4">
                     Ähnliche Inserate
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {similar.map((s) => (
+                    {similarListings.map((s) => (
                       <Link
                         key={s.id}
                         href={`/listings/${s.id}`}

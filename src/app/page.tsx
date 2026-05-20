@@ -7,6 +7,7 @@ import ListingCard from "@/components/ListingCard";
 import ListingGridCard from "@/components/ListingGridCard";
 import { MOCK_LISTINGS } from "@/lib/mockData";
 import { CATEGORIES } from "@/lib/types";
+import type { Listing } from "@/lib/types";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import type { BusinessStatus } from "@/lib/types";
@@ -207,9 +208,20 @@ function InlineCatalog({ lang }: { lang: string }) {
   const [sort, setSort] = useState("newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [listings, setListings] = useState<Listing[]>([]);
+
+  useEffect(() => {
+    createClient()
+      .from("listings")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(200)
+      .then(({ data }) => { if (data) setListings(data); });
+  }, []);
 
   const filtered = useMemo(() => {
-    let list = [...MOCK_LISTINGS];
+    let list = [...listings];
     if (q) {
       const lq = q.toLowerCase();
       list = list.filter((l) => l.title.toLowerCase().includes(lq) || l.city.toLowerCase().includes(lq) || l.category.toLowerCase().includes(lq));
@@ -225,7 +237,7 @@ function InlineCatalog({ lang }: { lang: string }) {
       default:           list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
     return list;
-  }, [q, cat, status, priceMax, sort]);
+  }, [q, cat, status, priceMax, sort, listings]);
 
   // Homepage shows max 12 (4×3 grid)
   const shown = filtered.slice(0, 12);

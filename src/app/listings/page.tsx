@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import ListingCard from "@/components/ListingCard";
 import ListingGridCard from "@/components/ListingGridCard";
-import { MOCK_LISTINGS } from "@/lib/mockData";
+import { createClient } from "@/lib/supabase";
 import { CATEGORIES, REGIONS_BY_COUNTRY } from "@/lib/types";
-import type { BusinessStatus } from "@/lib/types";
+import type { BusinessStatus, Listing } from "@/lib/types";
 
 const COUNTRY_OPTIONS = [
   { value: "DE", label: "🇩🇪 Deutschland" },
@@ -19,6 +19,18 @@ const COUNTRY_OPTIONS = [
 function ListingsContent() {
   const searchParams = useSearchParams();
   const { lang } = useLanguage();
+
+  const [listings, setListings] = useState<Listing[]>([]);
+
+  useEffect(() => {
+    createClient()
+      .from("listings")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(500)
+      .then(({ data }) => { setListings(data ?? []); });
+  }, []);
 
   const [search, setSearch]                 = useState(searchParams.get("q") ?? "");
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
@@ -44,7 +56,7 @@ function ListingsContent() {
   };
 
   const filtered = useMemo(() => {
-    let list = [...MOCK_LISTINGS];
+    let list = [...listings];
     if (search) {
       const q = search.toLowerCase();
       list = list.filter((l) => l.title.toLowerCase().includes(q) || l.category.toLowerCase().includes(q) || l.city.toLowerCase().includes(q) || l.description.toLowerCase().includes(q));
@@ -67,7 +79,7 @@ function ListingsContent() {
       default:           list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
     return list;
-  }, [search, selectedCategories, selectedRegion, selectedStatus, priceMin, priceMax, sortBy]);
+  }, [search, selectedCategories, selectedRegion, selectedStatus, priceMin, priceMax, sortBy, listings]);
 
   const clearFilters = () => {
     setSearch(""); setSelectedCategories([]); setSelectedCountry(""); setSelectedRegion("");
