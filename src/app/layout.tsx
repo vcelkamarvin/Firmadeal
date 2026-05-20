@@ -34,6 +34,11 @@ export const metadata: Metadata = {
     url:    "https://www.firmadeal.de",
   },
   alternates: { canonical: "https://www.firmadeal.de" },
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
