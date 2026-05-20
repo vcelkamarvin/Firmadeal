@@ -100,6 +100,7 @@ export default function AdminListings() {
                   </td>
                   <td style={{ padding: "12px 16px" }}>
                     <div style={{ display: "flex", gap: 12 }}>
+                      <Link href={`/admin/listings/${l.id}/edit`} style={{ fontSize: 12, color: "#1a3329", textDecoration: "none", fontWeight: 600 }}>Bearbeiten</Link>
                       <Link href={`/listings/${l.id}`} target="_blank" style={{ fontSize: 12, color: "#2d5a3d", textDecoration: "none" }}>Ansehen</Link>
                       <button onClick={() => deleteListing(l.id)} style={{ fontSize: 12, color: "#dc2626", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>Löschen</button>
                     </div>
