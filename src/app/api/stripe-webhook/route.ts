@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
               price: welcomePrice,
               dashboardUrl: `${SITE_URL}/dashboard`,
             }),
-          }).catch(() => {});
+          }).catch((err) => { console.error("[resend] webhook email failed:", err?.message ?? err); });
         }
       }
       break;
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
               transferabilityScore: listing.transferability_score ?? null,
               dashboardUrl: `${SITE_URL}/dashboard`,
             }),
-          }).catch(() => {});
+          }).catch((err) => { console.error("[resend] webhook email failed:", err?.message ?? err); });
         }
       }
       break;

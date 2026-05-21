@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
         message,
         listingUrl,
       }),
-    }).catch(() => {});
+    }).catch((err) => { console.error("[resend] seller email failed:", err?.message ?? err); });
   }
 
   await resend.emails.send({
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       listingPrice: listing?.price ?? null,
       siteUrl: SITE_URL,
     }),
-  }).catch(() => {});
+  }).catch((err) => { console.error("[resend] buyer email failed:", err?.message ?? err); });
 
   return NextResponse.json({ ok: true });
 }
