@@ -20,9 +20,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No subscription found" }, { status: 404 });
   }
 
-  await stripe.subscriptions.update(listing.stripe_subscription_id, {
-    cancel_at_period_end: true,
-  });
+  try {
+    await stripe.subscriptions.update(listing.stripe_subscription_id, {
+      cancel_at_period_end: true,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Stripe error";
+    console.error("[cancel-subscription] Stripe error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 
   await supabase.from("listings")
     .update({ status: "cancelling" })

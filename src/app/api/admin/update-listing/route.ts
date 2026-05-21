@@ -30,8 +30,23 @@ export async function PATCH(req: NextRequest) {
   if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
-  const { id, ...fields } = body;
+  const { id } = body;
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+
+  // Whitelist updatable fields — never spread raw body
+  const allowed = [
+    "title", "category", "description", "city", "region", "country",
+    "asking_price", "price_confidential", "annual_revenue", "ebitda",
+    "employees", "founded_year", "status", "status_business", "plan",
+    "featured", "reason_for_sale", "business_model", "competition",
+    "assets_included", "business_model_chips", "competition_chips",
+    "assets_checklist", "transferability_data", "images",
+    "type_of_operation", "vat_number", "company_name", "phone", "show_phone",
+  ];
+  const fields: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in body) fields[key] = body[key];
+  }
 
   const { error } = await adminDb()
     .from("listings")

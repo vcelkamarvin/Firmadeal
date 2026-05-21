@@ -501,7 +501,7 @@ export default function ListingDetailClient() {
                 costs:        3 + ((seed * 11) % 7),
                 processes:    2 + ((seed * 13) % 8),
               };
-              const tScore = listing.transferability_score ?? Math.min(100, Math.round((Object.values(td).reduce((a, b) => a + b, 0) / 50) * 100));
+              const tScore = listing.transferability_score ?? Math.min(100, Math.round((Object.values(td).reduce((a: number, b) => a + (Number(b) || 0), 0) / 50) * 100));
               const scoreColor = tScore >= 75 ? "#2d5a3d" : tScore >= 50 ? "#d97706" : "#dc2626";
               const QLABELS = [
                 { key: "independence", label: lang === "de" ? "Inhaberunabhängigkeit" : "Owner independence" },

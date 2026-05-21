@@ -22,9 +22,13 @@ export async function POST(request: NextRequest) {
 
   // Whitelist allowed fields — never spread raw body to prevent field injection
   const allowed = [
-    "title", "category", "description", "location", "price", "price_negotiable",
-    "annual_revenue", "ebitda", "employees", "founded_year", "industry",
-    "contact_name", "contact_email", "contact_phone", "website", "images",
+    "title", "category", "description", "city", "region", "country",
+    "asking_price", "price_confidential", "annual_revenue", "ebitda",
+    "employees", "founded_year", "status_business", "reason_for_sale",
+    "business_model", "business_model_chips", "competition", "competition_chips",
+    "assets_included", "assets_checklist", "transferability_data",
+    "type_of_operation", "vat_number", "company_name", "phone", "show_phone",
+    "images", "plan",
   ];
   const safeFields: Record<string, unknown> = {};
   for (const key of allowed) {

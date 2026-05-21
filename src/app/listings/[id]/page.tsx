@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
 import ListingDetailClient from "./ListingDetailClient";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 function db() {
   return createClient(
@@ -83,7 +84,9 @@ export default async function ListingDetailPage(
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
-      <ListingDetailClient />
+      <ErrorBoundary>
+        <ListingDetailClient />
+      </ErrorBoundary>
     </>
   );
 }

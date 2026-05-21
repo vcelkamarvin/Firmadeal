@@ -59,7 +59,7 @@ function ListingsContent() {
     let list = [...listings];
     if (search) {
       const q = search.toLowerCase();
-      list = list.filter((l) => l.title.toLowerCase().includes(q) || l.category.toLowerCase().includes(q) || l.city.toLowerCase().includes(q) || l.description.toLowerCase().includes(q));
+      list = list.filter((l) => (l.title ?? "").toLowerCase().includes(q) || (l.category ?? "").toLowerCase().includes(q) || (l.city ?? "").toLowerCase().includes(q) || (l.description ?? "").toLowerCase().includes(q));
     }
     if (selectedCountry)               list = list.filter((l) => l.country === selectedCountry);
     if (selectedCategories.length > 0) list = list.filter((l) => selectedCategories.includes(l.category));
@@ -75,7 +75,7 @@ function ListingsContent() {
     switch (sortBy) {
       case "price_asc":  list.sort((a, b) => (a.asking_price ?? Infinity) - (b.asking_price ?? Infinity)); break;
       case "price_desc": list.sort((a, b) => (b.asking_price ?? -Infinity) - (a.asking_price ?? -Infinity)); break;
-      case "popular":    list.sort((a, b) => b.views_count - a.views_count); break;
+      case "popular":    list.sort((a, b) => (b.views_count ?? 0) - (a.views_count ?? 0)); break;
       default:           list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
     return list;
