@@ -498,6 +498,7 @@ export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [subError, setSubError] = useState("");
   const [bizTypeIdx, setBizTypeIdx] = useState(0);
 
   useEffect(() => {
@@ -726,11 +727,26 @@ export default function HomePage() {
                   </p>
                 </div>
               ) : (
-                <form onSubmit={(e) => { e.preventDefault(); if (email) setSubscribed(true); }} className="flex gap-3">
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  setSubError("");
+                  const res = await fetch("/api/newsletter", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email }),
+                  });
+                  if (res.ok) {
+                    setSubscribed(true);
+                  } else {
+                    const j = await res.json();
+                    setSubError(j.error === "duplicate" ? "Bereits registriert." : "Fehler. Bitte erneut versuchen.");
+                  }
+                }} className="flex flex-col gap-2">
+                  <div className="flex gap-3">
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => { setEmail(e.target.value); setSubError(""); }}
                     placeholder={lang === "de" ? "ihre@email.de" : "your@email.com"}
                     required
                     className="flex-1 px-4 py-3 border border-[var(--border)] rounded-xl text-sm font-sans outline-none focus:border-[var(--accent)]"
@@ -741,6 +757,10 @@ export default function HomePage() {
                   >
                     {lang === "de" ? "Anmelden" : "Subscribe"}
                   </button>
+                  </div>
+                  {subError && (
+                    <p className="font-sans text-[13px] text-[var(--red)]">{subError}</p>
+                  )}
                 </form>
               )}
               <p className="font-mono text-[10px] text-[var(--muted)] mt-2">

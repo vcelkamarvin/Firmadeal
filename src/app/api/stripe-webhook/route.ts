@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@supabase/supabase-js";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.firmadeal.de";
+
+const PLAN_PRICES: Record<string, string> = {
+  basic: "39", advanced: "79", premium: "199",
+};
 
 function adminClient() {
   return createClient(
@@ -53,8 +61,45 @@ export async function POST(request: NextRequest) {
 
     // Trial ending soon (Stripe fires 3 days before)
     case "customer.subscription.trial_will_end": {
-      console.log("Trial ending soon for subscription:", obj.id);
-      // TODO: Send reminder email via Resend
+      const subId = obj.id;
+      const customerId = obj.customer;
+      const plan = obj.metadata?.plan ?? obj.items?.data?.[0]?.price?.metadata?.plan;
+
+      // Find listing + seller email
+      const { data: listing } = await supabase
+        .from("listings")
+        .select("id, plan, user_id")
+        .eq("stripe_subscription_id", subId)
+        .single();
+
+      if (listing) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("email")
+          .eq("id", listing.user_id)
+          .single();
+
+        const sellerEmail = profile?.email;
+        const planKey = listing.plan ?? plan ?? "basic";
+        const price = PLAN_PRICES[planKey] ?? "39";
+
+        if (sellerEmail) {
+          await resend.emails.send({
+            from: "noreply@firmadeal.de",
+            to: sellerEmail,
+            subject: "Ihr Firmadeal-Testzeitraum endet in 3 Tagen",
+            text: `Ihr 7-tägiger Markttest auf Firmadeal endet in 3 Tagen.
+Ab dann wird Ihre Karte mit €${price}/Monat belastet.
+Sie können jederzeit in Ihrem Dashboard kündigen.
+
+Zum Dashboard → ${SITE_URL}/dashboard
+
+— Das Firmadeal Team`,
+          }).catch(() => {});
+        }
+      }
+
+      void customerId; // referenced via listing lookup
       break;
     }
 
