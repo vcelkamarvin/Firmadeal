@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { CATEGORIES, REGIONS_BY_COUNTRY } from "@/lib/types";
@@ -68,6 +68,128 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function FullRow({ children }: { children: React.ReactNode }) {
   return <div style={{ gridColumn: "1 / -1" }}>{children}</div>;
+}
+
+// ── Image section with upload + URL entry ──────────────────────────────────────
+
+function ImageSection({ images, onChange }: { images: string[]; onChange: (imgs: string[]) => void }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+
+  async function uploadFiles(files: FileList | File[]) {
+    setUploading(true);
+    setUploadError("");
+    const newUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload-image", { method: "POST", body: fd });
+      const json = await res.json();
+      if (res.ok && json.url) {
+        newUrls.push(json.url);
+      } else {
+        setUploadError(json.error ?? "Upload fehlgeschlagen");
+      }
+    }
+    if (newUrls.length) onChange([...images, ...newUrls]);
+    setUploading(false);
+  }
+
+  function removeImage(i: number) {
+    onChange(images.filter((_, j) => j !== i));
+  }
+
+  function editUrl(i: number, val: string) {
+    const imgs = [...images];
+    imgs[i] = val;
+    onChange(imgs);
+  }
+
+  return (
+    <div style={{ background: "white", borderRadius: 12, border: "1px solid #e5e5e5", padding: 24, marginBottom: 24 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h2 style={{ fontSize: 13, fontWeight: 700, color: "#1a3329", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
+          Bilder ({images.length})
+        </h2>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="button" onClick={() => onChange([...images, ""])}
+            style={{ fontSize: 13, color: "#555", background: "none", border: "1px solid #e5e5e5", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontFamily: "inherit" }}>
+            + URL eingeben
+          </button>
+          <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
+            style={{ fontSize: 13, fontWeight: 600, color: "white", background: uploading ? "#999" : "#1a3329", border: "none", borderRadius: 8, padding: "6px 16px", cursor: uploading ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
+            {uploading ? "Lädt hoch…" : "Foto hochladen"}
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" multiple hidden
+            onChange={(e) => { if (e.target.files?.length) uploadFiles(e.target.files); e.target.value = ""; }} />
+        </div>
+      </div>
+
+      {/* Drag & drop zone */}
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files); }}
+        onClick={() => fileInputRef.current?.click()}
+        style={{
+          border: `2px dashed ${dragOver ? "#2d5a3d" : "#e5e5e5"}`,
+          borderRadius: 10, padding: "20px",
+          background: dragOver ? "#f0faf4" : "#fafafa",
+          textAlign: "center", cursor: "pointer", marginBottom: images.length ? 16 : 0,
+          transition: "all 0.15s",
+        }}
+      >
+        <p style={{ fontSize: 13, color: "#999", margin: 0 }}>
+          {uploading ? "Wird hochgeladen…" : "Fotos hierher ziehen oder klicken zum Auswählen"}
+        </p>
+        <p style={{ fontSize: 11, color: "#bbb", margin: "4px 0 0" }}>JPG, PNG, WebP, GIF · Max. 10 MB</p>
+      </div>
+
+      {uploadError && <p style={{ fontSize: 12, color: "#dc2626", margin: "8px 0 0" }}>{uploadError}</p>}
+
+      {/* Image grid */}
+      {images.length > 0 && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12, marginTop: 16 }}>
+          {images.map((url, i) => (
+            <div key={i} style={{ position: "relative", borderRadius: 8, border: "1px solid #e5e5e5", overflow: "hidden", background: "#f5f5f5" }}>
+              {/* Thumbnail */}
+              {url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={url} alt="" style={{ width: "100%", height: 120, objectFit: "cover", display: "block" }}
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              ) : (
+                <div style={{ height: 120, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ fontSize: 11, color: "#bbb" }}>Vorschau</span>
+                </div>
+              )}
+              {/* URL input below thumb */}
+              <div style={{ padding: "6px 8px", borderTop: "1px solid #f0f0f0" }}>
+                <input
+                  style={{ width: "100%", fontSize: 11, border: "none", outline: "none", color: "#555", background: "transparent", fontFamily: "monospace", boxSizing: "border-box" }}
+                  value={url}
+                  placeholder="URL…"
+                  onChange={(e) => editUrl(i, e.target.value)}
+                />
+              </div>
+              {/* Remove button */}
+              <button type="button" onClick={() => removeImage(i)}
+                style={{ position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,0.55)", border: "none", color: "white", fontSize: 13, lineHeight: "22px", textAlign: "center", cursor: "pointer", padding: 0 }}>
+                ×
+              </button>
+              {/* First image badge */}
+              {i === 0 && (
+                <span style={{ position: "absolute", top: 6, left: 6, fontSize: 9, fontWeight: 700, background: "#2d5a3d", color: "white", padding: "2px 6px", borderRadius: 4, letterSpacing: "0.05em" }}>
+                  COVER
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
@@ -304,49 +426,7 @@ export default function AdminEditListing() {
         </Section>
 
         {/* ── Bilder ── */}
-        <div style={{ background: "white", borderRadius: 12, border: "1px solid #e5e5e5", padding: 24, marginBottom: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-            <h2 style={{ fontSize: 13, fontWeight: 700, color: "#1a3329", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
-              Bilder (URLs)
-            </h2>
-            <button type="button"
-              onClick={() => set("images", [...(form.images ?? []), ""])}
-              style={{ fontSize: 13, fontWeight: 600, color: "#2d5a3d", background: "none", border: "1px solid #2d5a3d", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontFamily: "inherit" }}>
-              + Bild hinzufügen
-            </button>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {(form.images ?? []).map((url: string, i: number) => (
-              <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-                <div style={{ flex: 1 }}>
-                  <input
-                    style={inputStyle}
-                    value={url}
-                    placeholder="https://images.unsplash.com/..."
-                    onChange={(e) => {
-                      const imgs = [...(form.images ?? [])];
-                      imgs[i] = e.target.value;
-                      set("images", imgs);
-                    }}
-                  />
-                  {url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={url} alt="" style={{ marginTop: 8, height: 80, width: 140, objectFit: "cover", borderRadius: 6, border: "1px solid #e5e5e5" }}
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                  )}
-                </div>
-                <button type="button"
-                  onClick={() => { const imgs = (form.images ?? []).filter((_: string, j: number) => j !== i); set("images", imgs); }}
-                  style={{ marginTop: 8, fontSize: 12, color: "#dc2626", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", flexShrink: 0 }}>
-                  Entfernen
-                </button>
-              </div>
-            ))}
-            {!(form.images ?? []).length && (
-              <p style={{ fontSize: 13, color: "#999" }}>Noch keine Bilder. Fügen Sie eine Bild-URL hinzu.</p>
-            )}
-          </div>
-        </div>
+        <ImageSection images={form.images ?? []} onChange={(imgs) => set("images", imgs)} />
 
         {/* ── Save bar ── */}
         <div style={{ position: "sticky", bottom: 0, background: "white", border: "1px solid #e5e5e5", borderRadius: 12, padding: "16px 24px", display: "flex", alignItems: "center", gap: 16, boxShadow: "0 -4px 20px rgba(0,0,0,0.06)" }}>
