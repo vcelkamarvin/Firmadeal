@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import { buildTrialWelcomeEmail, buildTrialEndingEmail } from "@/lib/emails";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.firmadeal.de";
@@ -56,19 +57,52 @@ export async function POST(request: NextRequest) {
         stripe_customer_id: obj.customer ?? null,
         featured: plan === "advanced" || plan === "premium",
       }).eq("id", listingId);
+
+      // Send trial welcome email to seller
+      const { data: activatedListing } = await supabase
+        .from("listings")
+        .select("user_id")
+        .eq("id", listingId)
+        .single();
+
+      if (activatedListing?.user_id) {
+        const { data: welcomeProfile } = await supabase
+          .from("profiles")
+          .select("email")
+          .eq("id", activatedListing.user_id)
+          .single();
+
+        if (welcomeProfile?.email) {
+          const welcomePrice = PLAN_PRICES[plan ?? "basic"] ?? "39";
+          await resend.emails.send({
+            from: "noreply@firmadeal.de",
+            to: welcomeProfile.email,
+            subject: "🎉 Ihr Inserat ist live – 7 Tage kostenlos",
+            html: buildTrialWelcomeEmail({
+              price: welcomePrice,
+              dashboardUrl: `${SITE_URL}/dashboard`,
+            }),
+          }).catch(() => {});
+        }
+      }
       break;
     }
 
-    // Trial ending soon (Stripe fires 3 days before)
+    // Trial ending soon (Stripe fires 3 days before trial_end)
     case "customer.subscription.trial_will_end": {
       const subId = obj.id;
-      const customerId = obj.customer;
       const plan = obj.metadata?.plan ?? obj.items?.data?.[0]?.price?.metadata?.plan;
 
-      // Find listing + seller email
+      // trial_end is a Unix timestamp on the subscription object
+      const trialEndTs: number = obj.trial_end ?? Date.now() / 1000 + 3 * 86400;
+      const trialEndDate = new Date(trialEndTs * 1000).toLocaleDateString("de-DE", {
+        day: "numeric",
+        month: "long",
+      });
+
       const { data: listing } = await supabase
         .from("listings")
-        .select("id, plan, user_id")
+        .select("id, plan, user_id, views_count, inquiries_count, transferability_score")
         .eq("stripe_subscription_id", subId)
         .single();
 
@@ -87,19 +121,18 @@ export async function POST(request: NextRequest) {
           await resend.emails.send({
             from: "noreply@firmadeal.de",
             to: sellerEmail,
-            subject: "Ihr Firmadeal-Testzeitraum endet in 3 Tagen",
-            text: `Ihr 7-tägiger Markttest auf Firmadeal endet in 3 Tagen.
-Ab dann wird Ihre Karte mit €${price}/Monat belastet.
-Sie können jederzeit in Ihrem Dashboard kündigen.
-
-Zum Dashboard → ${SITE_URL}/dashboard
-
-— Das Firmadeal Team`,
+            subject: "⚠️ Ihr Testzeitraum endet in 3 Tagen",
+            html: buildTrialEndingEmail({
+              price,
+              trialEndDate,
+              viewsCount: listing.views_count ?? 0,
+              inquiriesCount: listing.inquiries_count ?? 0,
+              transferabilityScore: listing.transferability_score ?? null,
+              dashboardUrl: `${SITE_URL}/dashboard`,
+            }),
           }).catch(() => {});
         }
       }
-
-      void customerId; // referenced via listing lookup
       break;
     }
 

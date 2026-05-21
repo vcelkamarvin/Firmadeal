@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import {
+  buildSellerInquiryEmail,
+  buildBuyerConfirmationEmail,
+} from "@/lib/emails";
 
 function adminClient() {
   return createClient(
@@ -39,7 +43,7 @@ export async function POST(request: NextRequest) {
   // Increment inquiries_count manually
   const { data: listing } = await supabase
     .from("listings")
-    .select("title, user_id, inquiries_count")
+    .select("title, user_id, inquiries_count, location, category, price, ebitda")
     .eq("id", listing_id)
     .single();
 
@@ -53,57 +57,45 @@ export async function POST(request: NextRequest) {
   // 3. Get seller email from auth
   const listingTitle = listing?.title ?? "Ihr Inserat";
   let sellerEmail: string | null = null;
-  let sellerName: string | null = null;
 
   if (listing?.user_id) {
     const { data: userData } = await supabase.auth.admin.getUserById(listing.user_id);
     sellerEmail = userData?.user?.email ?? null;
-    sellerName = userData?.user?.user_metadata?.full_name ?? null;
   }
 
   // 4. Send emails (fire-and-forget — don't fail the request if email fails)
-  const phoneDisplay = sender_phone || "nicht angegeben";
   const listingUrl = `${SITE_URL}/listings/${listing_id}`;
 
   if (sellerEmail) {
     await resend.emails.send({
       from: "anfragen@firmadeal.de",
       to: sellerEmail,
-      subject: `💬 Neue Käuferanfrage: ${listingTitle}`,
-      text: `Guten Tag ${sellerName ?? ""},
-
-Sie haben eine neue Kaufanfrage für Ihr Inserat erhalten:
-"${listingTitle}"
-
-─────────────────────────
-VON: ${sender_name}
-E-MAIL: ${sender_email}
-TELEFON: ${phoneDisplay}
-
-NACHRICHT:
-${message}
-─────────────────────────
-
-Antworten Sie direkt an ${sender_email}.
-
-Ihr Inserat auf Firmadeal ansehen →
-${listingUrl}
-
-— Das Firmadeal Team`,
+      subject: `💬 Neue Kaufanfrage: ${listingTitle}`,
+      html: buildSellerInquiryEmail({
+        listingTitle,
+        listingLocation: listing?.location ?? null,
+        listingCategory: listing?.category ?? null,
+        listingPrice: listing?.price ?? null,
+        listingEbitda: listing?.ebitda ?? null,
+        buyerName: sender_name,
+        buyerEmail: sender_email,
+        buyerPhone: sender_phone || null,
+        message,
+        listingUrl,
+      }),
     }).catch(() => {});
   }
 
   await resend.emails.send({
     from: "noreply@firmadeal.de",
     to: sender_email,
-    subject: `Ihre Anfrage wurde gesendet — ${listingTitle}`,
-    text: `Ihre Anfrage wurde erfolgreich übermittelt.
-
-Der Anbieter meldet sich in der Regel innerhalb von 24–48 Stunden bei Ihnen.
-
-Weitere Inserate entdecken → ${SITE_URL}/listings
-
-— Das Firmadeal Team`,
+    subject: `✓ Anfrage gesendet – Firmadeal`,
+    html: buildBuyerConfirmationEmail({
+      listingTitle,
+      listingLocation: listing?.location ?? null,
+      listingPrice: listing?.price ?? null,
+      siteUrl: SITE_URL,
+    }),
   }).catch(() => {});
 
   return NextResponse.json({ ok: true });

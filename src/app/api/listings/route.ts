@@ -20,12 +20,23 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
+  // Whitelist allowed fields — never spread raw body to prevent field injection
+  const allowed = [
+    "title", "category", "description", "location", "price", "price_negotiable",
+    "annual_revenue", "ebitda", "employees", "founded_year", "industry",
+    "contact_name", "contact_email", "contact_phone", "website", "images",
+  ];
+  const safeFields: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in body) safeFields[key] = body[key];
+  }
+
   // Insert using service role key — bypasses RLS
   const supabase = adminClient();
   const { data: listing, error } = await supabase
     .from("listings")
     .insert({
-      ...body,
+      ...safeFields,
       user_id: user.id,
       status: "draft",
     })
