@@ -1,48 +1,49 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 
-const PLAN_CONFIG = {
-  basic:    { amount: 3900,  name: "Markttest Starter", description: "Ø 90–180 Tage · 250 Käufer/Monat · 0% Provision"    },
-  advanced: { amount: 7900,  name: "Markttest Pro",     description: "Ø 60–120 Tage · 1.000 Käufer/Monat · 0% Provision"  },
-  premium:  { amount: 19900, name: "Markttest Maximum", description: "Ø 30–90 Tage · 5.000+ Käufer/Monat · 0% Provision"  },
+// Stored EUR Price IDs from Stripe dashboard (confirmed EUR, active)
+const PRICE_IDS: Record<string, string> = {
+  basic:    process.env.STRIPE_PRICE_BASIC!,
+  advanced: process.env.STRIPE_PRICE_ADVANCED!,
+  premium:  process.env.STRIPE_PRICE_PREMIUM!,
 };
 
 export async function POST(req: Request) {
   const { plan, listingId } = await req.json();
 
-  const planData = PLAN_CONFIG[plan as keyof typeof PLAN_CONFIG];
-  if (!planData) {
+  const priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS];
+  if (!priceId) {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
 
-  try {
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "eur",
-            product_data: { name: planData.name, description: planData.description },
-            unit_amount: planData.amount,
-            recurring: { interval: "month" },
-          },
-          quantity: 1,
-        },
-      ],
-      subscription_data: {
-        trial_period_days: 7,
-        metadata: { listing_id: listingId ?? "", plan },
+  const sessionParams = {
+    mode: "subscription" as const,
+    payment_method_types: ["card" as const],
+    allow_promotion_codes: true,         // TOP LEVEL — enables promo code field
+    line_items: [
+      {
+        price: priceId,                  // Real EUR Price ID from Stripe dashboard
+        quantity: 1,
       },
+    ],
+    subscription_data: {
+      trial_period_days: 7,
       metadata: { listing_id: listingId ?? "", plan },
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?trial_started=true&plan=${plan}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/sell?step=4`,
-      allow_promotion_codes: true,
-    });
+    },
+    metadata: { listing_id: listingId ?? "", plan },
+    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?trial_started=true&plan=${plan}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/sell?step=4`,
+  };
 
+  console.log("[checkout] Creating session:", JSON.stringify(sessionParams, null, 2));
+
+  try {
+    const session = await stripe.checkout.sessions.create(sessionParams);
+    console.log("[checkout] Session created:", session.id, "url:", session.url, "allow_promotion_codes:", session.allow_promotion_codes);
     return NextResponse.json({ url: session.url });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[checkout] Stripe error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
