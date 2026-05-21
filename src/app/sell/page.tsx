@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, ChevronRight, Upload, X } from "lucide-react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useLanguage } from "@/context/LanguageContext";
 import { WizardProvider, useWizard } from "@/context/WizardContext";
 import { CATEGORIES, DACH_REGIONS, OperationType, BusinessStatus } from "@/lib/types";
@@ -238,8 +239,19 @@ const STATUS_PILLS: Array<{ value: BusinessStatus; label: string; color: string 
 function Step2() {
   const { data, updateData, setStep } = useWizard();
   const [dragOver, setDragOver] = useState(false);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
 
-  const canProceed = data.title.length >= 10 && data.description.length >= 100 && data.status_business !== "";
+  // Create object URLs once when images array changes; revoke old ones to prevent memory leaks.
+  // Never call URL.createObjectURL() inline in JSX — it runs on every render.
+  useEffect(() => {
+    const urls = data.images.map((f) => {
+      try { return URL.createObjectURL(f); } catch { return ""; }
+    });
+    setImageUrls(urls);
+    return () => { urls.forEach((u) => { if (u) URL.revokeObjectURL(u); }); };
+  }, [data.images]);
+
+  const canProceed = (data.title?.length ?? 0) >= 10 && (data.description?.length ?? 0) >= 100 && data.status_business !== "";
 
   const toggleChip = (field: "business_model_chips" | "competition_chips", val: string) => {
     const arr = data[field] as string[];
@@ -264,7 +276,7 @@ function Step2() {
     }
   };
 
-  const wordCount = data.description.trim().split(/\s+/).filter(Boolean).length;
+  const wordCount = (data.description ?? "").trim().split(/\s+/).filter(Boolean).length;
 
   return (
     <div>
@@ -573,17 +585,17 @@ function Step2() {
               <span className="font-sans text-sm text-[var(--accent)] hover:underline">Dateien auswählen</span>
             </label>
           </div>
-          {data.images.length > 0 && (
+          {imageUrls.length > 0 && (
             <div className="grid grid-cols-4 gap-2 mt-3">
-              {data.images.map((img, i) => (
+              {imageUrls.map((url, i) => url ? (
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-[var(--surface2)]">
-                  <img src={URL.createObjectURL(img)} alt="" className="w-full h-full object-cover" />
+                  <img src={url} alt="" className="w-full h-full object-cover" />
                   <button onClick={() => updateData({ images: data.images.filter((_, idx) => idx !== i) })}
                     className="absolute top-1 right-1 bg-white rounded-full p-0.5 shadow-sm">
                     <X size={12} className="text-[var(--red)]" />
                   </button>
                 </div>
-              ))}
+              ) : null)}
             </div>
           )}
         </div>
@@ -857,8 +869,10 @@ function WizardShell() {
 
 export default function SellPage() {
   return (
-    <WizardProvider>
-      <WizardShell />
-    </WizardProvider>
+    <ErrorBoundary>
+      <WizardProvider>
+        <WizardShell />
+      </WizardProvider>
+    </ErrorBoundary>
   );
 }
