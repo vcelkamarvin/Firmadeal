@@ -4,7 +4,6 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { buildTrialWelcomeEmail, buildTrialEndingEmail } from "@/lib/emails";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.firmadeal.de";
 
 const PLAN_PRICES: Record<string, string> = {
@@ -73,6 +72,7 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (welcomeProfile?.email) {
+          const resend = new Resend(process.env.RESEND_API_KEY);
           const welcomePrice = PLAN_PRICES[plan ?? "basic"] ?? "39";
           await resend.emails.send({
             from: "noreply@firmadeal.de",
@@ -118,6 +118,7 @@ export async function POST(request: NextRequest) {
         const price = PLAN_PRICES[planKey] ?? "39";
 
         if (sellerEmail) {
+          const resend = new Resend(process.env.RESEND_API_KEY);
           await resend.emails.send({
             from: "noreply@firmadeal.de",
             to: sellerEmail,

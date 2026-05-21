@@ -13,7 +13,6 @@ function adminClient() {
   );
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.firmadeal.de";
 
 export async function POST(request: NextRequest) {
@@ -64,6 +63,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 4. Send emails (fire-and-forget — don't fail the request if email fails)
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const listingUrl = `${SITE_URL}/listings/${listing_id}`;
 
   if (sellerEmail) {
