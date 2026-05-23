@@ -12,7 +12,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { createClient } from "@/lib/supabase";
 import type { Listing } from "@/lib/types";
 import { MobileStickyBar } from "@/components/MobileStickyBar";
-import { LiveViewerCount } from "@/components/LiveViewerCount";
 
 const INDUSTRY_MULTIPLES: Record<string, { lo: number; avg: number; hi: number }> = {
   "Gastronomie":      { lo: 2.0, avg: 3.0, hi: 4.5 },
@@ -307,20 +306,6 @@ export default function ListingDetailClient() {
                 <span>{listing.city}, {listing.region}, {listing.country === "DE" ? "Deutschland" : listing.country === "AT" ? "Österreich" : "Schweiz"}</span>
               </div>
 
-              {/* Social proof badges */}
-              <div className="flex flex-wrap items-center gap-2 mt-3">
-                <LiveViewerCount listingId={listing.id} />
-                {(listing.inquiries_count ?? 0) > 0 && (
-                  <div style={{
-                    display: "inline-flex", alignItems: "center", gap: 6,
-                    background: "#e8f5ed", border: "1px solid #c6e6d0",
-                    borderRadius: 100, padding: "4px 12px",
-                    fontSize: 12, fontWeight: 600, color: "#2d5a3d",
-                  }}>
-                    💬 {listing.inquiries_count} Interessenten haben bereits Kontakt aufgenommen
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Schnellübersicht — 4 stat boxes */}
@@ -682,9 +667,6 @@ export default function ListingDetailClient() {
                     </>
                   )}
                 </div>
-
-                {/* Live viewer count */}
-                <LiveViewerCount listingId={listing.id} />
 
                 {/* Documentation quality bar */}
                 <div>

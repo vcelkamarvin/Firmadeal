@@ -566,7 +566,3 @@ export default function DashboardPage() {
     </Suspense>
   );
 }
-    <DashboardContent />
-    </Suspense>
-  );
-}
