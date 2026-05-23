@@ -19,7 +19,6 @@ import {
 import { useLanguage } from "@/context/LanguageContext";
 import { createClient } from "@/lib/supabase";
 import { Listing } from "@/lib/types";
-import { MOCK_LISTINGS } from "@/lib/mockData";
 import { calcCompletionScore } from "@/lib/completionScore";
 import MilestoneBadges from "@/components/MilestoneBadges";
 
@@ -564,6 +563,10 @@ export default function DashboardPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-[var(--bg)]" />}>
       <DashboardContent />
+    </Suspense>
+  );
+}
+    <DashboardContent />
     </Suspense>
   );
 }

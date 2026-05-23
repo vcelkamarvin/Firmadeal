@@ -63,7 +63,7 @@ export default function Navbar() {
         <div className="desktop-only" style={{ display: "flex", gap: 24, alignItems: "center" }}>
           <Link href="/listings" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Inserate</Link>
           <Link href="/pricing"  style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Preise</Link>
-          <Link href="/blog"     style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Ratgeber</Link>
+          <Link href="/blog"     style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Blog</Link>
           <Link href="/dashboard" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Dashboard</Link>
         </div>
 
@@ -121,7 +121,7 @@ export default function Navbar() {
             { href: "/listings", label: "Inserate durchsuchen",   icon: "🔍", desc: "100+ Unternehmen im DACH-Raum" },
             { href: "/sell",     label: "Unternehmen inserieren", icon: "📋", desc: "7 Tage kostenlos · 0% Provision" },
             { href: "/pricing",  label: "Preise & Pläne",         icon: "💳", desc: "Ab €39/Monat" },
-            { href: "/blog",     label: "Ratgeber",               icon: "📖", desc: "Tipps für Käufer & Verkäufer" },
+            { href: "/blog",     label: "Blog",                   icon: "📖", desc: "Tipps für Käufer & Verkäufer" },
           ].map(item => (
             <Link
               key={item.href}
@@ -226,4 +226,6 @@ export default function Navbar() {
       <div style={{ height: 60 }} />
     </>
   );
+}
+;
 }

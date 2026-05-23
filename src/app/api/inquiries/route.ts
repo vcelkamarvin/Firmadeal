@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   // Increment inquiries_count manually
   const { data: listing } = await supabase
     .from("listings")
-    .select("title, user_id, inquiries_count, location, category, price, ebitda")
+    .select("title, user_id, inquiries_count, city, region, country, category, asking_price, ebitda")
     .eq("id", listing_id)
     .single();
 
@@ -73,9 +73,9 @@ export async function POST(request: NextRequest) {
       subject: `💬 Neue Kaufanfrage: ${listingTitle}`,
       html: buildSellerInquiryEmail({
         listingTitle,
-        listingLocation: listing?.location ?? null,
+        listingLocation: [listing?.city, listing?.region, listing?.country].filter(Boolean).join(", ") || null,
         listingCategory: listing?.category ?? null,
-        listingPrice: listing?.price ?? null,
+        listingPrice: listing?.asking_price ?? null,
         listingEbitda: listing?.ebitda ?? null,
         buyerName: sender_name,
         buyerEmail: sender_email,
@@ -92,8 +92,8 @@ export async function POST(request: NextRequest) {
     subject: `✓ Anfrage gesendet – Firmadeal`,
     html: buildBuyerConfirmationEmail({
       listingTitle,
-      listingLocation: listing?.location ?? null,
-      listingPrice: listing?.price ?? null,
+      listingLocation: [listing?.city, listing?.region, listing?.country].filter(Boolean).join(", ") || null,
+      listingPrice: listing?.asking_price ?? null,
       siteUrl: SITE_URL,
     }),
   }).catch((err) => { console.error("[resend] buyer email failed:", err?.message ?? err); });

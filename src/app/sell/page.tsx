@@ -36,7 +36,7 @@ function Step0Auth({ onComplete }: { onComplete: () => void }) {
     setLoading(true);
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/sell` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/sell`, queryParams: { prompt: "select_account" } },
     });
   };
 

@@ -78,6 +78,7 @@ export default function RegisterPage() {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=/sell`,
+        queryParams: { prompt: "select_account" },
       },
     });
   };
