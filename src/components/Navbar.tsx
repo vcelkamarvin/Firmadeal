@@ -1,191 +1,229 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Search, Menu, X } from "lucide-react";
-import { useLanguage } from "@/context/LanguageContext";
-import { CATEGORIES } from "@/lib/types";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function Navbar() {
-  const { lang, setLang } = useLanguage();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [promoCode, setPromoCode] = useState("FRUEHJAHR2026");
   const router = useRouter();
-  const [q, setQ] = useState("");
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [promoCode, setPromoCode] = useState("");
+  const pathname = usePathname();
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (q) router.push(`/listings?q=${encodeURIComponent(q)}`);
+  useEffect(() => {
+    const handler = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  // Close menu on route change
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
+
+  const handlePromoRedeem = () => {
+    if (promoCode.trim()) {
+      try { localStorage.setItem("firmadeal_promo", promoCode.trim().toUpperCase()); } catch {}
+    }
+    setMenuOpen(false);
+    router.push("/sell");
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-[var(--accent)] border-b border-white/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-6 h-14">
-
-          {/* Logo */}
-          <Link href="/" className="flex-shrink-0 flex items-baseline gap-0">
-            <span className="font-sans text-[18px] font-bold text-white tracking-tight">Firmadeal</span>
-            <span className="font-sans text-[18px] font-bold text-white/40">.de</span>
-          </Link>
-
-          {/* Search */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-[420px] items-center bg-white/10 border border-white/15 rounded-lg overflow-hidden">
-            <input
-              type="text"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={lang === "de" ? "Branche, Stadt oder Stichwort..." : "Industry, city or keyword..."}
-              className="flex-1 px-3 py-2 text-sm font-sans text-white placeholder-white/40 bg-transparent outline-none"
-            />
-            <button type="submit" className="px-3 py-2 text-white/60 hover:text-white transition-colors">
-              <Search size={15} />
-            </button>
-          </form>
-
-          {/* Right */}
-          <div className="ml-auto flex items-center gap-4">
-            <Link href="/listings" className="hidden sm:block font-sans text-[13px] text-white/70 hover:text-white transition-colors">
-              {lang === "de" ? "Inserate" : "Listings"}
-            </Link>
-            <Link href="/blog" className="hidden sm:block font-sans text-[13px] text-white/70 hover:text-white transition-colors">
-              {lang === "de" ? "Ratgeber" : "Guides"}
-            </Link>
-            <Link href="/pricing" className="hidden sm:block font-sans text-[13px] text-white/70 hover:text-white transition-colors">
-              {lang === "de" ? "Preise" : "Pricing"}
-            </Link>
-            <Link href="/login" className="hidden sm:block font-sans text-[13px] text-white/70 hover:text-white transition-colors">
-              {lang === "de" ? "Anmelden" : "Login"}
-            </Link>
-            <button
-              onClick={() => setLang(lang === "de" ? "en" : "de")}
-              className="hidden sm:block font-mono text-[11px] text-white/40 hover:text-white/70 transition-colors"
-            >
-              {lang === "de" ? "EN" : "DE"}
-            </button>
-            <Link
-              href="/sell"
-              className="font-sans text-[13px] font-semibold text-[var(--accent)] bg-white px-4 py-1.5 rounded-full hover:bg-white/90 transition-colors whitespace-nowrap"
-            >
-              {lang === "de" ? "Inserieren" : "List now"}
-            </Link>
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="sm:hidden text-white"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "10px", minHeight: 44, minWidth: 44, display: "flex", alignItems: "center", justifyContent: "center" }}
-              aria-label={mobileOpen ? "Menü schließen" : "Menü öffnen"}
-            >
-              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-            </button>
+    <>
+      {/* ── NAVBAR ── */}
+      <nav style={{
+        position: "fixed",
+        top: 0, left: 0, right: 0,
+        height: 60,
+        background: "white",
+        borderBottom: scrolled ? "1px solid #e5e5e5" : "1px solid transparent",
+        boxShadow: scrolled ? "0 2px 12px rgba(0,0,0,0.06)" : "none",
+        zIndex: 200,
+        display: "flex",
+        alignItems: "center",
+        padding: "0 20px",
+        gap: 12,
+        transition: "box-shadow 0.2s, border-color 0.2s",
+      }}>
+        {/* Logo */}
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", flex: 1 }}>
+          <div style={{
+            width: 28, height: 28, background: "#1a3329", borderRadius: 6,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: "white", fontWeight: 700, fontSize: 14, flexShrink: 0,
+          }}>
+            F
           </div>
+          <span style={{ fontSize: 16, fontWeight: 700, color: "#1a3329", letterSpacing: "-0.3px" }}>
+            Firmadeal
+          </span>
+        </Link>
+
+        {/* Desktop nav links */}
+        <div className="desktop-only" style={{ display: "flex", gap: 24, alignItems: "center" }}>
+          <Link href="/listings" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Inserate</Link>
+          <Link href="/pricing"  style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Preise</Link>
+          <Link href="/blog"     style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Ratgeber</Link>
+          <Link href="/dashboard" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Dashboard</Link>
         </div>
 
-        {mobileOpen && (
-          <div style={{
-            position: "fixed", inset: 0, background: "#1a3329", zIndex: 999,
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            gap: "8px", padding: "24px",
-          }}>
-            {/* Close button */}
-            <button
-              onClick={() => setMobileOpen(false)}
-              style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", color: "white", cursor: "pointer", padding: "8px", fontSize: 24 }}
-              aria-label="Menü schließen"
-            >
-              <X size={24} />
-            </button>
+        {/* Inserieren CTA — always visible */}
+        <Link href="/sell" style={{
+          background: "#1a3329", color: "white",
+          padding: "0 16px", height: 38, borderRadius: 8,
+          fontSize: 14, fontWeight: 600, textDecoration: "none",
+          display: "flex", alignItems: "center", whiteSpace: "nowrap", flexShrink: 0,
+        }}>
+          Inserieren
+        </Link>
 
-            {/* Search */}
-            <form onSubmit={(e) => { handleSearch(e); setMobileOpen(false); }} style={{ width: "100%", maxWidth: 340, marginBottom: 16, display: "flex", gap: 8 }}>
+        {/* Hamburger — mobile only */}
+        <button
+          className="mobile-only"
+          onClick={() => setMenuOpen(v => !v)}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            width: 40, height: 40, display: "flex",
+            alignItems: "center", justifyContent: "center",
+            borderRadius: 8, flexShrink: 0, color: "#333",
+          }}
+          aria-label={menuOpen ? "Menü schließen" : "Menü öffnen"}
+        >
+          {menuOpen ? (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M4 4L16 16M16 4L4 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          )}
+        </button>
+      </nav>
+
+      {/* ── MOBILE MENU OVERLAY ── */}
+      {menuOpen && (
+        <div
+          className="mobile-only"
+          style={{
+            position: "fixed",
+            top: 60, left: 0, right: 0, bottom: 0,
+            background: "white",
+            zIndex: 199,
+            overflowY: "auto",
+            padding: "24px 20px",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          {/* Nav items */}
+          {[
+            { href: "/listings", label: "Inserate durchsuchen",   icon: "🔍", desc: "100+ Unternehmen im DACH-Raum" },
+            { href: "/sell",     label: "Unternehmen inserieren", icon: "📋", desc: "7 Tage kostenlos · 0% Provision" },
+            { href: "/pricing",  label: "Preise & Pläne",         icon: "💳", desc: "Ab €39/Monat" },
+            { href: "/blog",     label: "Ratgeber",               icon: "📖", desc: "Tipps für Käufer & Verkäufer" },
+          ].map(item => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                display: "flex", alignItems: "center", gap: 14,
+                padding: "16px 4px", borderBottom: "1px solid #f0f0f0",
+                textDecoration: "none",
+              }}
+            >
+              <span style={{ fontSize: 24, flexShrink: 0 }}>{item.icon}</span>
+              <div>
+                <p style={{ fontSize: 16, fontWeight: 600, color: "#111", margin: 0, fontFamily: "inherit" }}>
+                  {item.label}
+                </p>
+                <p style={{ fontSize: 13, color: "#888", margin: "2px 0 0", fontFamily: "inherit" }}>
+                  {item.desc}
+                </p>
+              </div>
+              <svg style={{ marginLeft: "auto", flexShrink: 0 }} width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M6 4l4 4-4 4" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </Link>
+          ))}
+
+          {/* Promo code section */}
+          <div style={{
+            margin: "24px 0 0", padding: "16px",
+            background: "#f5faf7", borderRadius: 12,
+            border: "1px solid #c6e6d0",
+          }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#1a3329", margin: "0 0 4px", fontFamily: "inherit" }}>
+              🎁 1 Monat kostenlos
+            </p>
+            <p style={{ fontSize: 12, color: "#555", margin: "0 0 10px", fontFamily: "inherit" }}>
+              Code eingeben und ersten Monat gratis inserieren
+            </p>
+            <div style={{ display: "flex", gap: 8 }}>
               <input
                 type="text"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={lang === "de" ? "Branche, Stadt, Stichwort..." : "Industry, city, keyword..."}
-                style={{ flex: 1, padding: "12px 16px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, color: "white", fontSize: 16, outline: "none", fontFamily: "inherit" }}
+                value={promoCode}
+                onChange={e => setPromoCode(e.target.value.toUpperCase())}
+                style={{
+                  flex: 1, height: 44, padding: "0 12px",
+                  borderRadius: 8, border: "1.5px solid #2d5a3d",
+                  fontSize: 14, background: "white",
+                  color: "#1a3329", fontWeight: 600,
+                  outline: "none", fontFamily: "inherit",
+                }}
               />
-              <button type="submit" style={{ padding: "12px 14px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 10, cursor: "pointer", color: "white" }}>
-                <Search size={16} />
-              </button>
-            </form>
-
-            {/* Nav links */}
-            {[
-              { href: "/listings", de: "Inserate",  en: "Listings" },
-              { href: "/blog",     de: "Ratgeber",  en: "Guides"   },
-              { href: "/pricing",  de: "Preise",    en: "Pricing"  },
-              { href: "/login",    de: "Anmelden",  en: "Login"    },
-            ].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                style={{ color: "rgba(255,255,255,0.8)", fontSize: 20, fontWeight: 600, textDecoration: "none", padding: "12px 0", width: "100%", maxWidth: 340, textAlign: "center", fontFamily: "inherit" }}
+              <button
+                onClick={handlePromoRedeem}
+                style={{
+                  height: 44, padding: "0 16px",
+                  background: "#1a3329", color: "white",
+                  border: "none", borderRadius: 8,
+                  fontWeight: 600, cursor: "pointer",
+                  fontSize: 14, whiteSpace: "nowrap",
+                  fontFamily: "inherit",
+                }}
               >
-                {lang === "de" ? item.de : item.en}
-              </Link>
-            ))}
-
-            {/* Promo code input */}
-            <div style={{ width: "100%", maxWidth: 340, background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, padding: "14px 16px", margin: "4px 0" }}>
-              <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.06em", fontFamily: "inherit" }}>
-                🎁 Aktionscode
-              </p>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input
-                  type="text"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                  placeholder="z.B. SOMMER2026"
-                  style={{
-                    flex: 1, height: 40, padding: "0 12px",
-                    borderRadius: 8, border: "none", fontSize: 15,
-                    fontFamily: "inherit", background: "rgba(255,255,255,0.9)",
-                    outline: "none", color: "#111",
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    if (promoCode.trim()) {
-                      try { localStorage.setItem("firmadeal_promo", promoCode.trim()); } catch {}
-                      setMobileOpen(false);
-                      router.push("/sell");
-                    }
-                  }}
-                  style={{
-                    height: 40, padding: "0 14px", background: "#4e9a66", color: "white",
-                    border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer",
-                    fontFamily: "inherit", fontSize: 16,
-                  }}
-                >
-                  →
-                </button>
-              </div>
+                Einlösen →
+              </button>
             </div>
-
-            {/* Primary CTA */}
-            <Link
-              href="/sell"
-              onClick={() => setMobileOpen(false)}
-              style={{ marginTop: 8, background: "white", color: "#1a3329", padding: "16px 40px", borderRadius: 40, fontWeight: 700, textDecoration: "none", fontSize: 16, fontFamily: "inherit", textAlign: "center", width: "100%", maxWidth: 340, display: "block" }}
-            >
-              {lang === "de" ? "Jetzt inserieren →" : "List now →"}
-            </Link>
-            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, textAlign: "center", margin: "4px 0 0", fontFamily: "inherit" }}>
-              7 Tage gratis · 0% Provision · Jederzeit kündbar
-            </p>
-
-            {/* Language toggle */}
-            <button
-              onClick={() => setLang(lang === "de" ? "en" : "de")}
-              style={{ marginTop: 8, background: "none", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", borderRadius: 6, padding: "6px 14px", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}
-            >
-              {lang === "de" ? "EN" : "DE"}
-            </button>
           </div>
-        )}
-      </div>
-    </nav>
+
+          {/* Bottom CTA */}
+          <Link
+            href="/sell"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: "block", marginTop: 20,
+              background: "#1a3329", color: "white",
+              textAlign: "center", padding: "16px",
+              borderRadius: 10, fontWeight: 700,
+              fontSize: 17, textDecoration: "none",
+              fontFamily: "inherit",
+            }}
+          >
+            Jetzt kostenlos inserieren →
+          </Link>
+          <p style={{ textAlign: "center", fontSize: 12, color: "#aaa", marginTop: 8, fontFamily: "inherit" }}>
+            7 Tage gratis · 0% Provision · Jederzeit kündbar
+          </p>
+
+          {/* Auth links */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 20 }}>
+            <Link href="/login" onClick={() => setMenuOpen(false)}
+              style={{ fontSize: 14, color: "#888", textDecoration: "none", fontFamily: "inherit" }}>
+              Anmelden
+            </Link>
+            <Link href="/dashboard" onClick={() => setMenuOpen(false)}
+              style={{ fontSize: 14, color: "#888", textDecoration: "none", fontFamily: "inherit" }}>
+              Dashboard
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Spacer so content sits below fixed navbar */}
+      <div style={{ height: 60 }} />
+    </>
   );
 }

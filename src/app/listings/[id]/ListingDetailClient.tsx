@@ -5,12 +5,14 @@ import { useParams, notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  MapPin, Eye, MessageSquare, Clock, Phone, ChevronLeft,
+  MapPin, Eye, MessageSquare, Clock, Phone,
   CheckCircle, DollarSign, Send, Flag, ArrowLeft,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { createClient } from "@/lib/supabase";
 import type { Listing } from "@/lib/types";
+import { MobileStickyBar } from "@/components/MobileStickyBar";
+import { LiveViewerCount } from "@/components/LiveViewerCount";
 
 const INDUSTRY_MULTIPLES: Record<string, { lo: number; avg: number; hi: number }> = {
   "Gastronomie":      { lo: 2.0, avg: 3.0, hi: 4.5 },
@@ -99,13 +101,6 @@ export default function ListingDetailClient() {
   const [oError, setOError]     = useState("");
 
   const [similarListings, setSimilarListings] = useState<Listing[]>([]);
-  const [showStickyBar, setShowStickyBar] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setShowStickyBar(window.scrollY > 400);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useEffect(() => {
     createClient()
@@ -209,11 +204,24 @@ export default function ListingDetailClient() {
     }
   };
 
-  return (
-    <div className="bg-[var(--bg)] min-h-screen" style={{ paddingBottom: showStickyBar ? 80 : 0 }}>
+  // Listing quality score for buyers
+  const listingQuality = (() => {
+    let pts = 0;
+    if ((listing.images?.length ?? 0) > 0) pts += 25;
+    if (listing.ebitda && listing.ebitda > 0) pts += 25;
+    if ((listing.description?.length ?? 0) > 100) pts += 25;
+    if (listing.transferability_score != null) pts += 25;
+    if (pts >= 100) return { score: pts, label: "Vollständig dokumentiert", color: "#2d5a3d" };
+    if (pts >= 75)  return { score: pts, label: "Gut dokumentiert",          color: "#4e9a66" };
+    if (pts >= 50)  return { score: pts, label: "Teilweise dokumentiert",    color: "#f59e0b" };
+    return           { score: pts, label: "Basis-Dokumentation",            color: "#888" };
+  })();
 
-      {/* Sticky top nav */}
-      <div className="sticky top-0 z-40 bg-white border-b border-[var(--border)] h-12 flex items-center px-4 sm:px-6 lg:px-8 gap-4">
+  return (
+    <div className="bg-[var(--bg)] min-h-screen listing-page-wrapper">
+
+      {/* Sticky listing sub-nav — top-[60px] sits below fixed main navbar */}
+      <div className="sticky z-40 bg-white border-b border-[var(--border)] h-12 flex items-center px-4 sm:px-6 lg:px-8 gap-4" style={{ top: 60 }}>
         <Link
           href="/listings"
           className="flex items-center gap-1.5 font-sans text-[12px] text-[var(--muted)] hover:text-[var(--ink)] transition-colors flex-shrink-0"
@@ -230,34 +238,6 @@ export default function ListingDetailClient() {
           </span>
         </div>
       </div>
-
-      {/* Sticky mobile bottom bar */}
-      {showStickyBar && !cSent && (
-        <div className="sticky-mobile-bar" style={{
-          position: "fixed", bottom: 0, left: 0, right: 0,
-          background: "white", borderTop: "1px solid #e5e5e5",
-          padding: "12px 20px", paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
-          gap: 12, zIndex: 100, boxShadow: "0 -4px 20px rgba(0,0,0,0.10)",
-          alignItems: "center",
-        }}>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 11, color: "#888", margin: 0, fontFamily: "inherit" }}>Kaufpreis</p>
-            <p style={{ fontSize: 18, fontWeight: 700, color: "#1a3329", margin: 0, fontFamily: "inherit", lineHeight: 1.2 }}>
-              {listing.price_confidential || !listing.asking_price ? "Auf Anfrage" : fmtShort(listing.asking_price)}
-            </p>
-          </div>
-          <button
-            onClick={() => document.getElementById("contact-form")?.scrollIntoView({ behavior: "smooth" })}
-            style={{
-              background: "#1a3329", color: "white", border: "none", borderRadius: 10,
-              padding: "12px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer",
-              fontFamily: "inherit", minHeight: 44, whiteSpace: "nowrap",
-            }}
-          >
-            Kontakt aufnehmen
-          </button>
-        </div>
-      )}
 
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -325,6 +305,21 @@ export default function ListingDetailClient() {
               <div className="flex items-center gap-1.5 font-sans text-[13px] text-[var(--muted)]">
                 <MapPin size={13} />
                 <span>{listing.city}, {listing.region}, {listing.country === "DE" ? "Deutschland" : listing.country === "AT" ? "Österreich" : "Schweiz"}</span>
+              </div>
+
+              {/* Social proof badges */}
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                <LiveViewerCount listingId={listing.id} />
+                {(listing.inquiries_count ?? 0) > 0 && (
+                  <div style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    background: "#e8f5ed", border: "1px solid #c6e6d0",
+                    borderRadius: 100, padding: "4px 12px",
+                    fontSize: 12, fontWeight: 600, color: "#2d5a3d",
+                  }}>
+                    💬 {listing.inquiries_count} Interessenten haben bereits Kontakt aufgenommen
+                  </div>
+                )}
               </div>
             </div>
 
@@ -654,9 +649,16 @@ export default function ListingDetailClient() {
             </div>
           </div>
 
-          {/* ── RIGHT STICKY SIDEBAR ── */}
-          <aside id="contact-form" className="w-full lg:w-[360px] flex-shrink-0" style={{ alignSelf: "flex-start" }}>
-            <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden listing-sidebar-sticky" style={{ position: "sticky", top: 112 }}>
+          {/* ── RIGHT STICKY SIDEBAR — position:sticky via .listing-sidebar-col CSS ── */}
+          <aside id="contact-form" className="w-full lg:w-[360px] flex-shrink-0 listing-sidebar-col">
+            <div style={{
+              background: "white", border: "1px solid #e5e5e5",
+              borderRadius: 16, overflow: "hidden",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+            }}>
+              {/* Green accent bar */}
+              <div style={{ height: 4, background: "linear-gradient(90deg, #1a3329, #4e9a66)" }} />
+
               <div className="p-5 space-y-4">
 
                 {/* Price */}
@@ -666,7 +668,7 @@ export default function ListingDetailClient() {
                     <div className="font-sans text-[32px] font-bold text-[var(--muted)] leading-none">Auf Anfrage</div>
                   ) : (
                     <>
-                      <div className="font-sans text-[40px] font-bold text-[var(--green-700)] leading-none tabular-nums tracking-tight">
+                      <div style={{ fontSize: 44, fontWeight: 800, color: "#1a3329", lineHeight: 1, letterSpacing: "-2px", fontVariantNumeric: "tabular-nums" }}>
                         {fmtShort(listing.asking_price)}
                       </div>
                       <div className="flex items-center gap-3 mt-1.5 flex-wrap">
@@ -679,6 +681,20 @@ export default function ListingDetailClient() {
                       </div>
                     </>
                   )}
+                </div>
+
+                {/* Live viewer count */}
+                <LiveViewerCount listingId={listing.id} />
+
+                {/* Documentation quality bar */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: "0.06em" }}>Dokumentationsgrad</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: listingQuality.color }}>{listingQuality.label}</span>
+                  </div>
+                  <div style={{ height: 4, background: "#f0f0f0", borderRadius: 2 }}>
+                    <div style={{ height: "100%", width: `${listingQuality.score}%`, background: listingQuality.color, borderRadius: 2, transition: "width 0.8s ease" }} />
+                  </div>
                 </div>
 
                 <div className="h-px bg-[var(--border)]" />
@@ -732,6 +748,14 @@ export default function ListingDetailClient() {
                         <><Send size={13} /> Nachricht senden</>
                       )}
                     </button>
+
+                    {/* Response time indicator */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 10 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0, boxShadow: "0 0 0 2px rgba(34,197,94,0.25)" }} />
+                      <p style={{ fontSize: 12, color: "#666", margin: 0, lineHeight: 1.4 }}>
+                        Verkäufer antwortet in der Regel innerhalb von <strong style={{ color: "#1a3329" }}>24 Stunden</strong>
+                      </p>
+                    </div>
                   </form>
                 )}
 
@@ -832,6 +856,16 @@ export default function ListingDetailClient() {
             </div>
           </aside>
         </div>
+      </div>
+
+      {/* Mobile sticky contact bar — hidden on desktop via .mobile-only CSS */}
+      <div className="mobile-only">
+        <MobileStickyBar
+          price={listing.asking_price}
+          priceConfidential={listing.price_confidential ?? false}
+          listingTitle={listing.title}
+          listingId={listing.id}
+        />
       </div>
     </div>
   );
