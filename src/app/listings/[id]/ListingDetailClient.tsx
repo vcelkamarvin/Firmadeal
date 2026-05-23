@@ -655,8 +655,8 @@ export default function ListingDetailClient() {
           </div>
 
           {/* ── RIGHT STICKY SIDEBAR ── */}
-          <aside id="contact-form" className="w-full lg:w-[360px] flex-shrink-0">
-            <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden listing-sidebar-sticky" style={{ position: "sticky", top: 60 }}>
+          <aside id="contact-form" className="w-full lg:w-[360px] flex-shrink-0" style={{ alignSelf: "flex-start" }}>
+            <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden listing-sidebar-sticky" style={{ position: "sticky", top: 112 }}>
               <div className="p-5 space-y-4">
 
                 {/* Price */}
