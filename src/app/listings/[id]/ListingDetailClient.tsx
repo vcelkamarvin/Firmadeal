@@ -99,6 +99,13 @@ export default function ListingDetailClient() {
   const [oError, setOError]     = useState("");
 
   const [similarListings, setSimilarListings] = useState<Listing[]>([]);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setShowStickyBar(window.scrollY > 400);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     createClient()
@@ -203,7 +210,7 @@ export default function ListingDetailClient() {
   };
 
   return (
-    <div className="bg-[var(--bg)] min-h-screen">
+    <div className="bg-[var(--bg)] min-h-screen" style={{ paddingBottom: showStickyBar ? 80 : 0 }}>
 
       {/* Sticky top nav */}
       <div className="sticky top-0 z-40 bg-white border-b border-[var(--border)] h-12 flex items-center px-4 sm:px-6 lg:px-8 gap-4">
@@ -223,6 +230,34 @@ export default function ListingDetailClient() {
           </span>
         </div>
       </div>
+
+      {/* Sticky mobile bottom bar */}
+      {showStickyBar && !cSent && (
+        <div className="sticky-mobile-bar" style={{
+          position: "fixed", bottom: 0, left: 0, right: 0,
+          background: "white", borderTop: "1px solid #e5e5e5",
+          padding: "12px 20px", paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+          gap: 12, zIndex: 100, boxShadow: "0 -4px 20px rgba(0,0,0,0.10)",
+          alignItems: "center",
+        }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 11, color: "#888", margin: 0, fontFamily: "inherit" }}>Kaufpreis</p>
+            <p style={{ fontSize: 18, fontWeight: 700, color: "#1a3329", margin: 0, fontFamily: "inherit", lineHeight: 1.2 }}>
+              {listing.price_confidential || !listing.asking_price ? "Auf Anfrage" : fmtShort(listing.asking_price)}
+            </p>
+          </div>
+          <button
+            onClick={() => document.getElementById("contact-form")?.scrollIntoView({ behavior: "smooth" })}
+            style={{
+              background: "#1a3329", color: "white", border: "none", borderRadius: 10,
+              padding: "12px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer",
+              fontFamily: "inherit", minHeight: 44, whiteSpace: "nowrap",
+            }}
+          >
+            Kontakt aufnehmen
+          </button>
+        </div>
+      )}
 
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -620,8 +655,8 @@ export default function ListingDetailClient() {
           </div>
 
           {/* ── RIGHT STICKY SIDEBAR ── */}
-          <aside className="w-full lg:w-[360px] flex-shrink-0">
-            <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden" style={{ position: "sticky", top: 60 }}>
+          <aside id="contact-form" className="w-full lg:w-[360px] flex-shrink-0">
+            <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden listing-sidebar-sticky" style={{ position: "sticky", top: 60 }}>
               <div className="p-5 space-y-4">
 
                 {/* Price */}

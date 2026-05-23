@@ -66,31 +66,36 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
       const raw = localStorage.getItem(DRAFT_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
+        const { _step, ...dataFields } = parsed;
         setData((prev) => ({
           ...prev,
-          ...parsed,
+          ...dataFields,
           images: [], // File objects can't be serialised — always start empty
           transferability_data: {
             ...prev.transferability_data,
-            ...(parsed.transferability_data ?? {}),
+            ...(dataFields.transferability_data ?? {}),
           },
         }));
+        // Restore the wizard step (1–4) so a page refresh returns user to where they were
+        if (typeof _step === "number" && _step >= 1 && _step <= 4) {
+          setStep(_step);
+        }
       }
     } catch {
       // Corrupt draft — ignore and start fresh
     }
   }, []);
 
-  // Auto-save draft whenever form data changes (excluding images)
+  // Auto-save draft (data + step) whenever either changes
   useEffect(() => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { images, ...rest } = data;
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(rest));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...rest, _step: step }));
     } catch {
       // localStorage unavailable (private mode, quota exceeded) — ignore
     }
-  }, [data]);
+  }, [data, step]);
 
   const updateData = (updates: Partial<WizardData>) => {
     setData((prev) => ({ ...prev, ...updates }));

@@ -107,7 +107,7 @@ function MarketCharts({ lang }: { lang: string }) {
         {/* Industry count chart */}
         {chart === "industries" && (
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
               {CAT_DATA.map((d) => (
                 <div key={d.cat}>
                   <div className="flex items-center justify-between mb-1">
@@ -158,7 +158,7 @@ function MarketCharts({ lang }: { lang: string }) {
             <p className="font-mono text-[11px] text-[var(--muted)] mb-4">
               {lang === "de" ? "Ø EBITDA-Marge pro Branche" : "Avg. EBITDA margin per industry"}
             </p>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
               {CAT_DATA.filter((d) => d.avgMargin > 0).sort((a, b) => b.avgMargin - a.avgMargin).map((d) => (
                 <div key={d.cat}>
                   <div className="flex items-center justify-between mb-1">
@@ -180,7 +180,7 @@ function MarketCharts({ lang }: { lang: string }) {
         )}
 
         {/* KPI row */}
-        <div className="grid grid-cols-3 gap-4 mt-10 pt-8 border-t border-[var(--border)]">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10 pt-8 border-t border-[var(--border)]">
           {[
             { value: fmt(avgRevenue), label: lang === "de" ? "Ø Jahresumsatz" : "Avg. Annual Revenue", sub: lang === "de" ? "aller Inserate" : "across all listings" },
             { value: fmt(avgPrice),   label: lang === "de" ? "Ø Kaufpreis"    : "Avg. Asking Price",   sub: lang === "de" ? "exkl. vertraulich" : "excl. confidential" },
@@ -742,7 +742,7 @@ export default function HomePage() {
                     setSubError(j.error === "duplicate" ? "Bereits registriert." : "Fehler. Bitte erneut versuchen.");
                   }
                 }} className="flex flex-col gap-2">
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="email"
                     value={email}
@@ -753,7 +753,8 @@ export default function HomePage() {
                   />
                   <button
                     type="submit"
-                    className="px-5 py-3 bg-[var(--accent)] text-white font-sans font-semibold text-sm rounded-xl hover:bg-[var(--accent-hover)] transition-colors whitespace-nowrap"
+                    className="px-5 py-3 bg-[var(--accent)] text-white font-sans font-semibold text-sm rounded-xl hover:bg-[var(--accent-hover)] transition-colors whitespace-nowrap sm:whitespace-nowrap"
+                    style={{ minHeight: 44 }}
                   >
                     {lang === "de" ? "Anmelden" : "Subscribe"}
                   </button>

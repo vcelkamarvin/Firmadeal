@@ -14,6 +14,7 @@ import {
   BarChart3,
   Calendar,
   TrendingUp,
+  LogOut,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { createClient } from "@/lib/supabase";
@@ -512,6 +513,48 @@ function DashboardContent() {
             </div>
           </div>
         )}
+        {/* Account management */}
+        <div className="mt-10 border-t border-[var(--border)] pt-8">
+          <h2 className="font-sans text-sm font-semibold text-[var(--ink)] mb-4">
+            {lang === "de" ? "Konto" : "Account"}
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.push("/");
+              }}
+              className="flex items-center gap-2 px-4 py-2 border border-[var(--border)] rounded-lg font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] hover:bg-[var(--surface2)] transition-all"
+            >
+              <LogOut size={14} />
+              {lang === "de" ? "Abmelden" : "Sign out"}
+            </button>
+            <button
+              onClick={async () => {
+                if (!confirm(lang === "de"
+                  ? "Konto wirklich löschen? Alle Inserate werden entfernt. Diese Aktion ist unwiderruflich."
+                  : "Really delete your account? All listings will be removed. This is irreversible."))
+                  return;
+                const res = await fetch("/api/delete-account", { method: "DELETE" });
+                if (res.ok) {
+                  await supabase.auth.signOut();
+                  router.push("/");
+                } else {
+                  alert(lang === "de" ? "Fehler beim Löschen. Bitte erneut versuchen." : "Error deleting account. Please try again.");
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 border border-red-200 rounded-lg font-sans text-sm text-[var(--red)] hover:bg-red-50 transition-all"
+            >
+              <Trash2 size={14} />
+              {lang === "de" ? "Konto löschen (DSGVO)" : "Delete account (GDPR)"}
+            </button>
+          </div>
+          <p className="font-mono text-[10px] text-[var(--muted)] mt-3">
+            {lang === "de"
+              ? "Datenlöschung gemäß DSGVO Art. 17 — Recht auf Vergessenwerden. Alle Ihre Daten werden sofort und unwiderruflich gelöscht."
+              : "Data deletion per GDPR Art. 17 — Right to erasure. All your data is immediately and permanently deleted."}
+          </p>
+        </div>
       </div>
     </div>
   );

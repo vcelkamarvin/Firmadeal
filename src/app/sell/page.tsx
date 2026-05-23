@@ -10,6 +10,204 @@ import PricingCards from "@/components/PricingCards";
 import TransferabilityWizard from "@/components/TransferabilityWizard";
 import { createClient } from "@/lib/supabase";
 
+// ── Step 0 — Auth gate ────────────────────────────────────────────────────────
+
+const GOOGLE_SVG = (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+    <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+    <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+  </svg>
+);
+
+function Step0Auth({ onComplete }: { onComplete: () => void }) {
+  const [mode, setMode] = useState<"register" | "login">("register");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [gdpr, setGdpr] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const supabase = createClient();
+
+  const handleGoogle = async () => {
+    setLoading(true);
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/sell` },
+    });
+  };
+
+  const handleSubmit = async () => {
+    setError("");
+    if (!email || !password) { setError("Bitte E-Mail und Passwort eingeben."); return; }
+    if (mode === "register") {
+      if (!name) { setError("Bitte Ihren Namen eingeben."); return; }
+      if (!gdpr) { setError("Bitte Datenschutzerklärung akzeptieren."); return; }
+      if (password.length < 8) { setError("Passwort muss mindestens 8 Zeichen haben."); return; }
+    }
+    setLoading(true);
+    if (mode === "register") {
+      const { error: err } = await supabase.auth.signUp({
+        email, password,
+        options: { data: { full_name: name } },
+      });
+      if (err) {
+        if (err.message.toLowerCase().includes("already")) {
+          setMode("login");
+          setError("E-Mail bereits registriert — bitte anmelden.");
+        } else {
+          setError(err.message);
+        }
+        setLoading(false);
+        return;
+      }
+    } else {
+      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+      if (err) {
+        setError("Falsche E-Mail oder falsches Passwort.");
+        setLoading(false);
+        return;
+      }
+    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      onComplete();
+    } else {
+      setError("Bitte bestätigen Sie Ihre E-Mail-Adresse, dann melden Sie sich hier an.");
+    }
+    setLoading(false);
+  };
+
+  const inputStyle: React.CSSProperties = {
+    height: 52, padding: "0 16px", borderRadius: 10,
+    border: "1.5px solid #e5e5e5", fontSize: 16,
+    fontFamily: "inherit", outline: "none",
+    width: "100%", boxSizing: "border-box" as const,
+    transition: "border-color 0.15s",
+  };
+
+  return (
+    <div style={{ maxWidth: 440, margin: "0 auto" }}>
+      <div className="mb-8">
+        <h2 className="font-sans text-[26px] font-bold text-[var(--ink)] tracking-tight mb-2">
+          {mode === "register" ? "Konto erstellen" : "Anmelden"}
+        </h2>
+        <p className="font-sans text-[14px] text-[var(--muted)]">
+          {mode === "register"
+            ? "Damit Ihr Inserat gespeichert wird und Käuferanfragen ankommen."
+            : "Melden Sie sich an, um fortzufahren."}
+        </p>
+      </div>
+
+      {/* Google OAuth — primary CTA */}
+      <button
+        onClick={handleGoogle}
+        disabled={loading}
+        style={{
+          width: "100%", height: 52, display: "flex", alignItems: "center", justifyContent: "center",
+          gap: 12, background: "white", border: "2px solid #1a3329", borderRadius: 10,
+          fontSize: 16, fontWeight: 600, cursor: "pointer", marginBottom: 20,
+          fontFamily: "inherit", color: "#1a3329",
+        }}
+      >
+        {GOOGLE_SVG}
+        Mit Google fortfahren
+      </button>
+
+      {/* Divider */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+        <div style={{ flex: 1, height: 1, background: "#e5e5e5" }} />
+        <span className="font-mono text-[11px] text-[var(--muted)]">oder mit E-Mail</span>
+        <div style={{ flex: 1, height: 1, background: "#e5e5e5" }} />
+      </div>
+
+      {/* Email form */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {mode === "register" && (
+          <input
+            type="text" placeholder="Ihr vollständiger Name"
+            value={name} onChange={(e) => setName(e.target.value)}
+            style={inputStyle} autoComplete="name"
+          />
+        )}
+        <input
+          type="email" placeholder="ihre@email.de"
+          value={email} onChange={(e) => setEmail(e.target.value)}
+          style={inputStyle} autoComplete="email"
+        />
+        <input
+          type="password" placeholder={mode === "register" ? "Passwort (mind. 8 Zeichen)" : "Passwort"}
+          value={password} onChange={(e) => setPassword(e.target.value)}
+          style={inputStyle} autoComplete={mode === "register" ? "new-password" : "current-password"}
+        />
+
+        {/* GDPR — required for EU compliance */}
+        {mode === "register" && (
+          <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", padding: "4px 0" }}>
+            <input
+              type="checkbox" checked={gdpr} onChange={(e) => setGdpr(e.target.checked)}
+              style={{ width: 18, height: 18, marginTop: 2, flexShrink: 0, accentColor: "#1a3329" }}
+            />
+            <span style={{ fontSize: 13, color: "#555", lineHeight: 1.5, fontFamily: "inherit" }}>
+              Ich akzeptiere die{" "}
+              <a href="/agb" target="_blank" rel="noopener noreferrer" style={{ color: "#2d5a3d" }}>AGB</a>{" "}
+              und die{" "}
+              <a href="/datenschutz" target="_blank" rel="noopener noreferrer" style={{ color: "#2d5a3d" }}>Datenschutzerklärung</a>{" "}
+              von Firmadeal.de. *
+            </span>
+          </label>
+        )}
+
+        {error && (
+          <p style={{ fontSize: 13, color: "#dc2626", margin: 0, fontFamily: "inherit" }}>{error}</p>
+        )}
+
+        <button
+          onClick={handleSubmit}
+          disabled={loading || (mode === "register" && !gdpr)}
+          style={{
+            height: 52,
+            background: loading || (mode === "register" && !gdpr) ? "#ccc" : "#1a3329",
+            color: "white", border: "none", borderRadius: 10, fontSize: 16, fontWeight: 600,
+            cursor: loading || (mode === "register" && !gdpr) ? "not-allowed" : "pointer",
+            fontFamily: "inherit", transition: "background 0.15s",
+          }}
+        >
+          {loading ? "Bitte warten…" : mode === "register" ? "Kostenlos registrieren →" : "Anmelden →"}
+        </button>
+      </div>
+
+      {/* Mode toggle */}
+      <p style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: "#888", fontFamily: "inherit" }}>
+        {mode === "register" ? "Bereits registriert? " : "Noch kein Konto? "}
+        <button
+          onClick={() => { setMode(mode === "register" ? "login" : "register"); setError(""); }}
+          style={{ color: "#2d5a3d", background: "none", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "inherit" }}
+        >
+          {mode === "register" ? "Hier anmelden" : "Jetzt registrieren"}
+        </button>
+      </p>
+
+      {/* Trust signals */}
+      {mode === "register" && (
+        <div style={{ marginTop: 24, padding: "14px 16px", background: "#f5faf7", borderRadius: 10, display: "flex", flexDirection: "column", gap: 5 }}>
+          {[
+            "Kein Spam — nur Käuferanfragen",
+            "Jederzeit kündbar",
+            "0% Provision beim Verkauf",
+            "Ihre Daten sind verschlüsselt (SSL)",
+          ].map((item) => (
+            <p key={item} style={{ fontSize: 12, color: "#2d5a3d", margin: 0, fontFamily: "inherit" }}>✓ {item}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Progress bar ──────────────────────────────────────────────────────────────
 
 function ProgressBar({ step }: { step: number }) {
@@ -184,15 +382,16 @@ function Step1() {
           <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
             {lang === "de" ? "Gründungsjahr (optional)" : "Founded year (optional)"}
           </label>
-          <input
-            type="number"
+          <select
             value={data.founded_year}
             onChange={(e) => updateData({ founded_year: e.target.value })}
-            placeholder="2005"
-            min="1900"
-            max={new Date().getFullYear()}
-            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)]"
-          />
+            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans bg-white outline-none focus:border-[var(--accent)]"
+          >
+            <option value="">{lang === "de" ? "Jahr wählen…" : "Choose year…"}</option>
+            {Array.from({ length: new Date().getFullYear() - 1899 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+              <option key={y} value={String(y)}>{y}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -742,6 +941,11 @@ function Step4() {
   const { lang } = useLanguage();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [savedPromo, setSavedPromo] = useState<string | null>(null);
+
+  useEffect(() => {
+    try { setSavedPromo(localStorage.getItem("firmadeal_promo")); } catch {}
+  }, []);
 
   const investorCount = INVESTORS_BY_CATEGORY[data.category] ?? 1200;
   const categoryLabel = data.category || "DACH";
@@ -793,15 +997,21 @@ function Step4() {
         setListingId(listingJson.id);
       }
 
-      // Create Stripe checkout session
+      // Create Stripe checkout session (pass saved promo code if present)
+      const promoCode = typeof window !== "undefined" ? localStorage.getItem("firmadeal_promo") : null;
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(promoCode ? { "x-promo-code": promoCode } : {}),
+        },
         body: JSON.stringify({ plan: planId, listingId: id }),
       });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
 
+      // Clear saved promo after using it
+      try { localStorage.removeItem("firmadeal_promo"); } catch {}
       // Redirect to Stripe hosted checkout
       window.location.href = json.url;
     } catch (err) {
@@ -818,7 +1028,7 @@ function Step4() {
 
       {/* Investor count banner */}
       <div className="text-center mb-8 mt-4">
-        <p className="font-sans text-[22px] font-bold text-[var(--ink)] mb-2">
+        <p className="font-sans font-bold text-[var(--ink)] mb-2" style={{ fontSize: "clamp(16px, 4vw, 22px)" }}>
           {lang === "de" ? "Ihr Inserat wird " : "Your listing will reach "}
           <span className="text-[var(--green)]">
             {investorCount.toLocaleString("de-DE")} aktiven {categoryLabel}-Investor{investorCount === 1 ? "" : "en"}
@@ -831,6 +1041,14 @@ function Step4() {
             : "Choose your reach for the 7-day market test:"}
         </p>
       </div>
+
+      {savedPromo && (
+        <div className="bg-[var(--accent-light)] border border-[var(--accent)]/20 rounded-lg px-4 py-3 mb-4 flex items-center gap-2">
+          <span className="font-mono text-[11px] font-bold text-[var(--accent)]">🎁 AKTIONSCODE GESPEICHERT:</span>
+          <span className="font-mono text-[13px] font-bold text-[var(--accent)]">{savedPromo}</span>
+          <span className="font-sans text-[12px] text-[var(--muted)] ml-auto">Wird bei Stripe automatisch angewendet</span>
+        </div>
+      )}
 
       {checkoutError && (
         <div className="bg-red-50 border border-red-200 text-red-700 font-sans text-[13px] px-4 py-3 rounded-lg mb-6">
@@ -854,14 +1072,36 @@ function Step4() {
 
 function WizardShell() {
   const { step } = useWizard();
+  const [authed, setAuthed] = useState<boolean | null>(null);
+
+  // Check auth on mount — null = still checking, false = not logged in, true = logged in
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => setAuthed(!!data.user));
+  }, []);
+
+  if (authed === null) {
+    return (
+      <div className="bg-[var(--bg)] min-h-screen flex items-center justify-center">
+        <span className="font-mono text-sm text-[var(--muted)]">Lädt…</span>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[var(--bg)] min-h-screen">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <ProgressBar step={step} />
-        {step === 1 && <Step1 />}
-        {step === 2 && <Step2 />}
-        {step === 3 && <Step3 />}
-        {step === 4 && <Step4 />}
+        {!authed ? (
+          /* Step 0: Auth gate — register/login before filling wizard */
+          <Step0Auth onComplete={() => setAuthed(true)} />
+        ) : (
+          <>
+            <ProgressBar step={step} />
+            {step === 1 && <Step1 />}
+            {step === 2 && <Step2 />}
+            {step === 3 && <Step3 />}
+            {step === 4 && <Step4 />}
+          </>
+        )}
       </div>
     </div>
   );
