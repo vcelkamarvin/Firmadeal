@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Desktop sidebar */}
       <div className="admin-sidebar-desktop" style={{
         width: 220, background: "#1a3329", padding: "24px 0", flexShrink: 0,
-        position: "fixed", top: 0, left: 0, height: "100vh", overflowY: "auto",
+        position: "fixed", top: 60, left: 0, height: "calc(100vh - 60px)", overflowY: "auto",
       }}>
         <div style={{ padding: "0 20px 24px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
           <p style={{ color: "white", fontWeight: 700, fontSize: 16, margin: 0 }}>Firmadeal</p>
