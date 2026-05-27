@@ -593,12 +593,12 @@ function Step2() {
           </div>
         </div>
 
-        {/* 4. Competition chips */}
+        {/* 4. Competition chips + free text */}
         <div>
           <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">
             Wettbewerbssituation
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mb-3">
             {COMPETITION_CHIPS.map((chip) => {
               const active = data.competition_chips.includes(chip);
               return (
@@ -617,6 +617,13 @@ function Step2() {
               );
             })}
           </div>
+          <textarea
+            value={data.competition}
+            onChange={(e) => updateData({ competition: e.target.value })}
+            rows={3}
+            placeholder="Beschreiben Sie Ihre Wettbewerber (optional) — z.B. Hauptkonkurrenten, Alleinstellungsmerkmale, Marktposition..."
+            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)] resize-none"
+          />
         </div>
 
         {/* 5. Assets checklist */}
@@ -985,6 +992,7 @@ function Step4() {
             status_business: data.status_business || "active_profitable",
             reason_for_sale: data.reason_for_sale,
             business_model_chips: data.business_model_chips,
+            competition: data.competition,
             competition_chips: data.competition_chips,
             assets_checklist: data.assets_checklist,
             transferability_data: data.transferability_data,

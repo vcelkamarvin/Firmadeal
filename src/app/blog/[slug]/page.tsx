@@ -37,6 +37,42 @@ export async function generateMetadata(
   };
 }
 
-export default function BlogArticlePage() {
-  return <BlogArticleClient />;
+export default async function BlogArticlePage({ params }: { params: { slug: string } }) {
+  const { data: post } = await db()
+    .from("blog_posts")
+    .select("title, excerpt, published_at, category")
+    .eq("slug", params.slug)
+    .eq("published", true)
+    .single();
+
+  const jsonLd = post
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: post.title,
+        description: post.excerpt ?? undefined,
+        datePublished: post.published_at ?? undefined,
+        publisher: {
+          "@type": "Organization",
+          name: "Firmadeal.de",
+          url: "https://www.firmadeal.de",
+        },
+        mainEntityOfPage: {
+          "@type": "WebPage",
+          "@id": `https://www.firmadeal.de/blog/${params.slug}`,
+        },
+      }
+    : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <BlogArticleClient />
+    </>
+  );
 }

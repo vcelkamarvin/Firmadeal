@@ -18,19 +18,28 @@ export const metadata: Metadata = {
     template: "%s | Firmadeal",
   },
   description:
-    "Der direkte Marktplatz für Unternehmensverkäufe in Deutschland. 60+ Inserate. 0% Provision. Direkt vom Eigentümer. Jetzt 7 Tage kostenlos inserieren.",
+    "Der direkte Marktplatz für Unternehmensverkäufe in Deutschland, Österreich und der Schweiz. 60+ Inserate. 0% Provision. Direkt vom Eigentümer. Jetzt 7 Tage kostenlos inserieren.",
   keywords: [
     "Unternehmensverkauf",
     "Firmenkauf",
     "Unternehmen kaufen",
     "Unternehmen verkaufen",
+    "Firma kaufen",
+    "Firma verkaufen",
+    "Unternehmensmarktplatz",
+    "Unternehmensnachfolge",
+    "Betriebsübergabe",
     "DACH",
     "Deutschland",
     "Österreich",
     "Schweiz",
     "Nachfolge",
     "Unternehmenstransaktion",
+    "Firmenverkauf",
+    "GmbH verkaufen",
+    "Mittelstand verkaufen",
   ],
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   openGraph: {
     title: "Firmadeal.de – Unternehmen kaufen & verkaufen in Deutschland",
     description:
@@ -52,8 +61,23 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Firmadeal.de",
+    url: "https://www.firmadeal.de",
+    description: "Unternehmensmarktplatz für den DACH-Raum — Unternehmen kaufen und verkaufen ohne Provision.",
+    areaServed: ["DE", "AT", "CH"],
+  };
+
   return (
     <html lang="de">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
+      </head>
       <body className="min-h-screen flex flex-col">
         <LanguageProvider>
           <Navbar />
