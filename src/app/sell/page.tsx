@@ -1001,7 +1001,6 @@ function Step4() {
             reason_for_sale: data.reason_for_sale || null,
             business_model: data.business_model || null,
             business_model_chips: data.business_model_chips,
-            competition: data.competition || null,
             competition_chips: data.competition_chips,
             assets_included: null,
             assets_checklist: data.assets_checklist,
