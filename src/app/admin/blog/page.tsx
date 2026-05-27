@@ -11,7 +11,8 @@ const emptyForm = {
   excerpt: "",
   content: "",
   category: "ratgeber",
-  reading_time_min: "",
+  author: "",
+  reading_time_minutes: "",
   cover_image: "",
   published: false,
 };
@@ -40,7 +41,7 @@ export default function AdminBlog() {
     setLoading(true);
     const { data } = await supabase
       .from("blog_posts")
-      .select("id,title,slug,published,category,reading_time_min,created_at")
+      .select("id,title,slug,published,category,author,reading_time_minutes,created_at")
       .order("created_at", { ascending: false });
     setPosts(data ?? []);
     setLoading(false);
@@ -67,27 +68,35 @@ export default function AdminBlog() {
     setShowForm(true);
   }
 
-  function openEdit(post: any) {
-    setEditingId(post.id);
+  async function openEdit(id: string) {
+    setSaveError("");
+    // Fetch full post including content
+    const { data: post } = await supabase
+      .from("blog_posts")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (!post) return;
+    setEditingId(id);
     setForm({
       title: post.title ?? "",
       slug: post.slug ?? "",
       excerpt: post.excerpt ?? "",
       content: post.content ?? "",
       category: post.category ?? "ratgeber",
-      reading_time_min: post.reading_time_min != null ? String(post.reading_time_min) : "",
+      author: post.author ?? "",
+      reading_time_minutes: post.reading_time_minutes != null ? String(post.reading_time_minutes) : "",
       cover_image: post.cover_image ?? "",
       published: post.published ?? false,
     });
-    setSaveError("");
     setShowForm(true);
   }
 
   async function handleSave() {
     setSaveError("");
-    if (!form.title.trim()) { setSaveError("Titel ist erforderlich."); return; }
-    if (!form.slug.trim())  { setSaveError("Slug ist erforderlich.");  return; }
-    if (!form.content.trim()) { setSaveError("Inhalt ist erforderlich."); return; }
+    if (!form.title.trim())   { setSaveError("Titel ist erforderlich.");   return; }
+    if (!form.slug.trim())    { setSaveError("Slug ist erforderlich.");    return; }
+    if (!form.content.trim()) { setSaveError("Inhalt ist erforderlich.");  return; }
     setSaving(true);
 
     const payload: Record<string, any> = {
@@ -96,11 +105,14 @@ export default function AdminBlog() {
       excerpt: form.excerpt.trim() || null,
       content: form.content.trim(),
       category: form.category,
-      reading_time_min: form.reading_time_min ? parseInt(form.reading_time_min) : null,
+      author: form.author.trim() || null,
+      reading_time_minutes: form.reading_time_minutes ? parseInt(form.reading_time_minutes) : null,
       cover_image: form.cover_image.trim() || null,
       published: form.published,
     };
-    if (form.published) payload.published_at = new Date().toISOString();
+    if (form.published && !editingId) {
+      payload.published_at = new Date().toISOString();
+    }
 
     let error;
     if (editingId) {
@@ -185,6 +197,17 @@ export default function AdminBlog() {
               </select>
             </div>
 
+            {/* Author */}
+            <div>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Autor</label>
+              <input
+                style={inputStyle}
+                value={form.author}
+                onChange={(e) => setForm((f) => ({ ...f, author: e.target.value }))}
+                placeholder="z.B. Firmadeal Redaktion"
+              />
+            </div>
+
             {/* Excerpt */}
             <div style={{ gridColumn: "1 / -1" }}>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Kurzbeschreibung (Excerpt)</label>
@@ -200,21 +223,21 @@ export default function AdminBlog() {
             <div style={{ gridColumn: "1 / -1" }}>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Inhalt (Markdown) *</label>
               <textarea
-                style={{ ...inputStyle, resize: "vertical", minHeight: 300, fontFamily: "monospace", fontSize: 13 }}
+                style={{ ...inputStyle, resize: "vertical", minHeight: 320, fontFamily: "monospace", fontSize: 13 }}
                 value={form.content}
                 onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
                 placeholder={"# Überschrift\n\nIhren Artikel hier schreiben...\n\n## Abschnitt\n\nText..."}
               />
             </div>
 
-            {/* Lesezeit + Cover image */}
+            {/* Reading time + Cover image */}
             <div>
               <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#666", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Lesezeit (Minuten)</label>
               <input
                 type="number"
                 style={inputStyle}
-                value={form.reading_time_min}
-                onChange={(e) => setForm((f) => ({ ...f, reading_time_min: e.target.value }))}
+                value={form.reading_time_minutes}
+                onChange={(e) => setForm((f) => ({ ...f, reading_time_minutes: e.target.value }))}
                 placeholder="5"
                 min="1"
               />
@@ -276,7 +299,7 @@ export default function AdminBlog() {
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "#f9f9f9", borderBottom: "1px solid #e5e5e5" }}>
-                {["Titel", "Kategorie", "Lesezeit", "Status", "Aktionen"].map((h) => (
+                {["Titel", "Kategorie", "Autor", "Lesezeit", "Status", "Aktionen"].map((h) => (
                   <th key={h} style={{ padding: "12px 16px", textAlign: "left", fontSize: 11, color: "#666", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>{h}</th>
                 ))}
               </tr>
@@ -289,7 +312,8 @@ export default function AdminBlog() {
                     <p style={{ fontSize: 11, color: "#999", margin: "2px 0 0" }}>/blog/{post.slug}</p>
                   </td>
                   <td style={{ padding: "12px 16px", fontSize: 13, color: "#555" }}>{post.category || "–"}</td>
-                  <td style={{ padding: "12px 16px", fontSize: 13, color: "#555" }}>{post.reading_time_min ?? "–"} Min.</td>
+                  <td style={{ padding: "12px 16px", fontSize: 13, color: "#555" }}>{post.author || "–"}</td>
+                  <td style={{ padding: "12px 16px", fontSize: 13, color: "#555" }}>{post.reading_time_minutes ?? "–"} Min.</td>
                   <td style={{ padding: "12px 16px" }}>
                     <button onClick={() => togglePublish(post.id, post.published)} style={{
                       fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 100,
@@ -303,7 +327,7 @@ export default function AdminBlog() {
                   <td style={{ padding: "12px 16px" }}>
                     <div style={{ display: "flex", gap: 12 }}>
                       <button
-                        onClick={() => openEdit(post)}
+                        onClick={() => openEdit(post.id)}
                         style={{ fontSize: 12, color: "#1a3329", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}
                       >
                         Bearbeiten
