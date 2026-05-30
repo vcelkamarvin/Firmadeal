@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import InstantlyStats from "@/components/InstantlyStats";
 
 function adminClient() {
   return createClient(
@@ -112,6 +113,8 @@ export default async function AdminDashboard() {
           </table>
         </div>
       </div>
+
+      <InstantlyStats />
     </div>
   );
 }
