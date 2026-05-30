@@ -7,11 +7,8 @@ export async function GET() {
   }
 
   const res = await fetch(
-    "https://api.instantly.ai/api/v1/analytics/campaign/summary",
-    {
-      headers: { Authorization: `Bearer ${apiKey}` },
-      next: { revalidate: 300 },
-    }
+    `https://api.instantly.ai/api/v1/analytics/campaign/summary?api_key=${encodeURIComponent(apiKey)}`,
+    { next: { revalidate: 300 } }
   );
 
   if (!res.ok) {
