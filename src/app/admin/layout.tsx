@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: "/admin/inquiries", label: "💬 Anfragen",   short: "💬" },
   { href: "/admin/blog",      label: "✍️ Blog",       short: "✍️" },
   { href: "/admin/payments",  label: "💳 Zahlungen",  short: "💳" },
+  { href: "/admin/instantly", label: "📧 Instantly",   short: "📧" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

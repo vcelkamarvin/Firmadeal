@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Protect /admin — requires login + is_admin flag
+  // Protect /admin — requires login + (is_admin flag OR ADMIN_EMAIL match)
   if (path.startsWith("/admin")) {
     if (!user) {
       const url = request.nextUrl.clone();
@@ -48,13 +48,18 @@ export async function middleware(request: NextRequest) {
       url.searchParams.set("redirect", path);
       return NextResponse.redirect(url);
     }
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .single();
-    if (!profile?.is_admin) {
-      return NextResponse.redirect(new URL("/", request.url));
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail && user.email === adminEmail) {
+      // Owner email bypass — skip DB check
+    } else {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+      if (!profile?.is_admin) {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
     }
   }
 
