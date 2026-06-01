@@ -6,39 +6,39 @@ import PricingCards from "@/components/PricingCards";
 
 const BUYER_TYPES = [
   {
-    icon: "\ud83c\udfe2",
+    icon: "🏢",
     title: "Private Equity & Family Offices",
-    desc: "847 aktive PE-Investoren und Family Offices im DACH-Raum suchen Unternehmen ab \u20ac500K Umsatz",
+    desc: "847 aktive PE-Investoren und Family Offices im DACH-Raum suchen Unternehmen ab €500K Umsatz",
   },
   {
-    icon: "\ud83d\udc64",
+    icon: "👤",
     title: "Unternehmer & MBI-Kandidaten",
     desc: "2.340 erfahrene Manager suchen ein Unternehmen zum Kauf",
   },
   {
-    icon: "\ud83d\udd0d",
+    icon: "🔍",
     title: "Search Funds",
     desc: "156 Search Fund Manager durchsuchen aktiv den DACH-Mittelstand",
   },
   {
-    icon: "\ud83e\udd1d",
-    title: "Strategische K\u00e4ufer",
-    desc: "1.203 Unternehmen suchen \u00dcbernahmetargets f\u00fcr Wachstum",
+    icon: "🤝",
+    title: "Strategische Käufer",
+    desc: "1.203 Unternehmen suchen Übernahmetargets für Wachstum",
   },
 ];
 
 const FAQ = [
   {
     q: "Wie lange dauert ein Verkauf durchschnittlich?",
-    a: "Die durchschnittliche Verkaufsdauer auf Firmadeal betr\u00e4gt 3\u20139 Monate, abh\u00e4ngig von Branche, Preis und Marktlage. Mit dem Jahrespaket erhalten Sie Top-Platzierung und Newsletter-Reichweite, was die Kontaktaufnahme deutlich beschleunigt.",
+    a: "Die durchschnittliche Verkaufsdauer auf Firmadeal beträgt 3–9 Monate, abhängig von Branche, Preis und Marktlage. Mit dem Jahrespaket erhalten Sie Top-Platzierung und Newsletter-Reichweite, was die Kontaktaufnahme deutlich beschleunigt.",
   },
   {
-    q: "Bleibt mein Inserat vollst\u00e4ndig anonym?",
-    a: "Ja. Ihr Inserat ist vollst\u00e4ndig anonym \u2014 kein Unternehmensname, keine pers\u00f6nlichen Daten werden ohne Ihre Freigabe sichtbar. Interessierte K\u00e4ufer kontaktieren Sie \u00fcber unser gesch\u00fctztes Nachrichtensystem.",
+    q: "Bleibt mein Inserat vollständig anonym?",
+    a: "Ja. Ihr Inserat ist vollständig anonym — kein Unternehmensname, keine persönlichen Daten werden ohne Ihre Freigabe sichtbar. Interessierte Käufer kontaktieren Sie über unser geschütztes Nachrichtensystem.",
   },
   {
     q: "Was passiert nach der kostenlosen Testphase?",
-    a: "Nach 7 Tagen wird Ihr gew\u00e4hlter Plan automatisch aktiviert und abgerechnet (\u20ac39/Monat oder \u20ac189/Jahr). Sie k\u00f6nnen jederzeit vor Ablauf der Testphase k\u00fcndigen \u2014 ohne Kosten.",
+    a: "Nach 7 Tagen wird Ihr gewählter Plan automatisch aktiviert und abgerechnet (€39/Monat oder €189/Jahr). Sie können jederzeit vor Ablauf der Testphase kündigen — ohne Kosten.",
   },
 ];
 
@@ -79,10 +79,10 @@ export default function PricingPage() {
       {/* Header */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10 text-center">
         <h1 className="font-sans text-[clamp(28px,5vw,50px)] font-bold text-[var(--ink)] tracking-tight mb-4 leading-[1.05]">
-          Ihr Unternehmen verkaufen &mdash;<br />einfach und ohne Makler
+          Ihr Unternehmen verkaufen —<br />einfach und ohne Makler
         </h1>
         <p className="font-sans text-[17px] text-[var(--muted)] max-w-[440px] mx-auto leading-relaxed">
-          W\u00e4hlen Sie Ihren Plan. 7 Tage kostenlos testen.
+          Wählen Sie Ihren Plan. 7 Tage kostenlos testen.
         </p>
       </section>
 
@@ -98,7 +98,7 @@ export default function PricingPage() {
             Wer kauft auf Firmadeal?
           </h2>
           <p className="font-sans text-[14px] text-[var(--muted)] text-center mb-10">
-            Ihr Inserat wird automatisch nach Branche und Region an passende K\u00e4ufer weitergeleitet.
+            Ihr Inserat wird automatisch nach Branche und Region an passende Käufer weitergeleitet.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {BUYER_TYPES.map((b) => (
@@ -119,11 +119,11 @@ export default function PricingPage() {
             Neue Kaufgesuche direkt in Ihr Postfach
           </h2>
           <p className="font-sans text-[14px] text-white/60 mb-6 leading-relaxed">
-            W\u00f6chentlich die besten neuen Inserate passend zu Ihren Kriterien. Jederzeit abmeldbar.
+            Wöchentlich die besten neuen Inserate passend zu Ihren Kriterien. Jederzeit abmeldbar.
           </p>
           {newsletterState === "success" ? (
             <p className="font-sans text-[15px] font-semibold text-green-400">
-              \u2713 Sie sind angemeldet!
+              ✓ Sie sind angemeldet!
             </p>
           ) : (
             <form onSubmit={handleNewsletter} className="flex flex-col sm:flex-row gap-3">
@@ -141,7 +141,7 @@ export default function PricingPage() {
                 className="px-6 py-3 font-sans font-bold text-[14px] text-white rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 whitespace-nowrap"
                 style={{ background: "#1A5C3A" }}
               >
-                {newsletterState === "loading" ? "Wird gespeichert\u2026" : "Anmelden"}
+                {newsletterState === "loading" ? "Wird gespeichert…" : "Anmelden"}
               </button>
             </form>
           )}
@@ -156,7 +156,7 @@ export default function PricingPage() {
             </p>
           )}
           <p className="font-sans text-[12px] text-white/40 mt-6">
-            firmaDeal.de \u00b7 Sofort live \u00b7 0% Provision \u00b7 Kein Makler
+            firmaDeal.de · Sofort live · 0% Provision · Kein Makler
           </p>
         </div>
       </section>
@@ -165,7 +165,7 @@ export default function PricingPage() {
       <section className="bg-[var(--surface2)] border-t border-[var(--border)]">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <h2 className="font-sans text-[22px] font-bold text-[var(--ink)] tracking-tight text-center mb-8">
-            H\u00e4ufige Fragen
+            Häufige Fragen
           </h2>
           <div className="space-y-2">
             {FAQ.map((faq, i) => (
