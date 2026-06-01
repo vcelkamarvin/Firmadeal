@@ -7,7 +7,7 @@ import { buildTrialWelcomeEmail, buildTrialEndingEmail } from "@/lib/emails";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.firmadeal.de";
 
 const PLAN_PRICES: Record<string, string> = {
-  basic: "39", advanced: "79", premium: "199",
+  monthly: "39", yearly: "189",
 };
 
 function adminClient() {
@@ -45,7 +45,9 @@ export async function POST(request: NextRequest) {
       if (!listingId) break;
 
       const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      const planExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const planExpiresAt = plan === "yearly"
+        ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
       await supabase.from("listings").update({
         status: "active",
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
         plan_expires_at: planExpiresAt,
         stripe_subscription_id: obj.subscription ?? null,
         stripe_customer_id: obj.customer ?? null,
-        featured: plan === "advanced" || plan === "premium",
+        featured: plan === "yearly",
       }).eq("id", listingId);
 
       // Send trial welcome email to seller
@@ -73,7 +75,7 @@ export async function POST(request: NextRequest) {
 
         if (welcomeProfile?.email) {
           const resend = new Resend(process.env.RESEND_API_KEY);
-          const welcomePrice = PLAN_PRICES[plan ?? "basic"] ?? "39";
+          const welcomePrice = PLAN_PRICES[plan ?? "monthly"] ?? "39";
           await resend.emails.send({
             from: "noreply@firmadeal.de",
             to: welcomeProfile.email,
@@ -114,7 +116,7 @@ export async function POST(request: NextRequest) {
           .single();
 
         const sellerEmail = profile?.email;
-        const planKey = listing.plan ?? plan ?? "basic";
+        const planKey = listing.plan ?? plan ?? "monthly";
         const price = PLAN_PRICES[planKey] ?? "39";
 
         if (sellerEmail) {

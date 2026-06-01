@@ -2,148 +2,145 @@
 
 import Link from "next/link";
 import { Check } from "lucide-react";
-import { PLANS } from "@/data/plans";
-
-// Re-export PLANS for any existing consumers
-export { PLANS };
 
 interface PricingCardsProps {
-  onSelectPlan?: (planId: "basic" | "advanced" | "premium") => void;
+  onSelectPlan?: (planId: "monthly" | "yearly") => void;
   loadingPlan?: string | null;
 }
 
+const COMMON_FEATURES = [
+  "Listing sichtbar im Marktplatz",
+  "1.000+ aktive K\u00e4ufer/Monat kontaktieren Sie direkt",
+  "Anonymes Inserat \u2014 Ihre Daten bleiben gesch\u00fctzt",
+  "Automatische Unternehmensbewertung",
+  "7-Tage Markttest-Bericht",
+  "0% Provision auf den Verkaufspreis",
+];
+
+const EXCLUSIVE_FEATURES = [
+  "Top-Platzierung \u2014 Ihr Inserat erscheint vor Monthly-Inseraten",
+  "W\u00f6chentlicher Newsletter an 8.000+ aktive Investoren",
+];
+
 export default function PricingCards({ onSelectPlan, loadingPlan }: PricingCardsProps) {
+  const isLoading = loadingPlan !== null && loadingPlan !== undefined;
+
+  const renderCTA = (planId: "monthly" | "yearly", label: string, filled: boolean) => {
+    const cls = filled
+      ? "block text-center w-full py-3.5 rounded-xl font-sans font-bold text-[14px] bg-[#1A5C3A] text-white hover:bg-[#154d30] transition-all disabled:opacity-70"
+      : "block text-center w-full py-3.5 rounded-xl font-sans font-bold text-[14px] border border-[var(--border)] text-[var(--ink)] hover:border-[#1A5C3A] hover:text-[#1A5C3A] hover:bg-[var(--accent-light)] transition-all disabled:opacity-70";
+
+    if (onSelectPlan) {
+      return (
+        <button
+          type="button"
+          onClick={() => onSelectPlan(planId)}
+          disabled={isLoading}
+          className={cls}
+        >
+          {loadingPlan === planId ? "Wird geladen\u2026" : label}
+        </button>
+      );
+    }
+    return (
+      <Link href="/sell" className={cls}>
+        {label}
+      </Link>
+    );
+  };
+
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {PLANS.map((plan) => (
-          <div
-            key={plan.id}
-            className={`relative bg-white rounded-2xl flex flex-col ${
-              plan.highlight
-                ? "border-2 border-[var(--accent)] shadow-[0_8px_40px_rgba(26,51,41,0.12)]"
-                : "border border-[var(--border)]"
-            }`}
-          >
-            {/* Badge */}
-            {plan.badge && (
-              <div
-                className={`absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full font-sans text-[11px] font-bold whitespace-nowrap ${
-                  plan.badgeColor === "green"
-                    ? "bg-[var(--accent)] text-white"
-                    : "bg-amber-500 text-white"
-                }`}
-              >
-                {plan.badge}
-              </div>
-            )}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
+      {/* Monthly Card */}
+      <div className="relative bg-white border border-[var(--border)] rounded-2xl flex flex-col p-7">
+        <h3 className="font-sans text-[12px] font-bold text-[var(--muted)] uppercase tracking-widest mb-3">
+          Firmadeal Listing
+        </h3>
+        <div className="flex items-baseline gap-1 mb-1">
+          <span className="font-sans text-[48px] font-bold text-[var(--ink)] tracking-tight leading-none tabular-nums">
+            \u20ac39
+          </span>
+          <span className="font-sans text-[14px] text-[var(--muted)]">/Monat</span>
+        </div>
+        <p className="font-sans text-[12px] text-[var(--muted)] mb-5">
+          Nach 7 Tagen \u00b7 Jederzeit k\u00fcndbar
+        </p>
+        <ul className="space-y-3 mb-8 flex-1">
+          {COMMON_FEATURES.map((f) => (
+            <li key={f} className="flex items-start gap-2.5">
+              <Check size={13} className="text-[var(--green)] mt-0.5 flex-shrink-0" />
+              <span className="font-sans text-[13px] text-[var(--ink)]">{f}</span>
+            </li>
+          ))}
+        </ul>
+        {renderCTA("monthly", "7 Tage kostenlos starten \u2192", false)}
+      </div>
 
-            <div className="p-7 flex-1 flex flex-col">
-              {/* Plan name */}
-              <h3 className="font-sans text-[12px] font-bold text-[var(--muted)] uppercase tracking-widest mb-2">
-                {plan.name}
-              </h3>
+      {/* Yearly Card */}
+      <div
+        className="relative bg-white border-2 rounded-2xl flex flex-col p-7 shadow-[0_8px_40px_rgba(26,92,58,0.12)]"
+        style={{ borderColor: "#1A5C3A" }}
+      >
+        {/* EMPFOHLEN badge */}
+        <div className="absolute -top-3.5 right-6 px-4 py-1 rounded-full font-sans text-[11px] font-bold bg-[#1A5C3A] text-white whitespace-nowrap">
+          EMPFOHLEN
+        </div>
 
-              {/* Advanced social proof line */}
-              {plan.id === "advanced" && (
-                <p style={{
-                  fontSize: 12,
-                  color: "#2d5a3d",
-                  fontWeight: 500,
-                  marginBottom: 8,
-                  fontFamily: "Helvetica Neue, Arial, sans-serif",
-                }}>
-                  4× mehr Käufer als Basic · Ø 60 Tage schneller
-                </p>
-              )}
+        <h3 className="font-sans text-[12px] font-bold text-[var(--muted)] uppercase tracking-widest mb-1">
+          Firmadeal Listing Jahrespaket
+        </h3>
+        <p className="font-sans text-[11px] font-semibold mb-3" style={{ color: "#1A5C3A" }}>
+          Beliebteste Wahl \u2014 59% g\u00fcnstiger
+        </p>
 
-              {/* Trial badge */}
-              <div className="inline-flex items-center gap-1.5 bg-[var(--accent-light)] text-[var(--accent)] font-sans text-[11px] font-semibold px-2.5 py-1 rounded-full mb-3 self-start">
-                🎁 {plan.trialLabel}
-              </div>
+        {/* Price with strikethrough */}
+        <div className="flex items-baseline gap-2 mb-1 flex-wrap">
+          <span className="font-sans text-[15px] text-[var(--muted)] line-through tabular-nums">
+            \u20ac468/Jahr
+          </span>
+          <span className="font-sans text-[48px] font-bold text-[var(--ink)] tracking-tight leading-none tabular-nums">
+            \u20ac189
+          </span>
+          <span className="font-sans text-[14px] text-[var(--muted)]">/Jahr</span>
+        </div>
+        <p className="font-sans text-[12px] text-[var(--muted)] mb-2">
+          = \u20ac15,75/Monat \u00b7 Nach 7 Tagen \u00b7 Jederzeit k\u00fcndbar
+        </p>
 
-              {/* Price */}
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className="font-sans text-[46px] font-bold text-[var(--ink)] tracking-tight leading-none tabular-nums">
-                  €{plan.price}
+        {/* Savings pill */}
+        <div
+          className="inline-flex items-center self-start font-sans text-[12px] font-bold px-3 py-1 rounded-full mb-5"
+          style={{ background: "#e8f5ed", color: "#1A5C3A" }}
+        >
+          Sie sparen \u20ac279
+        </div>
+
+        {/* Features */}
+        <ul className="space-y-3 mb-6 flex-1">
+          {COMMON_FEATURES.map((f) => (
+            <li key={f} className="flex items-start gap-2.5">
+              <Check size={13} className="text-[var(--green)] mt-0.5 flex-shrink-0" />
+              <span className="font-sans text-[13px] text-[var(--ink)]">{f}</span>
+            </li>
+          ))}
+          {EXCLUSIVE_FEATURES.map((f) => (
+            <li key={f} className="flex items-start gap-2.5">
+              <Check size={13} className="mt-0.5 flex-shrink-0" style={{ color: "#1A5C3A" }} />
+              <span className="font-sans text-[13px] text-[var(--ink)]">
+                {f}
+                <span className="ml-1.5 font-sans text-[11px] font-semibold text-amber-600 whitespace-nowrap">
+                  \u2b50 Nur im Jahrespaket
                 </span>
-                <span className="font-sans text-[13px] text-[var(--muted)]">/Monat</span>
-              </div>
-              <p className="font-sans text-[11px] text-[var(--muted)] mb-3">
-                Dann €{plan.price}/Monat · Jederzeit kündbar
-              </p>
+              </span>
+            </li>
+          ))}
+        </ul>
 
-              {/* Info badges */}
-              <div className="flex flex-wrap gap-1.5 mb-5">
-                {[plan.duration, plan.views, plan.avgSaleDaysLabel, "0% Provision"].map((badge) => (
-                  <span
-                    key={badge}
-                    className="font-sans text-[11px] text-[var(--ink)] bg-[var(--surface2)] border border-[var(--border)] px-2 py-0.5 rounded-full"
-                  >
-                    {badge}
-                  </span>
-                ))}
-              </div>
+        {renderCTA("yearly", "Jetzt Jahrespaket starten \u2192", true)}
 
-              {/* Features */}
-              <p className="font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-3">
-                Inkludierte Funktionen
-              </p>
-              <ul className="space-y-2.5 mb-8 flex-1">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5">
-                    <Check size={13} className="text-[var(--green)] mt-0.5 flex-shrink-0" />
-                    <span className="font-sans text-[13px] text-[var(--ink)]">{f}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTA */}
-              {onSelectPlan ? (
-                <button
-                  type="button"
-                  onClick={() => onSelectPlan(plan.id)}
-                  disabled={loadingPlan !== null && loadingPlan !== undefined}
-                  className={`block text-center w-full py-3.5 rounded-xl font-sans font-bold text-[14px] transition-all disabled:opacity-70 ${
-                    plan.highlight
-                      ? "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
-                      : plan.id === "premium"
-                      ? "bg-[var(--neutral-900)] text-white hover:bg-[var(--neutral-800)]"
-                      : "border border-[var(--border)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent-light)]"
-                  }`}
-                >
-                  {loadingPlan === plan.id ? "Wird geladen…" : plan.ctaLabel}
-                </button>
-              ) : (
-                <Link
-                  href="/sell"
-                  className={`block text-center w-full py-3.5 rounded-xl font-sans font-bold text-[14px] transition-all ${
-                    plan.highlight
-                      ? "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
-                      : plan.id === "premium"
-                      ? "bg-[var(--neutral-900)] text-white hover:bg-[var(--neutral-800)]"
-                      : "border border-[var(--border)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent-light)]"
-                  }`}
-                >
-                  {plan.ctaLabel}
-                </Link>
-              )}
-
-              {/* Basic "not included" hint */}
-              {plan.id === "basic" && (
-                <p style={{
-                  fontSize: 11,
-                  color: "#bbb",
-                  textAlign: "center",
-                  marginTop: 8,
-                  fontFamily: "Helvetica Neue, Arial, sans-serif",
-                }}>
-                  Kein Newsletter · Keine Ads · Keine Syndication
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
+        <p className="font-sans text-[12px] text-[var(--muted)] text-center mt-4 leading-relaxed">
+          F\u00fcr ernsthafte Verk\u00e4ufer \u2014 maximale Sichtbarkeit \u00fcber den gesamten Verkaufsprozess
+        </p>
       </div>
     </div>
   );

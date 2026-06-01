@@ -957,7 +957,7 @@ function Step4() {
   const investorCount = INVESTORS_BY_CATEGORY[data.category] ?? 1200;
   const categoryLabel = data.category || "DACH";
 
-  const handleSelectPlan = async (planId: "basic" | "advanced" | "premium") => {
+  const handleSelectPlan = async (planId: "monthly" | "yearly") => {
     updateData({ plan: planId });
     setLoadingPlan(planId);
     setCheckoutError(null);

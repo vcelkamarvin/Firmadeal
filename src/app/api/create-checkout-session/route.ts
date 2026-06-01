@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 
-// Stored EUR Price IDs from Stripe dashboard (confirmed EUR, active)
 const PRICE_IDS: Record<string, string> = {
-  basic:    process.env.STRIPE_PRICE_BASIC!,
-  advanced: process.env.STRIPE_PRICE_ADVANCED!,
-  premium:  process.env.STRIPE_PRICE_PREMIUM!,
+  monthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID!,
+  yearly:  process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID!,
 };
 
 export async function POST(req: Request) {
@@ -19,10 +17,10 @@ export async function POST(req: Request) {
   const sessionParams = {
     mode: "subscription" as const,
     payment_method_types: ["card" as const],
-    allow_promotion_codes: true,         // TOP LEVEL — enables promo code field
+    allow_promotion_codes: true,
     line_items: [
       {
-        price: priceId,                  // Real EUR Price ID from Stripe dashboard
+        price: priceId,
         quantity: 1,
       },
     ],
@@ -39,7 +37,7 @@ export async function POST(req: Request) {
 
   try {
     const session = await stripe.checkout.sessions.create(sessionParams);
-    console.log("[checkout] Session created:", session.id, "url:", session.url, "allow_promotion_codes:", session.allow_promotion_codes);
+    console.log("[checkout] Session created:", session.id, "url:", session.url);
     return NextResponse.json({ url: session.url });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
