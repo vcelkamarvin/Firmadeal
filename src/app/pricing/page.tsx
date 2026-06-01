@@ -28,22 +28,19 @@ function SaleDurationBars() {
 
   return (
     <div className="bg-white border border-[var(--border)] rounded-2xl p-5">
-      <h3 className="font-sans text-[13px] font-bold text-[var(--ink)] mb-0.5">
-        Schneller verkaufen mit dem Jahrespaket
-      </h3>
-      <p className="font-sans text-[11px] text-[var(--muted)] mb-4">
-        Ø Verkaufsdauer · abgeschlossene Transaktionen 2024/25
+      <p className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-widest mb-4">
+        ⏱ Zeit bis erstes Angebot
       </p>
       <div ref={ref} className="space-y-3">
         {bars.map((bar, i) => (
           <div key={bar.label}>
             <div className="flex items-center justify-between mb-1">
               <span className="font-sans text-[12px] font-semibold text-[var(--ink)]">{bar.label}</span>
-              <span className="font-sans text-[12px] font-bold tabular-nums" style={{ color: bar.color }}>
-                {bar.days} Tage
+              <span className="font-sans text-[13px] font-bold tabular-nums" style={{ color: bar.color }}>
+                {bar.days}d
               </span>
             </div>
-            <div className="h-7 rounded-lg overflow-hidden" style={{ background: bar.bg }}>
+            <div className="h-6 rounded-lg overflow-hidden" style={{ background: bar.bg }}>
               <div
                 className="h-full rounded-lg flex items-center pl-3"
                 style={{
@@ -51,33 +48,18 @@ function SaleDurationBars() {
                   background: bar.color,
                   transition: `width 1.3s cubic-bezier(0.16,1,0.3,1) ${i * 0.18}s`,
                 }}
-              >
-                {inView && (
-                  <span className="font-sans text-[11px] font-semibold text-white whitespace-nowrap">
-                    Ø {bar.days} Tage
-                  </span>
-                )}
-              </div>
+              />
             </div>
           </div>
         ))}
       </div>
-      {/* Key stats row */}
-      <div className="grid grid-cols-3 gap-1 mt-4 pt-4 border-t border-[var(--border)]">
-        {[
-          { value: "37 Tage", label: "schneller" },
-          { value: "2×",      label: "mehr Käufer" },
-          { value: "94%",     label: "Abschlüsse" },
-        ].map((s) => (
-          <div key={s.label} className="text-center">
-            <p className="font-sans text-[15px] font-bold" style={{ color: "#1A5C3A" }}>{s.value}</p>
-            <p className="font-sans text-[10px] text-[var(--muted)]">{s.label}</p>
-          </div>
-        ))}
+      <div className="mt-4 rounded-xl p-3 flex items-center gap-3" style={{ background: "#e8f5ed" }}>
+        <span className="font-sans text-[22px] font-bold tabular-nums" style={{ color: "#1A5C3A" }}>37d</span>
+        <div>
+          <p className="font-sans text-[12px] font-bold" style={{ color: "#1A5C3A" }}>schneller zum ersten Angebot</p>
+          <p className="font-sans text-[10px] text-[var(--muted)]">mit dem Jahrespaket · 2× mehr Käufer</p>
+        </div>
       </div>
-      <p className="font-sans text-[10px] text-[var(--muted)] mt-2.5">
-        * Keine Erfolgsgarantie · Ø-Werte abgeschlossener Transaktionen
-      </p>
     </div>
   );
 }
@@ -172,17 +154,11 @@ export default function PricingPage() {
 
       {/* ── Compact Header ─────────────────────────────────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-5 text-center">
-        <div className="inline-flex items-center gap-2 bg-[var(--accent-light)] border border-[var(--accent)]/25 rounded-full px-4 py-1.5 mb-4">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse-dot" />
-          <span className="font-sans text-[12px] font-semibold text-[var(--accent)]">
-            7 Tage kostenlos · Karte erforderlich · Keine Abbuchung in der Testphase
-          </span>
-        </div>
-        <h1 className="font-sans text-[clamp(24px,4vw,44px)] font-bold text-[var(--ink)] tracking-tight mb-3 leading-[1.08]">
-          Wählen Sie Ihren Plan —<br className="hidden sm:block" /> 7 Tage kostenlos testen
+        <h1 className="font-sans text-[clamp(20px,3.5vw,36px)] font-bold text-[var(--ink)] tracking-tight mb-2 leading-[1.1]">
+          Wählen Sie Ihren Plan — 7 Tage kostenlos
         </h1>
-        <p className="font-sans text-[15px] text-[var(--muted)] max-w-[460px] mx-auto leading-relaxed mb-5">
-          Verkaufen Sie Ihr Unternehmen direkt an geprüfte Käufer. Keine Provision. Kein Makler. Sofort live.
+        <p className="font-sans text-[13px] text-[var(--muted)] mb-4">
+          0% Provision · Kein Makler · Sofort live
         </p>
         {/* Live stats */}
         <div className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 bg-white border border-[var(--border)] rounded-full px-5 py-2 shadow-sm text-[13px] font-sans font-semibold text-[var(--ink)]">
@@ -317,15 +293,6 @@ export default function PricingPage() {
             >
               Jetzt Jahrespaket sichern →
             </Link>
-            <p className="font-sans text-[11px] text-[var(--muted)] text-center mt-2.5 leading-snug">
-              Für ernsthafte Verkäufer — maximale Reichweite über den gesamten Verkaufsprozess
-            </p>
-            <div className="mt-2.5 flex items-center justify-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse-dot flex-shrink-0" />
-              <p className="font-sans text-[11px] font-semibold" style={{ color: "#1A5C3A" }}>
-                47 Unternehmer haben in den letzten 30 Tagen das Jahrespaket gestartet
-              </p>
-            </div>
           </div>
 
           {/* ── Stats Sidebar ── */}
