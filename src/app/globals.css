@@ -459,3 +459,54 @@ input, select, textarea {
     padding-bottom: 100px !important;
   }
 }
+
+/* ─── HOMEPAGE MOBILE FIXES ─────────────────────────────────────────────────── */
+
+/* Hero: smaller headline + stacked full-width CTAs */
+@media (max-width: 768px) {
+  .hero-headline {
+    font-size: 28px !important;
+    line-height: 1.15 !important;
+  }
+  .hero-cta-primary,
+  .hero-cta-secondary {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    padding: 14px 20px !important;
+  }
+  .hero-cta-row {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  .hero-trust-pills {
+    gap: 8px !important;
+  }
+  .hero-trust-pills > div {
+    font-size: 11px !important;
+    padding: 6px 12px !important;
+  }
+}
+
+/* Live ticker: slightly smaller on mobile */
+@media (max-width: 768px) {
+  .animate-marquee span {
+    font-size: 10px !important;
+  }
+}
+
+/* Tab switcher: equal-width buttons on mobile */
+@media (max-width: 480px) {
+  .tab-switcher-btn {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* Testimonials carousel: hide scrollbar on iOS */
+.testimonials-scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.testimonials-scroll::-webkit-scrollbar { display: none; }

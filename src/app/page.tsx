@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import ListingCard from "@/components/ListingCard";
@@ -18,6 +18,54 @@ import MarketLiquidity from "@/components/MarketLiquidity";
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const BIZ_TYPES = ["KFZ-Werkstatt", "Bäckerei", "IT-Firma", "Restaurant", "Praxis", "Online-Shop"];
+
+const ANON_LISTINGS = [
+  { id: 1, cat: "Gastronomie",   city: "München",   revenue: "€420k", ebitda: "€85k",  price: "€280k",    emp: 8,  years: 12 },
+  { id: 2, cat: "IT & Software", city: "Hamburg",   revenue: "€680k", ebitda: "€190k", price: "€1,1M",    emp: 5,  years: 7  },
+  { id: 3, cat: "Handwerk",      city: "Berlin",    revenue: "€310k", ebitda: "€62k",  price: "€195k",    emp: 6,  years: 18 },
+  { id: 4, cat: "Einzelhandel",  city: "Frankfurt", revenue: "€520k", ebitda: "€78k",  price: "Auf Anfrage", emp: 12, years: 9 },
+];
+
+const CAT_PILLS = ["Alle", "Gastronomie", "IT & Software", "Handwerk", "Einzelhandel", "Produktion", "Dienstleistung"];
+
+const TESTIMONIALS = [
+  {
+    name: "Michael K.",
+    role: "Maschinenbau GmbH · München",
+    quote: "Innerhalb von 6 Wochen hatte ich drei ernsthafte Kaufinteressenten. Vollständig anonym, ohne Maklergebühren — genau wie versprochen.",
+    badge: "Verkäufer",
+    badgeStyle: { background: "#e8f5ed", color: "#1a3329" } as React.CSSProperties,
+    result: "Verkauft in 4 Monaten",
+    resultStyle: "text-green-700 bg-green-100",
+  },
+  {
+    name: "Sarah M.",
+    role: "Online-Shop Käuferin · Hamburg",
+    quote: "Ich habe genau das richtige Unternehmen gefunden. Die Kennzahlen waren transparent, der Kontakt direkt — kein Makler dazwischen.",
+    badge: "Käuferin",
+    badgeStyle: { background: "#dbeafe", color: "#1d4ed8" } as React.CSSProperties,
+    result: "Acquisition erfolgreich",
+    resultStyle: "text-blue-700 bg-blue-100",
+  },
+  {
+    name: "Thomas W.",
+    role: "Steuerberatung · Frankfurt",
+    quote: "0% Provision bedeutete für mich €47.000 mehr in der Tasche. Firmadeal hat das in 3 Monaten möglich gemacht.",
+    badge: "Verkäufer",
+    badgeStyle: { background: "#e8f5ed", color: "#1a3329" } as React.CSSProperties,
+    result: "€47k gespart",
+    resultStyle: "text-green-700 bg-green-100",
+  },
+  {
+    name: "Anna L.",
+    role: "Gastronomie Käuferin · Wien",
+    quote: "Als Erstkäuferin war ich unsicher. Die Bewertungstools und transparenten Daten gaben mir die Sicherheit für die richtige Entscheidung.",
+    badge: "Käuferin",
+    badgeStyle: { background: "#dbeafe", color: "#1d4ed8" } as React.CSSProperties,
+    result: "Erstes Unternehmen gekauft",
+    resultStyle: "text-blue-700 bg-blue-100",
+  },
+];
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -491,6 +539,323 @@ function BlogTeaser({ lang }: { lang: string }) {
   );
 }
 
+// ── Testimonial card ───────────────────────────────────────────────────────────
+
+function TestimonialCard({ t }: { t: typeof TESTIMONIALS[0] }) {
+  return (
+    <div className="bg-white border border-[var(--border)] rounded-2xl p-6 flex flex-col h-full">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <span className="font-sans text-[11px] font-bold px-2.5 py-1 rounded-full" style={t.badgeStyle}>
+          {t.badge}
+        </span>
+        <span className={`font-sans text-[11px] font-bold px-2.5 py-1 rounded-full ${t.resultStyle}`}>
+          {t.result}
+        </span>
+      </div>
+      <p className="font-sans text-[14px] text-[var(--ink)] leading-relaxed mb-4 flex-1">
+        &ldquo;{t.quote}&rdquo;
+      </p>
+      <div className="border-t border-[var(--border)] pt-3 mt-auto">
+        <div className="font-sans text-[13px] font-bold text-[var(--ink)]">{t.name}</div>
+        <div className="font-sans text-[12px] text-[var(--muted)]">{t.role}</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Testimonials section ────────────────────────────────────────────────────────
+
+function TestimonialsSection({ lang }: { lang: string }) {
+  const [activeDot, setActiveDot] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    const pct = scrollLeft / (scrollWidth - clientWidth || 1);
+    setActiveDot(Math.round(pct * (TESTIMONIALS.length - 1)));
+  };
+
+  return (
+    <section className="bg-[var(--surface2)] border-b border-[var(--border)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="text-center mb-10">
+          <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-2">
+            {lang === "de" ? "Erfolgsgeschichten" : "Success stories"}
+          </p>
+          <h2 className="font-sans text-[26px] sm:text-[32px] font-bold text-[var(--ink)] tracking-tight">
+            {lang === "de" ? "Was unsere Nutzer sagen" : "What our users say"}
+          </h2>
+        </div>
+
+        {/* Desktop grid */}
+        <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-5">
+          {TESTIMONIALS.map((t) => <TestimonialCard key={t.name} t={t} />)}
+        </div>
+
+        {/* Mobile horizontal carousel */}
+        <div className="sm:hidden">
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4"
+            style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+          >
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name} className="flex-shrink-0 snap-start" style={{ width: "85vw" }}>
+                <TestimonialCard t={t} />
+              </div>
+            ))}
+          </div>
+          {/* Dots */}
+          <div className="flex justify-center gap-1.5 mt-3">
+            {TESTIMONIALS.map((_, i) => (
+              <div
+                key={i}
+                className={`rounded-full transition-all ${activeDot === i ? "bg-[var(--accent)]" : "bg-[var(--border)]"}`}
+                style={{ width: activeDot === i ? 16 : 8, height: 8 }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Trust row */}
+        <div className="mt-10 pt-8 border-t border-[var(--border)] flex flex-wrap justify-center gap-8">
+          {[
+            { stat: "4.8 ★", label: lang === "de" ? "Ø Bewertung" : "Avg. rating" },
+            { stat: "120+",  label: lang === "de" ? "Verifizierte Bewertungen" : "Verified reviews" },
+            { stat: "93%",   label: lang === "de" ? "Empfehlungsrate" : "Recommend rate" },
+          ].map((k) => (
+            <div key={k.stat} className="text-center">
+              <div className="font-sans text-[22px] font-bold text-[var(--accent)]">{k.stat}</div>
+              <div className="font-sans text-[12px] text-[var(--muted)] mt-0.5">{k.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Tab switcher section ────────────────────────────────────────────────────────
+
+function TabSwitcherSection({ lang }: { lang: string }) {
+  const [tab, setTab] = useState<"verkaufen" | "kaufen">("verkaufen");
+  const [catFilter, setCatFilter] = useState("Alle");
+  const [searchQ, setSearchQ] = useState("");
+
+  const filteredAnon = ANON_LISTINGS.filter((l) => {
+    if (catFilter !== "Alle" && l.cat !== catFilter) return false;
+    if (searchQ && !l.cat.toLowerCase().includes(searchQ.toLowerCase()) && !l.city.toLowerCase().includes(searchQ.toLowerCase())) return false;
+    return true;
+  });
+
+  return (
+    <section className="bg-white border-b border-[var(--border)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        {/* Tab toggles */}
+        <div className="flex justify-center mb-10">
+          <div className="flex bg-[var(--surface2)] rounded-xl p-1 gap-1">
+            {(["verkaufen", "kaufen"] as const).map((id) => (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                className={`font-sans font-semibold text-[14px] sm:text-[15px] px-5 sm:px-8 py-3 rounded-lg transition-all duration-200 ${
+                  tab === id
+                    ? "bg-[var(--accent)] text-white shadow-sm"
+                    : "text-[var(--muted)] hover:text-[var(--ink)]"
+                }`}
+              >
+                {id === "verkaufen"
+                  ? (lang === "de" ? "Ich möchte verkaufen" : "I want to sell")
+                  : (lang === "de" ? "Ich möchte kaufen"    : "I want to buy")}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* VERKAUFEN tab */}
+        {tab === "verkaufen" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div>
+              <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-2">
+                {lang === "de" ? "Für Unternehmer" : "For business owners"}
+              </p>
+              <h2 className="font-sans text-[26px] sm:text-[34px] font-bold text-[var(--ink)] tracking-tight leading-tight mb-4">
+                {lang === "de"
+                  ? "Verkaufen Sie Ihr Unternehmen — direkt, anonym, provisionsfrei."
+                  : "Sell your business — directly, anonymously, commission-free."}
+              </h2>
+              <p className="font-sans text-[15px] text-[var(--muted)] leading-relaxed mb-6">
+                {lang === "de"
+                  ? "Erreichen Sie über 1.000 vorgeprüfte Käufer im DACH-Raum. Keine Makler, keine Provision."
+                  : "Reach 1,000+ pre-screened buyers across DACH. No brokers, no commission."}
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+                {[
+                  { stat: "0%",      label: lang === "de" ? "Provision" : "Commission"        },
+                  { stat: "7 Tage",  label: lang === "de" ? "Markttest gratis" : "Free trial" },
+                  { stat: "1.000+",  label: lang === "de" ? "Aktive Käufer" : "Active buyers" },
+                  { stat: "100%",    label: lang === "de" ? "Anonym" : "Anonymous"             },
+                  { stat: "Ø 90d",   label: lang === "de" ? "Bis Erstangebot" : "To 1st offer"},
+                  { stat: "DSGVO",   label: lang === "de" ? "Konform" : "Compliant"            },
+                ].map((k) => (
+                  <div key={k.stat} className="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-3 text-center">
+                    <div className="font-sans text-[18px] font-bold text-[var(--accent)]">{k.stat}</div>
+                    <div className="font-sans text-[11px] text-[var(--muted)] mt-0.5">{k.label}</div>
+                  </div>
+                ))}
+              </div>
+              <Link
+                href="/sell"
+                className="inline-flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-bold px-7 py-4 rounded-xl hover:bg-[var(--accent-hover)] transition-colors text-[15px]"
+              >
+                {lang === "de" ? "Kostenlos inserieren →" : "List for free →"}
+              </Link>
+              <p className="font-sans text-[12px] text-[var(--muted)] mt-2">
+                {lang === "de" ? "7 Tage gratis · Keine Kreditkarte nötig" : "7 days free · No credit card required"}
+              </p>
+            </div>
+            <div className="hidden lg:block">
+              <div className="bg-[var(--surface2)] rounded-2xl p-6 space-y-3">
+                {[
+                  { step: lang === "de" ? "Inserat erstellen" : "Create listing", done: true },
+                  { step: lang === "de" ? "1.000+ Käufer benachrichtigt" : "1,000+ buyers notified", done: true },
+                  { step: lang === "de" ? "Anfragen direkt empfangen" : "Receive inquiries directly", done: true },
+                  { step: lang === "de" ? "Verkauf abschließen" : "Close the sale", done: false },
+                ].map((s, i) => (
+                  <div key={s.step} className="flex items-center gap-4 bg-white rounded-xl p-4 border border-[var(--border)] shadow-sm">
+                    <div className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-bold text-[13px] flex items-center justify-center flex-shrink-0">
+                      {i + 1}
+                    </div>
+                    <span className="font-sans text-[14px] text-[var(--ink)] font-medium flex-1">{s.step}</span>
+                    {s.done
+                      ? <span className="font-sans text-[11px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full whitespace-nowrap">{lang === "de" ? "Erledigt" : "Done"}</span>
+                      : <span className="font-sans text-[11px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full whitespace-nowrap">{lang === "de" ? "Ausstehend" : "Pending"}</span>
+                    }
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* KAUFEN tab */}
+        {tab === "kaufen" && (
+          <div>
+            <div className="text-center mb-8">
+              <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-2">
+                {lang === "de" ? "Für Investoren & Käufer" : "For investors & buyers"}
+              </p>
+              <h2 className="font-sans text-[26px] sm:text-[34px] font-bold text-[var(--ink)] tracking-tight leading-tight mb-3">
+                {lang === "de" ? "Finden Sie Ihr Traumunternehmen" : "Find your next acquisition"}
+              </h2>
+              <p className="font-sans text-[15px] text-[var(--muted)]">
+                {lang === "de"
+                  ? "Aktuelle Kaufgelegenheiten im DACH-Raum — direkt, ohne Makler."
+                  : "Live acquisition opportunities across DACH — direct, no broker."}
+              </p>
+            </div>
+
+            {/* Search */}
+            <div className="max-w-xl mx-auto mb-5">
+              <input
+                type="text"
+                value={searchQ}
+                onChange={(e) => setSearchQ(e.target.value)}
+                placeholder={lang === "de" ? "Branche oder Stadt suchen…" : "Search industry or city…"}
+                className="w-full px-4 py-3.5 border-2 border-[var(--border)] rounded-xl font-sans text-[15px] outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </div>
+
+            {/* Category pills */}
+            <div className="flex gap-2 overflow-x-auto pb-3 mb-6" style={{ scrollbarWidth: "none" }}>
+              {CAT_PILLS.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCatFilter(p)}
+                  className={`flex-shrink-0 font-sans text-[13px] font-medium px-4 py-2 rounded-full border transition-all ${
+                    catFilter === p
+                      ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                      : "bg-white text-[var(--muted)] border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            {/* Anonymous listing cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {filteredAnon.length === 0 ? (
+                <div className="col-span-full text-center py-10">
+                  <p className="font-sans text-[14px] text-[var(--muted)]">
+                    {lang === "de" ? "Keine Inserate gefunden." : "No listings found."}
+                  </p>
+                </div>
+              ) : filteredAnon.map((l) => (
+                <Link href="/listings" key={l.id} className="bg-white border border-[var(--border)] rounded-xl p-5 hover:border-[var(--accent)] hover:shadow-md transition-all flex flex-col">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-sans text-[11px] font-bold text-[var(--accent)] bg-[var(--accent-light)] px-2.5 py-1 rounded-full">
+                      {l.cat}
+                    </span>
+                    <span className="font-sans text-[11px] text-[var(--muted)]">Anonym</span>
+                  </div>
+                  <p className="font-sans text-[12px] text-[var(--muted)] mb-3">{l.city} · {l.years} {lang === "de" ? "Jahre" : "years"}</p>
+                  <div className="space-y-1.5 mb-4 flex-1">
+                    <div className="flex justify-between">
+                      <span className="font-sans text-[12px] text-[var(--muted)]">{lang === "de" ? "Umsatz" : "Revenue"}</span>
+                      <span className="font-sans text-[12px] font-semibold text-[var(--ink)]">{l.revenue}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-sans text-[12px] text-[var(--muted)]">EBITDA</span>
+                      <span className="font-sans text-[12px] font-semibold text-green-600">{l.ebitda}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-sans text-[12px] text-[var(--muted)]">{lang === "de" ? "Mitarbeiter" : "Employees"}</span>
+                      <span className="font-sans text-[12px] text-[var(--ink)]">{l.emp}</span>
+                    </div>
+                  </div>
+                  <div className="border-t border-[var(--border)] pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-sans text-[11px] text-[var(--muted)]">{lang === "de" ? "Kaufpreis" : "Asking price"}</span>
+                      <span className="font-sans text-[15px] font-bold text-[var(--ink)]">{l.price}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Buyer CTA */}
+            <div className="text-center">
+              <p className="font-sans text-[14px] text-[var(--muted)] mb-4">
+                {lang === "de"
+                  ? "Registrieren Sie sich kostenlos — erhalten Sie Zugang zu allen Inseraten inklusive direktem Verkäuferkontakt."
+                  : "Register for free — get access to all listings including direct seller contact."}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  href="/listings"
+                  className="inline-flex items-center justify-center gap-2 bg-[var(--accent)] text-white font-sans font-bold px-7 py-4 rounded-xl hover:bg-[var(--accent-hover)] transition-colors text-[15px]"
+                >
+                  {lang === "de" ? "Alle Inserate ansehen →" : "View all listings →"}
+                </Link>
+                <Link
+                  href="/auth"
+                  className="inline-flex items-center justify-center gap-2 border-2 border-[var(--accent)] text-[var(--accent)] font-sans font-bold px-7 py-4 rounded-xl hover:bg-[var(--accent-light)] transition-colors text-[15px]"
+                >
+                  {lang === "de" ? "Kostenlos registrieren" : "Register for free"}
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
@@ -547,7 +912,7 @@ export default function HomePage() {
               </div>
 
               {/* Rotating headline */}
-              <h1 className="font-sans font-bold text-white tracking-tight mb-6" style={{ fontSize: "clamp(34px, 5vw, 58px)", lineHeight: 1.08 }}>
+              <h1 className="hero-headline font-sans font-bold text-white tracking-tight mb-6" style={{ fontSize: "clamp(28px, 5vw, 58px)", lineHeight: 1.08 }}>
                 {lang === "de"
                   ? <>Den richtigen Käufer finden<br />für Ihre{" "}<span style={{ color: "#6dbf87" }}>{BIZ_TYPES[bizTypeIdx]}.</span></>
                   : <>Find the right buyer<br />for your{" "}<span style={{ color: "#6dbf87" }}>{BIZ_TYPES[bizTypeIdx]}.</span></>}
@@ -575,11 +940,11 @@ export default function HomePage() {
               </div>
 
               {/* CTAs */}
-              <div className="flex flex-wrap gap-4 items-center mb-8">
-                <Link href="/sell" className="font-sans font-bold text-white rounded-lg hover:opacity-90 transition-opacity" style={{ background: "#2d5a3d", padding: "14px 28px", fontSize: "16px", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}>
+              <div className="hero-cta-row flex flex-wrap gap-4 items-center mb-8">
+                <Link href="/sell" className="hero-cta-primary font-sans font-bold text-white rounded-lg hover:opacity-90 transition-opacity" style={{ background: "#2d5a3d", padding: "14px 28px", fontSize: "16px", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}>
                   {lang === "de" ? "Unternehmen inserieren" : "List your business"} →
                 </Link>
-                <a href="#listings" className="font-sans font-semibold text-white/80 hover:text-white transition-colors" style={{ fontSize: "16px" }}>
+                <a href="#listings" className="hero-cta-secondary font-sans font-semibold text-white/80 hover:text-white transition-colors" style={{ fontSize: "16px" }}>
                   {lang === "de" ? "Inserate durchsuchen" : "Browse listings"}
                 </a>
               </div>
@@ -630,6 +995,12 @@ export default function HomePage() {
           ))}
         </div>
       </div>
+
+      {/* ── TAB SWITCHER ─────────────────────────────────────────────────────── */}
+      <TabSwitcherSection lang={lang} />
+
+      {/* ── TESTIMONIALS ─────────────────────────────────────────────────────── */}
+      <TestimonialsSection lang={lang} />
 
       {/* ── MARKET LIQUIDITY ─────────────────────────────────────────────────── */}
       <MarketLiquidity lang={lang} />
