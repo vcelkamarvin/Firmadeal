@@ -414,34 +414,54 @@ input, select, textarea {
 /* Sticky navigation bar at bottom of each wizard step */
 @media (max-width: 768px) {
   .wizard-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: #ffffff;
-    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-    border-top: 1px solid var(--border);
-    z-index: 50;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: #ffffff !important;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom)) !important;
+    border-top: 1px solid #e5e5e5 !important;
+    z-index: 100 !important;
+    /* Reset any inline flex styles from JSX */
+    display: block !important;
   }
 
-  /* "Weiter" / next buttons: full-width, tall, easy tap */
+  /* Inner wrapper (back + next row) → stack vertically, next on top */
+  .wizard-nav > div {
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    justify-content: initial !important;
+  }
+
+  /* Next / Weiter button: full width, tall, easy tap */
   .wizard-nav-next {
     width: 100% !important;
     height: 56px !important;
     font-size: 18px !important;
     border-radius: 12px !important;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    justify-content: center !important;
+    padding: 0 !important;
     display: flex !important;
     align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
   }
 
-  /* Back link: readable but not obtrusive */
+  /* Back link: centered text, compact */
   .wizard-nav-back {
     font-size: 14px !important;
-    padding: 8px 0 !important;
-    display: inline-block !important;
+    padding: 6px 0 !important;
+    display: block !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+}
+
+/* Extra body padding so fixed nav doesn't cover last content */
+@media (max-width: 768px) {
+  .wizard-page-body {
+    padding-bottom: 120px !important;
   }
 }
 
@@ -452,12 +472,6 @@ input, select, textarea {
   }
 }
 
-/* Wizard sell page: extra bottom padding so sticky nav doesn't cover content */
-@media (max-width: 768px) {
-  .wizard-page-body {
-    padding-bottom: 100px !important;
-  }
-}
 
 /* ─── HOMEPAGE MOBILE FIXES ─────────────────────────────────────────────────── */
 

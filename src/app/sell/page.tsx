@@ -1183,7 +1183,7 @@ function Step4() {
         loadingPlan={loadingPlan}
       />
 
-      <div className="wizard-nav" style={{ justifyContent: "flex-start" }}>
+      <div className="wizard-nav">
         <button onClick={() => setStep(3)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
           ← {lang === "de" ? "Zurück" : "Back"}
         </button>
