@@ -689,14 +689,14 @@ function TabSwitcherSection({ lang }: { lang: string }) {
               </h2>
               <p className="font-sans text-[15px] text-[var(--muted)] leading-relaxed mb-6">
                 {lang === "de"
-                  ? "Erreichen Sie über 1.000 vorgeprüfte Käufer im DACH-Raum. Keine Makler, keine Provision."
-                  : "Reach 1,000+ pre-screened buyers across DACH. No brokers, no commission."}
+                  ? "Erreichen Sie über 16.000 vorgeprüfte Investoren im DACH-Raum. Keine Makler, keine Provision."
+                  : "Reach 16,000+ pre-screened investors across DACH. No brokers, no commission."}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
                 {[
                   { stat: "0%",      label: lang === "de" ? "Provision" : "Commission"        },
                   { stat: "7 Tage",  label: lang === "de" ? "Markttest gratis" : "Free trial" },
-                  { stat: "1.000+",  label: lang === "de" ? "Aktive Käufer" : "Active buyers" },
+                  { stat: "16.000+", label: lang === "de" ? "Aktive Investoren" : "Active investors" },
                   { stat: "100%",    label: lang === "de" ? "Anonym" : "Anonymous"             },
                   { stat: "Ø 90d",   label: lang === "de" ? "Bis Erstangebot" : "To 1st offer"},
                   { stat: "DSGVO",   label: lang === "de" ? "Konform" : "Compliant"            },
@@ -721,7 +721,7 @@ function TabSwitcherSection({ lang }: { lang: string }) {
               <div className="bg-[var(--surface2)] rounded-2xl p-6 space-y-3">
                 {[
                   { step: lang === "de" ? "Inserat erstellen" : "Create listing", done: true },
-                  { step: lang === "de" ? "1.000+ Käufer benachrichtigt" : "1,000+ buyers notified", done: true },
+                  { step: lang === "de" ? "16.000+ Investoren benachrichtigt" : "16,000+ investors notified", done: true },
                   { step: lang === "de" ? "Anfragen direkt empfangen" : "Receive inquiries directly", done: true },
                   { step: lang === "de" ? "Verkauf abschließen" : "Close the sale", done: false },
                 ].map((s, i) => (
@@ -982,11 +982,11 @@ export default function HomePage() {
       <div className="bg-[var(--ink)] overflow-hidden py-2.5">
         <div className="animate-marquee">
           {[...(lang === "de"
-            ? ["1.247 aktive Käufer", "0% Provision", "47 neue Inserate diese Woche", "DSGVO-konform", "€2,3 Mrd. Transaktionsvolumen", "Direkte Kommunikation", "Keine versteckten Kosten", "Sofort nach Zahlung live"]
-            : ["1,247 active buyers", "0% commission", "47 new listings this week", "GDPR compliant", "€2.3B in deal volume", "Direct communication", "No hidden costs", "Live instantly after payment"]
+            ? ["16.000+ aktive Investoren", "0% Provision", "47 neue Inserate diese Woche", "DSGVO-konform", "€2,3 Mrd. Transaktionsvolumen", "Direkte Kommunikation", "Keine versteckten Kosten", "Sofort nach Zahlung live"]
+            : ["16,000+ active investors", "0% commission", "47 new listings this week", "GDPR compliant", "€2.3B in deal volume", "Direct communication", "No hidden costs", "Live instantly after payment"]
           ), ...(lang === "de"
-            ? ["1.247 aktive Käufer", "0% Provision", "47 neue Inserate diese Woche", "DSGVO-konform", "€2,3 Mrd. Transaktionsvolumen", "Direkte Kommunikation", "Keine versteckten Kosten", "Sofort nach Zahlung live"]
-            : ["1,247 active buyers", "0% commission", "47 new listings this week", "GDPR compliant", "€2.3B in deal volume", "Direct communication", "No hidden costs", "Live instantly after payment"]
+            ? ["16.000+ aktive Investoren", "0% Provision", "47 neue Inserate diese Woche", "DSGVO-konform", "€2,3 Mrd. Transaktionsvolumen", "Direkte Kommunikation", "Keine versteckten Kosten", "Sofort nach Zahlung live"]
+            : ["16,000+ active investors", "0% commission", "47 new listings this week", "GDPR compliant", "€2.3B in deal volume", "Direct communication", "No hidden costs", "Live instantly after payment"]
           )].map((item, i) => (
             <span key={i} className="flex items-center gap-5 px-5 font-mono text-[11px] text-white/30 whitespace-nowrap">
               {item}

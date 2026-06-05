@@ -67,17 +67,17 @@ function SaleDurationBars() {
 // ── Buyer Types sidebar ───────────────────────────────────────────────────────
 
 const BUYERS = [
-  { icon: "🏢", label: "Private Equity & Family Offices", count: "847" },
-  { icon: "👤", label: "Unternehmer & MBI-Kandidaten",    count: "2.340" },
-  { icon: "🔍", label: "Search Funds & ETA",              count: "156" },
-  { icon: "🤝", label: "Strategische Käufer",             count: "1.203" },
+  { icon: "🏢", label: "Private Equity & Family Offices", count: "3.200" },
+  { icon: "👤", label: "Unternehmer & MBI-Kandidaten",    count: "8.900" },
+  { icon: "🔍", label: "Search Funds & ETA",              count: "620" },
+  { icon: "🤝", label: "Strategische Käufer",             count: "3.280" },
 ];
 
 // ── Monthly features ──────────────────────────────────────────────────────────
 
 const MONTHLY_FEATURES = [
   "Listing sichtbar im Marktplatz",
-  "500 aktive Käufer/Monat kontaktieren Sie direkt",
+  "2.000 aktive Käufer/Monat kontaktieren Sie direkt",
   "Anonymes Inserat — Daten bleiben geschützt",
   "Automatische Unternehmensbewertung",
   "7-Tage Markttest-Bericht",
@@ -86,7 +86,7 @@ const MONTHLY_FEATURES = [
 
 const YEARLY_BASE = [
   "Listing sichtbar im Marktplatz",
-  "1.000 Käufer/Monat — 2× mehr als Monatsplan",
+  "4.000 Käufer/Monat — 2× mehr als Monatsplan",
   "Anonymes Inserat — Daten bleiben geschützt",
   "Automatische Unternehmensbewertung",
   "7-Tage Markttest-Bericht",
@@ -95,7 +95,7 @@ const YEARLY_BASE = [
 ];
 
 const YEARLY_EXCLUSIVE = [
-  "Wöchentlicher Newsletter an 8.000+ aktive Investoren",
+  "Wöchentlicher Newsletter an 16.000+ aktive Investoren",
   "Direktes Käufer-Matching nach Branche, Region & Größe — wir leiten Ihr Inserat aktiv an PE-Fonds, Unternehmer und strategische Käufer weiter",
 ];
 
@@ -253,7 +253,7 @@ export default function PricingPage() {
 
             {/* Green pills */}
             <div className="flex flex-wrap gap-1.5 mb-4">
-              {["1.000 Käufer/Monat", "Ø 60–120 Tage", "0% Provision"].map((p) => (
+              {["4.000 Käufer/Monat", "Ø 60–120 Tage", "0% Provision"].map((p) => (
                 <span key={p} className="font-sans text-[10px] font-bold px-2.5 py-1 rounded-full text-white" style={{ background: "#1A5C3A" }}>
                   {p}
                 </span>

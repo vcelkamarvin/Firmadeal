@@ -11,7 +11,7 @@ interface PricingCardsProps {
 
 const MONTHLY_FEATURES = [
   "Listing sichtbar im Marktplatz",
-  "500 aktive Käufer/Monat kontaktieren Sie direkt",
+  "2.000 aktive Käufer/Monat kontaktieren Sie direkt",
   "Anonymes Inserat — Ihre Daten bleiben geschützt",
   "Automatische Unternehmensbewertung",
   "7-Tage Markttest-Bericht",
@@ -20,7 +20,7 @@ const MONTHLY_FEATURES = [
 
 const YEARLY_BASE = [
   "Listing sichtbar im Marktplatz",
-  "1.000 aktive Käufer/Monat — 2× mehr als Monatsplan",
+  "4.000 aktive Käufer/Monat — 2× mehr als Monatsplan",
   "Anonymes Inserat — Ihre Daten bleiben geschützt",
   "Automatische Unternehmensbewertung",
   "7-Tage Markttest-Bericht",
@@ -29,7 +29,7 @@ const YEARLY_BASE = [
 ];
 
 const YEARLY_EXCLUSIVE = [
-  "Wöchentlicher Newsletter an 8.000+ aktive Investoren",
+  "Wöchentlicher Newsletter an 16.000+ aktive Investoren",
   "Direktes Matching mit verifizierten Käufern in Ihrer Branche und Region — wir leiten Ihr Inserat aktiv an passende Investoren, PE-Fonds und Unternehmer im DACH-Raum weiter",
 ];
 
@@ -108,7 +108,7 @@ export default function PricingCards({ onSelectPlan, loadingPlan }: PricingCards
 
         {/* Stats pills — gray */}
         <div className="flex flex-wrap gap-1.5 mb-5">
-          {["500 Käufer/Monat", "Ø 90–180 Tage", "0% Provision"].map((p) => (
+          {["2.000 Käufer/Monat", "Ø 90–180 Tage", "0% Provision"].map((p) => (
             <span key={p} className="font-sans text-[11px] font-medium text-[var(--muted)] bg-[var(--surface2)] border border-[var(--border)] px-2.5 py-1 rounded-full">
               {p}
             </span>
@@ -182,7 +182,7 @@ export default function PricingCards({ onSelectPlan, loadingPlan }: PricingCards
 
         {/* Stats pills — green */}
         <div className="flex flex-wrap gap-1.5 mb-6">
-          {["1.000 Käufer/Monat", "Ø 60–120 Tage", "0% Provision"].map((p) => (
+          {["4.000 Käufer/Monat", "Ø 60–120 Tage", "0% Provision"].map((p) => (
             <span
               key={p}
               className="font-sans text-[11px] font-bold px-3 py-1.5 rounded-full text-white"

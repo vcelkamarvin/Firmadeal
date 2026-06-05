@@ -1038,14 +1038,14 @@ function Step3() {
 // ── Step 4 ────────────────────────────────────────────────────────────────────
 
 const INVESTORS_BY_CATEGORY: Record<string, number> = {
-  "Gastronomie & Lebensmittel": 847,
-  "IT & Software":              1203,
-  "Handwerk & Bau":             634,
-  "Gesundheit & Pflege":        921,
-  "E-Commerce & Retail":        1089,
-  "Produktion & Industrie":     412,
-  "Immobilien":                 756,
-  "Dienstleistungen":           538,
+  "Gastronomie & Lebensmittel": 2100,
+  "IT & Software":              3000,
+  "Handwerk & Bau":             1600,
+  "Gesundheit & Pflege":        2300,
+  "E-Commerce & Retail":        2700,
+  "Produktion & Industrie":     1000,
+  "Immobilien":                 1900,
+  "Dienstleistungen":           1400,
 };
 
 function Step4() {
@@ -1059,7 +1059,7 @@ function Step4() {
     try { setSavedPromo(localStorage.getItem("firmadeal_promo")); } catch {}
   }, []);
 
-  const investorCount = INVESTORS_BY_CATEGORY[data.category] ?? 1200;
+  const investorCount = INVESTORS_BY_CATEGORY[data.category] ?? 3200;
   const categoryLabel = data.category || "DACH";
 
   const handleSelectPlan = async (planId: "monthly" | "yearly") => {

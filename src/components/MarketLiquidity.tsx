@@ -38,7 +38,7 @@ const STATS = [
   { raw: TOTAL_LISTINGS, format: (n: number) => n.toString(),           label: "Aktive Inserate",          labelEn: "Active listings",         sub: "auf dem Marktplatz",       subEn: "on the marketplace"    },
   { raw: 8874,           format: (n: number) => n.toLocaleString("de"), label: "Plattform-Besucher/Monat", labelEn: "Platform visitors/month", sub: "Mai 2026",                  subEn: "May 2026"              },
   { raw: 319,            format: (n: number) => n.toString(),           label: "Angebote/Monat",           labelEn: "Offers/month",           sub: "eingereichte Kaufangebote", subEn: "submitted bids"        },
-  { raw: 4102,           format: (n: number) => n.toLocaleString("de"), label: "Verifizierte Käufer",      labelEn: "Verified buyers",        sub: "aktiv suchend",            subEn: "actively searching"    },
+  { raw: 16000,          format: (n: number) => n.toLocaleString("de"), label: "Aktive Investoren",        labelEn: "Active investors",       sub: "aktiv suchend",            subEn: "actively searching"    },
 ];
 
 const METRICS = [
