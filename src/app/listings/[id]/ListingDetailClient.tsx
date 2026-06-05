@@ -267,7 +267,7 @@ export default function ListingDetailClient() {
                       }`}
                       style={{ width: 100, height: 70 }}
                     >
-                      <Image src={img} alt="" fill className="object-cover" sizes="100px" />
+                      <Image src={img} alt={`${listing.title} — Foto ${i + 1}`} fill loading="lazy" className="object-cover" sizes="100px" />
                     </button>
                   ))}
                 </div>

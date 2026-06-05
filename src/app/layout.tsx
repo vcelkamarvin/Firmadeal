@@ -14,39 +14,57 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Firmadeal.de – Unternehmen kaufen & verkaufen im DACH-Raum",
-    template: "%s | Firmadeal",
+    default: "Firmadeal.de — Unternehmen verkaufen ohne Makler",
+    template: "%s | Firmadeal.de",
   },
   description:
-    "Der direkte Marktplatz für Unternehmensverkäufe in Deutschland, Österreich und der Schweiz. 60+ Inserate. 0% Provision. Direkt vom Eigentümer. Jetzt 7 Tage kostenlos inserieren.",
+    "Der DACH-Marktplatz für Unternehmensverkäufe. Verkaufen Sie Ihre Firma direkt an Käufer — 0% Provision, anonym, sofort live. 7 Tage kostenlos.",
   keywords: [
-    "Unternehmensverkauf",
-    "Firmenkauf",
-    "Unternehmen kaufen",
-    "Unternehmen verkaufen",
-    "Firma kaufen",
     "Firma verkaufen",
-    "Unternehmensmarktplatz",
-    "Unternehmensnachfolge",
-    "Betriebsübergabe",
-    "DACH",
-    "Deutschland",
-    "Österreich",
-    "Schweiz",
-    "Nachfolge",
-    "Unternehmenstransaktion",
-    "Firmenverkauf",
+    "Unternehmen verkaufen",
+    "Unternehmensverkauf ohne Makler",
+    "Firma verkaufen Deutschland",
+    "Betrieb verkaufen",
+    "Nachfolger finden",
+    "Unternehmensübertragung",
+    "Firma verkaufen Bayern",
+    "Unternehmen kaufen Deutschland",
+    "Firmadeal",
     "GmbH verkaufen",
     "Mittelstand verkaufen",
+    "Unternehmensnachfolge",
+    "Betriebsübergabe",
   ],
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   openGraph: {
-    title: "Firmadeal.de – Unternehmen kaufen & verkaufen in Deutschland",
-    description:
-      "60+ Inserate. 0% Provision. Direkt vom Eigentümer.",
+    title: "Firmadeal.de — Unternehmen verkaufen ohne Makler",
+    description: "0% Provision. Anonym. Direkt an Käufer. 7 Tage kostenlos testen.",
+    url: "https://www.firmadeal.de",
+    siteName: "Firmadeal.de",
     locale: "de_DE",
-    type:   "website",
-    url:    "https://www.firmadeal.de",
+    type: "website",
+    images: [{
+      url: "https://www.firmadeal.de/opengraph-image.png",
+      width: 1200,
+      height: 630,
+      alt: "Firmadeal — Unternehmen verkaufen ohne Makler",
+    }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Firmadeal.de — Unternehmen verkaufen ohne Makler",
+    description: "0% Provision. Anonym. 7 Tage kostenlos.",
+    images: ["https://www.firmadeal.de/opengraph-image.png"],
   },
   alternates: { canonical: "https://www.firmadeal.de" },
   icons: {
@@ -61,18 +79,42 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Firmadeal.de",
+    url: "https://www.firmadeal.de",
+    description: "DACH-Marktplatz für Unternehmensverkäufe",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://www.firmadeal.de/listings?q={search_term}",
+      "query-input": "required name=search_term",
+    },
+  };
+
   const orgJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Firmadeal.de",
     url: "https://www.firmadeal.de",
+    logo: "https://www.firmadeal.de/logo.png",
     description: "Unternehmensmarktplatz für den DACH-Raum — Unternehmen kaufen und verkaufen ohne Provision.",
+    contactPoint: {
+      "@type": "ContactPoint",
+      email: "info@firmadeal.de",
+      contactType: "customer service",
+      availableLanguage: "German",
+    },
     areaServed: ["DE", "AT", "CH"],
   };
 
   return (
     <html lang="de">
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}

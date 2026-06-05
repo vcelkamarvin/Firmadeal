@@ -47,8 +47,9 @@ export default function ListingGridCard({ listing }: ListingGridCardProps) {
       <div className="relative" style={{ height: 220, flexShrink: 0 }}>
         <Image
           src={heroSrc}
-          alt={listing.title}
+          alt={`${listing.title} — Firmeninserat auf Firmadeal`}
           fill
+          loading="lazy"
           className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
         />

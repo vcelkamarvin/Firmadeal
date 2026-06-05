@@ -876,7 +876,7 @@ function Step2() {
             <div className="grid grid-cols-4 sm:grid-cols-4 gap-2 mt-3">
               {imageUrls.map((url, i) => url ? (
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-[var(--surface2)]">
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <img src={url} alt="Hochgeladenes Foto für das Firmeninserat" loading="lazy" className="w-full h-full object-cover" />
                   {/* Green checkmark overlay */}
                   <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
                     <Check size={10} className="text-white" />

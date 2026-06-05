@@ -54,9 +54,10 @@ export default function ListingCard({ listing }: ListingCardProps) {
         {listing.images?.[0] ? (
           <Image
             src={listing.images[0]}
-            alt=""
+            alt={`${listing.title} — Firmeninserat auf Firmadeal`}
             width={56}
             height={56}
+            loading="lazy"
             className="w-full h-full object-cover"
           />
         ) : (
