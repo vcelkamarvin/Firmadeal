@@ -998,11 +998,11 @@ export default function HomePage() {
       {/* ── TAB SWITCHER ─────────────────────────────────────────────────────── */}
       <TabSwitcherSection lang={lang} />
 
-      {/* ── TESTIMONIALS ─────────────────────────────────────────────────────── */}
-      <TestimonialsSection lang={lang} />
-
       {/* ── INLINE CATALOG ───────────────────────────────────────────────────── */}
       <InlineCatalog lang={lang} />
+
+      {/* ── TESTIMONIALS ─────────────────────────────────────────────────────── */}
+      <TestimonialsSection lang={lang} />
 
       {/* ── SALE TIMELINE ────────────────────────────────────────────────────── */}
       <SaleTimelineSection lang={lang} />
