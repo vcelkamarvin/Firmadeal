@@ -28,6 +28,8 @@ export default function Navbar() {
     router.push("/sell");
   };
 
+  const isSellPage = pathname === "/sell";
+
   return (
     <>
       {/* ── NAVBAR ── */}
@@ -59,50 +61,65 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop nav links */}
-        <div className="desktop-only" style={{ display: "flex", gap: 24, alignItems: "center" }}>
-          <Link href="/listings" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Inserate</Link>
-          <Link href="/pricing"  style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Preise</Link>
-          <Link href="/blog"     style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Blog</Link>
-          <Link href="/dashboard" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Dashboard</Link>
-        </div>
-
-        {/* Inserieren CTA — always visible */}
-        <Link href="/sell" style={{
-          background: "#1a3329", color: "white",
-          padding: "0 16px", height: 38, borderRadius: 8,
-          fontSize: 14, fontWeight: 600, textDecoration: "none",
-          display: "flex", alignItems: "center", whiteSpace: "nowrap", flexShrink: 0,
-        }}>
-          Inserieren
-        </Link>
-
-        {/* Hamburger — mobile only */}
-        <button
-          className="mobile-only"
-          onClick={() => setMenuOpen(v => !v)}
-          style={{
-            background: "none", border: "none", cursor: "pointer",
-            width: 40, height: 40, display: "flex",
-            alignItems: "center", justifyContent: "center",
-            borderRadius: 8, flexShrink: 0, color: "#333",
-          }}
-          aria-label={menuOpen ? "Menü schließen" : "Menü öffnen"}
-        >
-          {menuOpen ? (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M4 4L16 16M16 4L4 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        {isSellPage ? (
+          /* Funnel mode — only show a subtle exit link */
+          <Link href="/" style={{
+            fontSize: 13, color: "#999", textDecoration: "none",
+            display: "flex", alignItems: "center", gap: 5, flexShrink: 0,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M8.5 2L3.5 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          )}
-        </button>
+            Abbrechen
+          </Link>
+        ) : (
+          <>
+            {/* Desktop nav links */}
+            <div className="desktop-only" style={{ display: "flex", gap: 24, alignItems: "center" }}>
+              <Link href="/listings" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Inserate</Link>
+              <Link href="/pricing"  style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Preise</Link>
+              <Link href="/blog"     style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Blog</Link>
+              <Link href="/dashboard" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Dashboard</Link>
+            </div>
+
+            {/* Inserieren CTA */}
+            <Link href="/sell" style={{
+              background: "#1a3329", color: "white",
+              padding: "0 16px", height: 38, borderRadius: 8,
+              fontSize: 14, fontWeight: 600, textDecoration: "none",
+              display: "flex", alignItems: "center", whiteSpace: "nowrap", flexShrink: 0,
+            }}>
+              Inserieren
+            </Link>
+
+            {/* Hamburger — mobile only */}
+            <button
+              className="mobile-only"
+              onClick={() => setMenuOpen(v => !v)}
+              style={{
+                background: "none", border: "none", cursor: "pointer",
+                width: 40, height: 40, display: "flex",
+                alignItems: "center", justifyContent: "center",
+                borderRadius: 8, flexShrink: 0, color: "#333",
+              }}
+              aria-label={menuOpen ? "Menü schließen" : "Menü öffnen"}
+            >
+              {menuOpen ? (
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M4 4L16 16M16 4L4 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M3 6h14M3 10h14M3 14h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              )}
+            </button>
+          </>
+        )}
       </nav>
 
       {/* ── MOBILE MENU OVERLAY ── */}
-      {menuOpen && (
+      {!isSellPage && menuOpen && (
         <div
           className="mobile-only"
           style={{
