@@ -13,7 +13,6 @@ import Link from "next/link";
 import type { BusinessStatus } from "@/lib/types";
 import ValuationCalculator from "@/components/ValuationCalculator";
 import SaleTimelineSection from "@/components/SaleTimelineSection";
-import MarketLiquidity from "@/components/MarketLiquidity";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -1001,9 +1000,6 @@ export default function HomePage() {
 
       {/* ── TESTIMONIALS ─────────────────────────────────────────────────────── */}
       <TestimonialsSection lang={lang} />
-
-      {/* ── MARKET LIQUIDITY ─────────────────────────────────────────────────── */}
-      <MarketLiquidity lang={lang} />
 
       {/* ── INLINE CATALOG ───────────────────────────────────────────────────── */}
       <InlineCatalog lang={lang} />

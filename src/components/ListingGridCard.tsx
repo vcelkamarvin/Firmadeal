@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Listing } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
 import { MapPin } from "lucide-react";
@@ -20,7 +20,6 @@ function fmt(n: number): string {
 
 export default function ListingGridCard({ listing }: ListingGridCardProps) {
   const { lang } = useLanguage();
-  const router = useRouter();
 
   const margin = listing.ebitda && listing.annual_revenue && listing.annual_revenue > 0
     ? Math.round((listing.ebitda / listing.annual_revenue) * 100)
@@ -39,9 +38,10 @@ export default function ListingGridCard({ listing }: ListingGridCardProps) {
     ?? `https://picsum.photos/seed/${listing.id.slice(0, 8)}/800/600`;
 
   return (
-    <div
-      onClick={() => router.push(`/listings/${listing.id}`)}
-      className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:-translate-y-1 flex flex-col"
+    <Link
+      href={`/listings/${listing.id}`}
+      className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:-translate-y-1 flex flex-col no-underline"
+      style={{ textDecoration: "none", color: "inherit" }}
     >
       {/* Photo */}
       <div className="relative" style={{ height: 220, flexShrink: 0 }}>
@@ -129,13 +129,12 @@ export default function ListingGridCard({ listing }: ListingGridCardProps) {
         )}
 
         {/* CTA button */}
-        <button
-          type="button"
-          className="mt-auto w-full h-10 border border-[var(--green-700)] text-[var(--green-700)] font-sans text-[14px] font-medium rounded-lg hover:bg-[var(--green-700)] hover:text-white transition-all duration-150"
+        <div
+          className="mt-auto w-full h-10 border border-[var(--green-700)] text-[var(--green-700)] font-sans text-[14px] font-medium rounded-lg hover:bg-[var(--green-700)] hover:text-white transition-all duration-150 flex items-center justify-center"
         >
           {lang === "de" ? "Details ansehen →" : "View details →"}
-        </button>
+        </div>
       </div>
-    </div>
+    </Link>
   );
 }

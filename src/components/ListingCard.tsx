@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Listing } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -33,7 +33,6 @@ const STATUS_LABEL: Record<string, { de: string; en: string }> = {
 
 export default function ListingCard({ listing }: ListingCardProps) {
   const { lang } = useLanguage();
-  const router = useRouter();
 
   const margin = listing.ebitda && listing.annual_revenue && listing.annual_revenue > 0
     ? Math.round((listing.ebitda / listing.annual_revenue) * 100)
@@ -42,10 +41,10 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const statusLabel = STATUS_LABEL[listing.status_business]?.[lang] ?? listing.status_business;
 
   return (
-    <div
-      onClick={() => router.push(`/listings/${listing.id}`)}
+    <Link
+      href={`/listings/${listing.id}`}
       className="relative flex items-center gap-4 px-5 py-4 border-b border-[var(--border)] cursor-pointer transition-all group hover:bg-[var(--accent-light)]"
-      style={{ minHeight: 88 }}
+      style={{ minHeight: 88, textDecoration: "none", color: "inherit", display: "flex" }}
     >
       {/* Left hover accent bar */}
       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[var(--green-700)] opacity-0 group-hover:opacity-100 transition-opacity rounded-r-sm" />
@@ -149,6 +148,6 @@ export default function ListingCard({ listing }: ListingCardProps) {
           <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </div>
-    </div>
+    </Link>
   );
 }
