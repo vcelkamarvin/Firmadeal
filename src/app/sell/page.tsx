@@ -287,7 +287,7 @@ const OPERATION_TYPES: Array<{
 function Step1() {
   const { data, updateData, setStep } = useWizard();
   const { lang } = useLanguage();
-  const canProceed = data.type_of_operation && data.category && data.city;
+  const canProceed = true;
 
   return (
     <div>
@@ -300,7 +300,7 @@ function Step1() {
 
       <div className="mb-8">
         <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">
-          {lang === "de" ? "Art der Transaktion *" : "Transaction type *"}
+          {lang === "de" ? "Art der Transaktion" : "Transaction type"}
         </label>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {OPERATION_TYPES.map((op) => (
@@ -324,7 +324,7 @@ function Step1() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
         <div>
           <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-            {lang === "de" ? "Branche *" : "Industry *"}
+            {lang === "de" ? "Branche" : "Industry"}
           </label>
           <select
             value={data.category}
@@ -338,7 +338,7 @@ function Step1() {
 
         <div>
           <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-            {lang === "de" ? "Stadt *" : "City *"}
+            {lang === "de" ? "Stadt" : "City"}
           </label>
           <input
             type="text"
@@ -462,8 +462,7 @@ function Step2() {
     return () => { urls.forEach((u) => { if (u) URL.revokeObjectURL(u); }); };
   }, [data.images]);
 
-  // Only require: non-empty title, non-empty description, status selected
-  const canProceed = (data.title?.trim().length ?? 0) > 0 && (data.description?.trim().length ?? 0) > 0 && data.status_business !== "";
+  const canProceed = true;
 
   const toggleChip = (field: "business_model_chips" | "competition_chips", val: string) => {
     const arr = data[field] as string[];
@@ -525,7 +524,7 @@ function Step2() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide">
-                  Inseratstitel *
+                  Inseratstitel
                 </label>
                 <span className="hidden sm:inline font-mono text-[11px] text-[var(--muted)]">{len}/80</span>
               </div>
@@ -567,7 +566,7 @@ function Step2() {
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide">
-              Unternehmensbeschreibung *
+              Unternehmensbeschreibung
             </label>
             <span className="hidden sm:inline font-sans text-[11px] text-[var(--muted)]">
               {wordCount} Wörter · {data.description.length} Zeichen
@@ -677,7 +676,7 @@ function Step2() {
         {/* 6. Status radio pills */}
         <div>
           <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">
-            Unternehmensstatus *
+            Unternehmensstatus
           </label>
           <div className="flex flex-col sm:flex-row flex-wrap gap-3">
             {STATUS_PILLS.map((s) => {
