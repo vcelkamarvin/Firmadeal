@@ -408,3 +408,54 @@ input, select, textarea {
 .animate-float-badge {
   animation: float-badge 2.5s ease-in-out infinite;
 }
+
+/* ─── SELL WIZARD MOBILE FIXES ──────────────────────────────────────────────── */
+
+/* Sticky navigation bar at bottom of each wizard step */
+@media (max-width: 768px) {
+  .wizard-nav {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+    box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.08);
+    z-index: 50;
+    margin-top: 20px;
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+
+  /* "Weiter" / next buttons: full-width, tall, easy tap */
+  .wizard-nav-next {
+    width: 100% !important;
+    height: 56px !important;
+    font-size: 18px !important;
+    border-radius: 12px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    justify-content: center !important;
+  }
+
+  /* Back link: readable but not obtrusive */
+  .wizard-nav-back {
+    font-size: 14px !important;
+    padding: 8px 0 !important;
+    display: inline-block !important;
+  }
+}
+
+/* Operation type grid: 1 column on very small screens */
+@media (max-width: 400px) {
+  .wizard-op-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Wizard sell page: extra bottom padding so sticky nav doesn't cover content */
+@media (max-width: 768px) {
+  .wizard-page-body {
+    padding-bottom: 100px !important;
+  }
+}

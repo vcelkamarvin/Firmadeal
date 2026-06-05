@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Check, ChevronRight, Upload, X } from "lucide-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { useLanguage } from "@/context/LanguageContext";
@@ -217,8 +217,8 @@ function ProgressBar({ step }: { step: number }) {
     : ["Your Business",   "Listing & Financials", "Review",          "Visibility"];
 
   return (
-    <div className="mb-10">
-      {/* Fill bar */}
+    <div className="mb-8">
+      {/* Fill bar — always visible */}
       <div style={{ height: "4px", background: "#e5e5e5", borderRadius: "2px", marginBottom: "10px" }}>
         <div style={{
           height: "100%",
@@ -228,32 +228,43 @@ function ProgressBar({ step }: { step: number }) {
           transition: "width 0.4s ease",
         }} />
       </div>
-      <p className="font-sans text-[13px] text-[var(--muted)] mb-6">
-        {lang === "de" ? `Schritt ${step} von 4` : `Step ${step} of 4`}
+
+      {/* Mobile: simple text only */}
+      <p className="sm:hidden font-sans text-[14px] text-[var(--muted)] mb-4">
+        {lang === "de"
+          ? `Schritt ${step} von 4 — ${steps[step - 1]}`
+          : `Step ${step} of 4 — ${steps[step - 1]}`}
       </p>
-      <div className="flex items-center">
-        {steps.map((label, i) => {
-          const idx = i + 1;
-          const done = step > idx;
-          const active = step === idx;
-          return (
-            <div key={label} className="flex items-center flex-1 last:flex-none">
-              <div className="flex flex-col items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-sans font-semibold transition-all ${
-                  done ? "bg-[var(--green)] text-white" : active ? "bg-[var(--accent)] text-white" : "bg-[var(--surface2)] text-[var(--muted)] border border-[var(--border)]"
-                }`}>
-                  {done ? <Check size={14} /> : idx}
+
+      {/* Desktop: step circles */}
+      <div className="hidden sm:block">
+        <p className="font-sans text-[13px] text-[var(--muted)] mb-6">
+          {lang === "de" ? `Schritt ${step} von 4` : `Step ${step} of 4`}
+        </p>
+        <div className="flex items-center">
+          {steps.map((label, i) => {
+            const idx = i + 1;
+            const done = step > idx;
+            const active = step === idx;
+            return (
+              <div key={label} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-sans font-semibold transition-all ${
+                    done ? "bg-[var(--green)] text-white" : active ? "bg-[var(--accent)] text-white" : "bg-[var(--surface2)] text-[var(--muted)] border border-[var(--border)]"
+                  }`}>
+                    {done ? <Check size={14} /> : idx}
+                  </div>
+                  <span className={`font-sans text-[10px] mt-1.5 text-center ${active ? "text-[var(--accent)]" : "text-[var(--muted)]"}`}>
+                    {label}
+                  </span>
                 </div>
-                <span className={`font-sans text-[10px] mt-1.5 hidden sm:block text-center ${active ? "text-[var(--accent)]" : "text-[var(--muted)]"}`}>
-                  {label}
-                </span>
+                {i < steps.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-2 transition-all ${step > idx ? "bg-[var(--green)]" : "bg-[var(--border)]"}`} />
+                )}
               </div>
-              {i < steps.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-2 transition-all ${step > idx ? "bg-[var(--green)]" : "bg-[var(--border)]"}`} />
-              )}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -395,11 +406,11 @@ function Step1() {
         </div>
       </div>
 
-      <div className="flex justify-end mt-8">
+      <div className="wizard-nav">
         <button
           onClick={() => setStep(2)}
           disabled={!canProceed}
-          className="flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {lang === "de" ? "Weiter" : "Continue"}
           <ChevronRight size={16} />
@@ -439,9 +450,10 @@ function Step2() {
   const { data, updateData, setStep } = useWizard();
   const [dragOver, setDragOver] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const uploadRef = useRef<HTMLInputElement>(null);
 
   // Create object URLs once when images array changes; revoke old ones to prevent memory leaks.
-  // Never call URL.createObjectURL() inline in JSX — it runs on every render.
   useEffect(() => {
     const urls = data.images.map((f) => {
       try { return URL.createObjectURL(f); } catch { return ""; }
@@ -450,7 +462,8 @@ function Step2() {
     return () => { urls.forEach((u) => { if (u) URL.revokeObjectURL(u); }); };
   }, [data.images]);
 
-  const canProceed = (data.title?.length ?? 0) >= 10 && (data.description?.length ?? 0) >= 100 && data.status_business !== "";
+  // Only require: non-empty title, non-empty description, status selected
+  const canProceed = (data.title?.trim().length ?? 0) > 0 && (data.description?.trim().length ?? 0) > 0 && data.status_business !== "";
 
   const toggleChip = (field: "business_model_chips" | "competition_chips", val: string) => {
     const arr = data[field] as string[];
@@ -465,14 +478,24 @@ function Step2() {
   const handleImageDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);
-    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
-    updateData({ images: [...data.images, ...files].slice(0, 8) });
+    const MAX_SIZE = 10 * 1024 * 1024;
+    const files = Array.from(e.dataTransfer.files).filter((f) => {
+      if (!f.type.startsWith("image/")) return false;
+      if (f.size > MAX_SIZE) { setUploadError(`"${f.name}" ist zu groß (max. 10 MB)`); return false; }
+      return true;
+    });
+    if (files.length > 0) { setUploadError(null); updateData({ images: [...data.images, ...files].slice(0, 10) }); }
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      updateData({ images: [...data.images, ...Array.from(e.target.files)].slice(0, 8) });
-    }
+    if (!e.target.files) return;
+    const MAX_SIZE = 10 * 1024 * 1024;
+    const oversized = Array.from(e.target.files).find((f) => f.size > MAX_SIZE);
+    if (oversized) { setUploadError(`"${oversized.name}" ist zu groß (max. 10 MB)`); return; }
+    setUploadError(null);
+    updateData({ images: [...data.images, ...Array.from(e.target.files)].slice(0, 10) });
+    // Reset input so the same file can be re-selected after removal
+    e.target.value = "";
   };
 
   const wordCount = (data.description ?? "").trim().split(/\s+/).filter(Boolean).length;
@@ -491,7 +514,6 @@ function Step2() {
         {/* 1. Title */}
         {(() => {
           const len = data.title.length;
-          const quality = len === 0 ? null : len < 20 ? { label: "Zu kurz", color: "#dc2626" } : len < 40 ? { label: "Detail ergänzen", color: "#d97706" } : len <= 70 ? { label: "✓ Guter Titel", color: "#2d5a3d" } : { label: "Etwas zu lang", color: "#d97706" };
           const EXAMPLE_CHIPS = [
             "Etabliertes Restaurant mit Biergarten — 15 Jahre",
             "E-Commerce-Shop mit 50k Besuchern/Monat",
@@ -505,14 +527,7 @@ function Step2() {
                 <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide">
                   Inseratstitel *
                 </label>
-                <div className="flex items-center gap-2">
-                  {quality && (
-                    <span className="font-sans text-[11px] font-semibold" style={{ color: quality.color }}>
-                      {quality.label}
-                    </span>
-                  )}
-                  <span className="font-mono text-[11px] text-[var(--muted)]">{len}/80</span>
-                </div>
+                <span className="hidden sm:inline font-mono text-[11px] text-[var(--muted)]">{len}/80</span>
               </div>
               <p className="font-sans text-[11px] text-[var(--muted)] mb-2">
                 Struktur: <strong>Was</strong> — <strong>USP</strong> — <strong>Standort</strong>
@@ -524,10 +539,10 @@ function Step2() {
                 placeholder="z.B. Etabliertes Restaurant mit Biergarten — 15 Jahre — München"
                 className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)]"
               />
-              {/* Quality bar */}
+              {/* Fill bar — neutral green progress */}
               {len > 0 && (
-                <div className="h-1 rounded-full mt-1.5 transition-all" style={{
-                  background: `linear-gradient(to right, ${quality?.color ?? "#e5e5e5"} ${Math.min(100, (len / 70) * 100)}%, #e5e5e5 ${Math.min(100, (len / 70) * 100)}%)`,
+                <div className="h-1 rounded-full mt-1.5 transition-all hidden sm:block" style={{
+                  background: `linear-gradient(to right, #4e9a66 ${Math.min(100, (len / 70) * 100)}%, #e5e5e5 ${Math.min(100, (len / 70) * 100)}%)`,
                 }} />
               )}
               {/* Example chips */}
@@ -554,7 +569,7 @@ function Step2() {
             <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide">
               Unternehmensbeschreibung *
             </label>
-            <span className={`font-sans text-[11px] ${data.description.length < 100 ? "text-amber-600" : "text-[var(--green)]"}`}>
+            <span className="hidden sm:inline font-sans text-[11px] text-[var(--muted)]">
               {wordCount} Wörter · {data.description.length} Zeichen
             </span>
           </div>
@@ -562,7 +577,7 @@ function Step2() {
             value={data.description}
             onChange={(e) => updateData({ description: e.target.value })}
             rows={5}
-            placeholder={"Beispiel: Gut etabliertes Familienrestaurant mit 15 Jahren Geschichte im Herzen von München. Stammkundschaft von 300+ Haushalten, voll eingespieltes 8-köpfiges Team. Verkauf aus Altersgründen — Übergabe ist fließend möglich.\n\nMindestens 100 Zeichen für aussagekräftige Inserate."}
+            placeholder="Beispiel: Gut etabliertes Familienrestaurant mit 15 Jahren Geschichte im Herzen von München. Stammkundschaft von 300+ Haushalten, voll eingespieltes 8-köpfiges Team. Verkauf aus Altersgründen — Übergabe ist fließend möglich."
             className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)] resize-none"
           />
         </div>
@@ -635,15 +650,24 @@ function Step2() {
             {ASSETS_LIST.map((asset) => {
               const checked = data.assets_checklist.includes(asset);
               return (
-                <label key={asset} className="flex items-center gap-2.5 cursor-pointer group">
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                    checked ? "bg-[var(--green)] border-[var(--green)]" : "border-[var(--border)] group-hover:border-[var(--green)]"
-                  }`} onClick={() => toggleAsset(asset)}>
-                    {checked && <Check size={11} className="text-white" />}
-                  </div>
-                  <span className="font-sans text-[13px] text-[var(--ink)]" onClick={() => toggleAsset(asset)}>
-                    {asset}
-                  </span>
+                <label
+                  key={asset}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "12px",
+                    padding: "12px 14px", minHeight: "52px", cursor: "pointer",
+                    borderRadius: "8px",
+                    border: `1.5px solid ${checked ? "#1a3329" : "#e5e5e5"}`,
+                    background: checked ? "#e8f5ed" : "white",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleAsset(asset)}
+                    style={{ width: "18px", height: "18px", flexShrink: 0, accentColor: "#1a3329" }}
+                  />
+                  <span style={{ fontSize: "14px", fontFamily: "inherit", color: "var(--ink)" }}>{asset}</span>
                 </label>
               );
             })}
@@ -655,7 +679,7 @@ function Step2() {
           <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">
             Unternehmensstatus *
           </label>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3">
             {STATUS_PILLS.map((s) => {
               const active = data.status_business === s.value;
               return (
@@ -663,14 +687,17 @@ function Step2() {
                   key={s.value}
                   type="button"
                   onClick={() => updateData({ status_business: s.value })}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 font-sans text-[13px] font-semibold transition-all ${
+                  className={`flex items-center gap-2 px-4 rounded-xl border-2 font-sans text-[14px] font-semibold transition-all ${
                     active
                       ? "text-white border-transparent"
                       : "bg-white text-[var(--ink)] border-[var(--border)] hover:border-[var(--muted)]"
                   }`}
-                  style={active ? { background: s.color, borderColor: s.color } : {}}
+                  style={{
+                    minHeight: "52px",
+                    ...(active ? { background: s.color, borderColor: s.color } : {}),
+                  }}
                 >
-                  <span className="w-2 h-2 rounded-full" style={{ background: active ? "rgba(255,255,255,0.7)" : s.color }} />
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: active ? "rgba(255,255,255,0.7)" : s.color }} />
                   {s.label}
                 </button>
               );
@@ -763,47 +790,122 @@ function Step2() {
             />
           </div>
           <div className="flex items-end pb-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={data.price_confidential}
-                onChange={(e) => updateData({ price_confidential: e.target.checked })} className="rounded" />
+            <label style={{
+              display: "flex", alignItems: "center", gap: "12px",
+              padding: "12px 14px", minHeight: "52px", cursor: "pointer",
+              borderRadius: "8px", border: `1.5px solid ${data.price_confidential ? "#1a3329" : "#e5e5e5"}`,
+              background: data.price_confidential ? "#e8f5ed" : "white", width: "100%",
+            }}>
+              <input
+                type="checkbox"
+                checked={data.price_confidential}
+                onChange={(e) => updateData({ price_confidential: e.target.checked })}
+                style={{ width: "18px", height: "18px", flexShrink: 0, accentColor: "#1a3329" }}
+              />
               <span className="font-sans text-sm text-[var(--ink)]">Vertrauliche Verhandlung</span>
             </label>
           </div>
         </div>
 
-        {/* 10. Photos (max 8) */}
+        {/* 10. Photos (max 10) */}
         <div>
           <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-            Fotos (max. 8) — {data.images.length}/8
+            Fotos (optional, max. 10) — {data.images.length}/10
           </label>
+
+          {/* Hidden file input — shared by mobile button and desktop click */}
+          <input
+            ref={uploadRef}
+            type="file"
+            accept="image/jpeg,image/png,image/heic,image/webp,image/*"
+            multiple
+            onChange={handleImageSelect}
+            style={{ display: "none" }}
+          />
+
+          {/* Mobile upload button */}
+          <div className="block sm:hidden mb-2">
+            <button
+              type="button"
+              onClick={() => uploadRef.current?.click()}
+              disabled={data.images.length >= 10}
+              style={{
+                width: "100%", height: "64px", fontSize: "18px",
+                background: data.images.length >= 10 ? "#ccc" : "#1a3329",
+                color: "white", border: "none", borderRadius: "8px",
+                cursor: data.images.length >= 10 ? "not-allowed" : "pointer",
+                fontFamily: "inherit", display: "flex", alignItems: "center",
+                justifyContent: "center", gap: "8px",
+              }}
+            >
+              Fotos hinzufugen
+            </button>
+            {data.images.length > 0 && (
+              <p style={{ fontSize: "14px", color: "#16a34a", marginTop: "8px", fontFamily: "inherit", fontWeight: 600 }}>
+                {data.images.length} Foto{data.images.length !== 1 ? "s" : ""} ausgewahlt
+              </p>
+            )}
+          </div>
+
+          {/* Desktop drag-and-drop zone */}
           <div
+            className="hidden sm:block"
             onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleImageDrop}
-            className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-              dragOver ? "border-[var(--accent)] bg-[var(--accent-light)]" : "border-[var(--border)] bg-[var(--surface2)]"
-            } ${data.images.length >= 8 ? "opacity-50 pointer-events-none" : ""}`}
+            onClick={() => uploadRef.current?.click()}
+            style={{ cursor: "pointer" }}
           >
-            <Upload size={24} className="mx-auto mb-3 text-[var(--muted)]" />
-            <p className="font-sans text-sm text-[var(--muted)] mb-2">Fotos hierher ziehen oder</p>
-            <label className="inline-block cursor-pointer">
-              <input type="file" accept="image/*" multiple onChange={handleImageSelect} className="hidden" />
-              <span className="font-sans text-sm text-[var(--accent)] hover:underline">Dateien auswählen</span>
-            </label>
+            <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+              dragOver ? "border-[var(--accent)] bg-[var(--accent-light)]" : "border-[var(--border)] bg-[var(--surface2)]"
+            } ${data.images.length >= 10 ? "opacity-50 pointer-events-none" : ""}`}>
+              <Upload size={24} className="mx-auto mb-3 text-[var(--muted)]" />
+              <p className="font-sans text-sm text-[var(--muted)] mb-1">Fotos hierher ziehen oder</p>
+              <span className="font-sans text-sm text-[var(--accent)] hover:underline">Dateien auswahlen</span>
+            </div>
           </div>
+
+          {/* Error message */}
+          {uploadError && (
+            <p style={{ fontSize: "13px", color: "#dc2626", marginTop: "8px", fontFamily: "inherit" }}>
+              {uploadError}
+            </p>
+          )}
+
+          {/* Thumbnails */}
           {imageUrls.length > 0 && (
-            <div className="grid grid-cols-4 gap-2 mt-3">
+            <div className="grid grid-cols-4 sm:grid-cols-4 gap-2 mt-3">
               {imageUrls.map((url, i) => url ? (
                 <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-[var(--surface2)]">
                   <img src={url} alt="" className="w-full h-full object-cover" />
-                  <button onClick={() => updateData({ images: data.images.filter((_, idx) => idx !== i) })}
-                    className="absolute top-1 right-1 bg-white rounded-full p-0.5 shadow-sm">
+                  {/* Green checkmark overlay */}
+                  <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                    <Check size={10} className="text-white" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateData({ images: data.images.filter((_, idx) => idx !== i) })}
+                    className="absolute top-1 right-1 bg-white rounded-full p-0.5 shadow-sm"
+                  >
                     <X size={12} className="text-[var(--red)]" />
                   </button>
                 </div>
               ) : null)}
             </div>
           )}
+
+          {/* Skip option */}
+          <button
+            type="button"
+            onClick={() => setStep(3)}
+            style={{
+              width: "100%", marginTop: "12px", padding: "12px",
+              color: "#6b7280", background: "transparent", border: "none",
+              fontSize: "14px", cursor: "pointer", fontFamily: "inherit",
+            }}
+          >
+            Ohne Fotos fortfahren →
+          </button>
         </div>
 
         {/* 11. Phone */}
@@ -839,17 +941,19 @@ function Step2() {
 
       </div>
 
-      <div className="flex items-center justify-between mt-8">
-        <button onClick={() => setStep(1)} className="font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
-          ← Zurück
-        </button>
-        <button
-          onClick={() => setStep(3)}
-          disabled={!canProceed}
-          className="flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Weiter <ChevronRight size={16} />
-        </button>
+      <div className="wizard-nav">
+        <div className="flex items-center justify-between">
+          <button onClick={() => setStep(1)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
+            ← Zurück
+          </button>
+          <button
+            onClick={() => setStep(3)}
+            disabled={!canProceed}
+            className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Weiter <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -915,16 +1019,18 @@ function Step3() {
         </p>
       </div>
 
-      <div className="flex items-center justify-between">
-        <button onClick={() => setStep(2)} className="font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
-          ← Zurück
-        </button>
-        <button
-          onClick={() => setStep(4)}
-          className="flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors"
-        >
-          Bestätigen & Plan wählen →
-        </button>
+      <div className="wizard-nav">
+        <div className="flex items-center justify-between">
+          <button onClick={() => setStep(2)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
+            ← Zurück
+          </button>
+          <button
+            onClick={() => setStep(4)}
+            className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors"
+          >
+            Bestatigen & Plan wahlen →
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1078,9 +1184,11 @@ function Step4() {
         loadingPlan={loadingPlan}
       />
 
-      <button onClick={() => setStep(3)} className="font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors mt-6">
-        ← {lang === "de" ? "Zurück" : "Back"}
-      </button>
+      <div className="wizard-nav" style={{ justifyContent: "flex-start" }}>
+        <button onClick={() => setStep(3)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
+          ← {lang === "de" ? "Zurück" : "Back"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -1106,7 +1214,7 @@ function WizardShell() {
 
   return (
     <div className="bg-[var(--bg)] min-h-screen">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="wizard-page-body max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!authed ? (
           /* Step 0: Auth gate — register/login before filling wizard */
           <Step0Auth onComplete={() => setAuthed(true)} />
