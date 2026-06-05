@@ -11,18 +11,18 @@ function db() {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const supabase = db();
+  let listings: Array<{ id: string; updated_at: string }> | null = null;
+  let posts: Array<{ slug: string; updated_at: string }> | null = null;
 
-  const [{ data: listings }, { data: posts }] = await Promise.all([
-    supabase
-      .from("listings")
-      .select("id, updated_at")
-      .eq("status", "active"),
-    supabase
-      .from("blog_posts")
-      .select("slug, updated_at")
-      .eq("published", true),
-  ]);
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const supabase = db();
+    const [listingsRes, postsRes] = await Promise.all([
+      supabase.from("listings").select("id, updated_at").eq("status", "active"),
+      supabase.from("blog_posts").select("slug, updated_at").eq("published", true),
+    ]);
+    listings = listingsRes.data;
+    posts = postsRes.data;
+  }
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE,            lastModified: new Date(), changeFrequency: "daily",   priority: 1.0 },
