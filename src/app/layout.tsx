@@ -47,8 +47,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Firmadeal.de — Unternehmen verkaufen ohne Makler",
-    description: "0% Provision. Anonym. Direkt an Käufer. 7 Tage kostenlos testen.",
+    title: "Firmadeal.de — Unternehmen verkaufen ohne Makler | DACH",
+    description: "Der führende Marktplatz für den Kauf und Verkauf von Unternehmen im DACH-Raum. 0% Provision, anonym, direkt an Käufer. 7 Tage kostenlos testen.",
     url: "https://www.firmadeal.de",
     siteName: "Firmadeal.de",
     locale: "de_DE",
@@ -67,6 +67,9 @@ export const metadata: Metadata = {
     images: ["https://www.firmadeal.de/opengraph-image.png"],
   },
   alternates: { canonical: "https://www.firmadeal.de" },
+  verification: {
+    google: "ADD_YOUR_GOOGLE_SEARCH_CONSOLE_ID",
+  },
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
     shortcut: "/favicon.svg",
