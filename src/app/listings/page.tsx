@@ -103,6 +103,35 @@ function ListingsContent() {
           </p>
         </div>
 
+        {/* Quick category chips — sticky horizontal scroll */}
+        <div className="sticky top-0 z-10 bg-[var(--bg)] py-2 -mx-4 px-4 mb-4 border-b border-[var(--border)]" style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          <div className="flex gap-2 w-max min-w-full">
+            <button
+              onClick={() => setSelectedCategories([])}
+              className={`flex-shrink-0 px-4 py-2 rounded-full font-sans text-[13px] font-semibold border transition-all ${
+                selectedCategories.length === 0
+                  ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                  : "bg-white text-[var(--ink)] border-[var(--border)]"
+              }`}
+            >
+              Alle
+            </button>
+            {["Gastronomie & Lebensmittel","Handwerk & Bau","IT & Software","Gesundheit & Pflege","E-Commerce & Retail","Dienstleistungen","Produktion & Industrie"].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => toggleCategory(cat)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full font-sans text-[13px] font-semibold border transition-all ${
+                  selectedCategories.includes(cat)
+                    ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                    : "bg-white text-[var(--ink)] border-[var(--border)]"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Mobile filter toggle */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -404,6 +433,46 @@ function ListingsContent() {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* Bottom: search alert CTA */}
+          <div className="mt-8 bg-white border border-[var(--border)] rounded-2xl p-6 text-center">
+            <p className="font-sans text-[16px] font-bold text-[var(--ink)] mb-1">
+              Kein passendes Inserat gefunden?
+            </p>
+            <p className="font-sans text-[13px] text-[var(--muted)] mb-4">
+              Suchauftrag erstellen — wir benachrichtigen Sie bei neuen passenden Inseraten
+            </p>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const el = e.currentTarget.querySelector("input") as HTMLInputElement;
+                if (el?.value) {
+                  fetch("/api/newsletter", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: el.value, type: "buyer_alert" }),
+                  });
+                  el.value = "";
+                  alert("✓ Sie werden benachrichtigt!");
+                }
+              }}
+              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+            >
+              <input
+                type="email"
+                placeholder="Ihre E-Mail-Adresse"
+                required
+                className="flex-1 px-4 py-2.5 border border-[var(--border)] rounded-xl font-sans text-[13px] outline-none focus:border-[var(--accent)]"
+              />
+              <button
+                type="submit"
+                className="px-5 py-2.5 font-sans font-bold text-[13px] text-white rounded-xl hover:opacity-90 transition-opacity whitespace-nowrap"
+                style={{ background: "#1A5C3A" }}
+              >
+                Alert erstellen →
+              </button>
+            </form>
           </div>
         </div>
       </div>

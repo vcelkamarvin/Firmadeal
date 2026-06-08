@@ -88,6 +88,21 @@ input, select, textarea, button {
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
+/* Safari iOS: font-size >= 16px prevents viewport zoom on focus */
+input, select, textarea {
+  font-size: 16px;
+  min-height: 44px;
+}
+/* Remove Safari tap flash on interactive elements */
+*, a, button, input, select, textarea, label {
+  -webkit-tap-highlight-color: transparent;
+}
+/* Safari select arrow reset */
+select {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

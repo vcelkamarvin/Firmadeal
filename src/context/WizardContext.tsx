@@ -12,6 +12,7 @@ interface WizardContextType {
   updateData: (updates: Partial<WizardData>) => void;
   listingId: string | null;
   setListingId: (id: string) => void;
+  resetWizard: () => void;
 }
 
 const defaultData: WizardData = {
@@ -53,6 +54,7 @@ const WizardContext = createContext<WizardContextType>({
   updateData: () => {},
   listingId: null,
   setListingId: () => {},
+  resetWizard: () => {},
 });
 
 export function WizardProvider({ children }: { children: React.ReactNode }) {
@@ -101,9 +103,16 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
     setData((prev) => ({ ...prev, ...updates }));
   };
 
+  const resetWizard = () => {
+    try { localStorage.removeItem(DRAFT_KEY); } catch {}
+    setData(defaultData);
+    setStep(1);
+    setListingId(null);
+  };
+
   return (
     <WizardContext.Provider
-      value={{ step, setStep, data, updateData, listingId, setListingId }}
+      value={{ step, setStep, data, updateData, listingId, setListingId, resetWizard }}
     >
       {children}
     </WizardContext.Provider>

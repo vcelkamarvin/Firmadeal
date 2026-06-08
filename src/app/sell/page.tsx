@@ -329,7 +329,8 @@ function Step1() {
           <select
             value={data.category}
             onChange={(e) => updateData({ category: e.target.value })}
-            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans bg-white outline-none focus:border-[var(--accent)]"
+            className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none"
+            style={{ height: 52, fontSize: 16, padding: "0 16px", cursor: "pointer", WebkitAppearance: "none", appearance: "none" }}
           >
             <option value="">{lang === "de" ? "Branche wählen..." : "Choose industry..."}</option>
             {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
@@ -451,7 +452,15 @@ function Step2() {
   const [dragOver, setDragOver] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const uploadRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // Create object URLs once when images array changes; revoke old ones to prevent memory leaks.
   useEffect(() => {
@@ -812,57 +821,57 @@ function Step2() {
             Fotos (optional, max. 10) — {data.images.length}/10
           </label>
 
-          {/* Hidden file input — shared by mobile button and desktop click */}
+          {/* Hidden file input */}
           <input
             ref={uploadRef}
             type="file"
-            accept="image/jpeg,image/png,image/heic,image/webp,image/*"
+            accept="image/jpeg,image/png,image/heic,image/heif,image/webp,image/*"
             multiple
             onChange={handleImageSelect}
             style={{ display: "none" }}
           />
 
-          {/* Mobile upload button */}
-          <div className="block sm:hidden mb-2">
+          {isMobile ? (
+            /* Mobile: large tap-friendly button */
             <button
               type="button"
               onClick={() => uploadRef.current?.click()}
               disabled={data.images.length >= 10}
               style={{
-                width: "100%", height: "64px", fontSize: "18px",
-                background: data.images.length >= 10 ? "#ccc" : "#1a3329",
-                color: "white", border: "none", borderRadius: "8px",
+                width: "100%", height: "80px",
+                background: "#F9FAFB",
+                border: "2px dashed #D1D5DB",
+                borderRadius: "12px",
+                fontSize: "16px", color: "#374151",
                 cursor: data.images.length >= 10 ? "not-allowed" : "pointer",
-                fontFamily: "inherit", display: "flex", alignItems: "center",
-                justifyContent: "center", gap: "8px",
+                fontFamily: "inherit",
+                display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center", gap: "6px",
+                WebkitTapHighlightColor: "transparent",
+                opacity: data.images.length >= 10 ? 0.5 : 1,
               }}
             >
-              Fotos hinzufugen
+              <span style={{ fontSize: 28 }}>📷</span>
+              <span>Fotos hinzufügen</span>
             </button>
-            {data.images.length > 0 && (
-              <p style={{ fontSize: "14px", color: "#16a34a", marginTop: "8px", fontFamily: "inherit", fontWeight: 600 }}>
-                {data.images.length} Foto{data.images.length !== 1 ? "s" : ""} ausgewahlt
-              </p>
-            )}
-          </div>
-
-          {/* Desktop drag-and-drop zone */}
-          <div
-            className="hidden sm:block"
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleImageDrop}
-            onClick={() => uploadRef.current?.click()}
-            style={{ cursor: "pointer" }}
-          >
-            <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-              dragOver ? "border-[var(--accent)] bg-[var(--accent-light)]" : "border-[var(--border)] bg-[var(--surface2)]"
-            } ${data.images.length >= 10 ? "opacity-50 pointer-events-none" : ""}`}>
-              <Upload size={24} className="mx-auto mb-3 text-[var(--muted)]" />
-              <p className="font-sans text-sm text-[var(--muted)] mb-1">Fotos hierher ziehen oder</p>
-              <span className="font-sans text-sm text-[var(--accent)] hover:underline">Dateien auswahlen</span>
+          ) : (
+            /* Desktop: drag-and-drop zone */
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={handleImageDrop}
+              onClick={() => uploadRef.current?.click()}
+              style={{ cursor: "pointer" }}
+            >
+              <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
+                dragOver ? "border-[var(--accent)] bg-[var(--accent-light)]" : "border-[var(--border)] bg-[var(--surface2)]"
+              } ${data.images.length >= 10 ? "opacity-50 pointer-events-none" : ""}`}>
+                <Upload size={24} className="mx-auto mb-3 text-[var(--muted)]" />
+                <p className="font-sans text-sm text-[var(--muted)] mb-1">Fotos hierher ziehen oder</p>
+                <span className="font-sans text-sm text-[var(--accent)] hover:underline">Dateien auswählen</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Error message */}
           {uploadError && (
@@ -1195,12 +1204,26 @@ function Step4() {
 // ── Wizard shell ──────────────────────────────────────────────────────────────
 
 function WizardShell() {
-  const { step } = useWizard();
+  const { step, resetWizard } = useWizard();
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [showResumeBanner, setShowResumeBanner] = useState(false);
 
   // Check auth on mount — null = still checking, false = not logged in, true = logged in
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setAuthed(!!data.user));
+  }, []);
+
+  // Show resume banner if there's a saved draft with meaningful content
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("firmadeal_wizard_draft");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if ((parsed._step && parsed._step > 1) || parsed.title || parsed.category) {
+          setShowResumeBanner(true);
+        }
+      }
+    } catch {}
   }, []);
 
   if (authed === null) {
@@ -1219,6 +1242,40 @@ function WizardShell() {
           <Step0Auth onComplete={() => setAuthed(true)} />
         ) : (
           <>
+            {showResumeBanner && (
+              <div style={{
+                background: "#E8F5EE", border: "1px solid #1A5C3A", borderRadius: "10px",
+                padding: "12px 16px", marginBottom: "20px",
+                display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px",
+                flexWrap: "wrap",
+              }}>
+                <span style={{ fontSize: "14px", color: "#1A5C3A", fontFamily: "inherit" }}>
+                  ✓ Sie haben ein angefangenes Inserat — Schritt {step} von 4
+                </span>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    onClick={() => setShowResumeBanner(false)}
+                    style={{
+                      padding: "6px 14px", background: "#1A5C3A", color: "white",
+                      border: "none", borderRadius: "6px", fontSize: "13px",
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    Weiter machen
+                  </button>
+                  <button
+                    onClick={() => { resetWizard(); setShowResumeBanner(false); }}
+                    style={{
+                      padding: "6px 14px", background: "transparent", color: "#6B7280",
+                      border: "1px solid #E2E8E4", borderRadius: "6px", fontSize: "13px",
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    Neu beginnen
+                  </button>
+                </div>
+              </div>
+            )}
             <ProgressBar step={step} />
             {step === 1 && <Step1 />}
             {step === 2 && <Step2 />}

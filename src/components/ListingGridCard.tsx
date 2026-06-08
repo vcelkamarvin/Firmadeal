@@ -25,6 +25,11 @@ export default function ListingGridCard({ listing }: ListingGridCardProps) {
     ? Math.round((listing.ebitda / listing.annual_revenue) * 100)
     : null;
 
+  const daysAgo = listing.created_at
+    ? Math.floor((Date.now() - new Date(listing.created_at).getTime()) / 86400000)
+    : null;
+  const isNew = daysAgo !== null && daysAgo <= 7;
+
   const marginColor = margin !== null
     ? margin >= 20 ? "text-[var(--green)]" : margin >= 10 ? "text-amber-600" : "text-[var(--muted)]"
     : "";
@@ -72,6 +77,20 @@ export default function ListingGridCard({ listing }: ListingGridCardProps) {
 
       {/* Card body */}
       <div className="p-4 flex flex-col flex-1">
+        {/* Urgency + views row */}
+        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+          {isNew && (
+            <span className="font-sans text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+              🔴 Neu — vor {daysAgo === 0 ? "heute" : `${daysAgo}d`}
+            </span>
+          )}
+          {(listing.views_count ?? 0) > 5 && (
+            <span className="font-sans text-[10px] text-[var(--muted)] whitespace-nowrap">
+              👁 {listing.views_count} Aufrufe
+            </span>
+          )}
+        </div>
+
         {/* Title */}
         <h3 className="font-sans text-[15px] font-semibold text-[var(--ink)] leading-snug line-clamp-2 mb-1.5">
           {listing.title}
@@ -131,9 +150,10 @@ export default function ListingGridCard({ listing }: ListingGridCardProps) {
 
         {/* CTA button */}
         <div
-          className="mt-auto w-full h-10 border border-[var(--green-700)] text-[var(--green-700)] font-sans text-[14px] font-medium rounded-lg hover:bg-[var(--green-700)] hover:text-white transition-all duration-150 flex items-center justify-center"
+          className="mt-auto w-full h-12 font-sans text-[14px] font-bold rounded-lg transition-all duration-150 flex items-center justify-center text-white"
+          style={{ background: "#1A5C3A" }}
         >
-          {lang === "de" ? "Details ansehen →" : "View details →"}
+          {lang === "de" ? "Jetzt anfragen →" : "Inquire now →"}
         </div>
       </div>
     </Link>
