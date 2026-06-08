@@ -355,7 +355,8 @@ function Step1() {
           <select
             value={data.region}
             onChange={(e) => updateData({ region: e.target.value })}
-            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans bg-white outline-none focus:border-[var(--accent)]"
+            className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none"
+            style={{ height: 52, fontSize: 16, padding: "0 16px", cursor: "pointer", WebkitAppearance: "none", appearance: "none" }}
           >
             <option value="">{lang === "de" ? "Region wählen..." : "Choose region..."}</option>
             {DACH_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -369,7 +370,8 @@ function Step1() {
           <select
             value={data.country}
             onChange={(e) => updateData({ country: e.target.value })}
-            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans bg-white outline-none focus:border-[var(--accent)]"
+            className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none"
+            style={{ height: 52, fontSize: 16, padding: "0 16px", cursor: "pointer", WebkitAppearance: "none", appearance: "none" }}
           >
             <option value="DE">Deutschland</option>
             <option value="AT">Österreich</option>
@@ -397,7 +399,8 @@ function Step1() {
           <select
             value={data.founded_year}
             onChange={(e) => updateData({ founded_year: e.target.value })}
-            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans bg-white outline-none focus:border-[var(--accent)]"
+            className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none"
+            style={{ height: 52, fontSize: 16, padding: "0 16px", cursor: "pointer", WebkitAppearance: "none", appearance: "none" }}
           >
             <option value="">{lang === "de" ? "Jahr wählen…" : "Choose year…"}</option>
             {Array.from({ length: new Date().getFullYear() - 1899 }, (_, i) => new Date().getFullYear() - i).map((y) => (
@@ -722,7 +725,8 @@ function Step2() {
             <select
               value={data.reason_for_sale}
               onChange={(e) => updateData({ reason_for_sale: e.target.value })}
-              className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans bg-white outline-none focus:border-[var(--accent)]"
+              className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none"
+              style={{ height: 52, fontSize: 16, padding: "0 16px", cursor: "pointer", WebkitAppearance: "none", appearance: "none" }}
             >
               <option value="">Bitte wählen…</option>
               {REASON_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -1036,7 +1040,7 @@ function Step3() {
             onClick={() => setStep(4)}
             className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors"
           >
-            Bestatigen & Plan wahlen →
+            Bestätigen & Plan wählen →
           </button>
         </div>
       </div>

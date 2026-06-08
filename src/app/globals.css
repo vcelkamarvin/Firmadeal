@@ -89,8 +89,9 @@ input, select, textarea, button {
 }
 
 /* Safari iOS: font-size >= 16px prevents viewport zoom on focus */
+/* !important needed to override Tailwind's text-sm/text-xs utility classes */
 input, select, textarea {
-  font-size: 16px;
+  font-size: 16px !important;
   min-height: 44px;
 }
 /* Remove Safari tap flash on interactive elements */
