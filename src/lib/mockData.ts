@@ -134,7 +134,7 @@ export const MOCK_LISTINGS: Listing[] = [
     country: "AT",
     title: "Profitabler E-Commerce Shop für nachhaltige Mode",
     description:
-      "Etablierter Online-Shop für nachhaltige Damenmode mit über 12.000 Stammkunden in der DACH-Region. Starke Social-Media-Präsenz (42.000 Instagram-Follower). Proprietäres Warenwirtschaftssystem, Lieferantenverträge mit ethischen Produzenten. Betrieb vollständig remote führbar.",
+      "Etablierter Online-Shop für nachhaltige Damenmode mit über 12.000 Stammkunden in der Deutschland. Starke Social-Media-Präsenz (42.000 Instagram-Follower). Proprietäres Warenwirtschaftssystem, Lieferantenverträge mit ethischen Produzenten. Betrieb vollständig remote führbar.",
     asking_price: 590000,
     price_confidential: false,
     annual_revenue: 1850000,

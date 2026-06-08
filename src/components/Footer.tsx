@@ -78,7 +78,7 @@ export default function Footer() {
               </svg>
             </a>
             <p className="font-mono text-[11px] text-white/25">
-              DE · AT · CH — DACH-Marktplatz
+              DE · AT · CH — deutschen Marktplatz
             </p>
           </div>
         </div>

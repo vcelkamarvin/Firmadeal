@@ -18,22 +18,9 @@ export const stripe = new Proxy({} as Stripe, {
 });
 
 export const PLANS = {
-  base: {
-    name: "Basic",
-    price: 3900, // cents / month
-    description: "1 aktives Inserat · 3 Monate",
-    duration_months: 3,
-  },
-  plus: {
-    name: "Advanced",
-    price: 7900,
-    description: "3 aktive Inserate · 6 Monate · Featured",
-    duration_months: 6,
-  },
-  premium: {
-    name: "Premium",
-    price: 19900,
-    description: "Unbegrenzt · 12 Monate · Top-Placement · Beratung",
-    duration_months: 12,
+  test: {
+    name: "Firmadeal Listing",
+    price: 8700, // cents, one-time
+    description: "Inserat · 4.000 Käufer/Monat · Newsletter · Pipeline",
   },
 } as const;

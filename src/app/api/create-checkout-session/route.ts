@@ -3,21 +3,16 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 
-const PRICE_IDS: Record<string, string> = {
-  monthly: process.env.NEXT_PUBLIC_STRIPE_MONTHLY_PRICE_ID!,
-  yearly:  process.env.NEXT_PUBLIC_STRIPE_YEARLY_PRICE_ID!,
-};
-
 export async function POST(req: Request) {
   const { plan, listingId } = await req.json();
 
-  const priceId = PRICE_IDS[plan as keyof typeof PRICE_IDS];
+  const priceId = process.env.NEXT_PUBLIC_STRIPE_TEST_PRICE_ID;
   if (!priceId) {
-    return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    return NextResponse.json({ error: "Stripe price not configured" }, { status: 500 });
   }
 
   const sessionParams = {
-    mode: "subscription" as const,
+    mode: "payment" as const,
     payment_method_types: ["card" as const],
     allow_promotion_codes: true,
     line_items: [
@@ -26,12 +21,8 @@ export async function POST(req: Request) {
         quantity: 1,
       },
     ],
-    subscription_data: {
-      trial_period_days: 7,
-      metadata: { listing_id: listingId ?? "", plan },
-    },
-    metadata: { listing_id: listingId ?? "", plan },
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?trial_started=true&plan=${plan}`,
+    metadata: { listing_id: listingId ?? "", plan: plan ?? "test" },
+    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard?payment_success=true`,
     cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/sell?step=4`,
   };
 

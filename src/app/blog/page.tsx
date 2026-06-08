@@ -60,8 +60,8 @@ export default function BlogPage() {
           </h1>
           <p className="font-sans text-[15px] text-white/70 mt-2 max-w-xl">
             {lang === "de"
-              ? "Expertenwissen zu Unternehmenskauf, -verkauf, Bewertung und Nachfolge im DACH-Raum."
-              : "Expert knowledge on buying, selling, valuation and succession in the DACH region."}
+              ? "Expertenwissen zu Unternehmenskauf, -verkauf, Bewertung und Nachfolge in Deutschland."
+              : "Expert knowledge on buying, selling, valuation and succession in the Germany."}
           </p>
         </div>
       </div>
@@ -165,8 +165,8 @@ export default function BlogPage() {
           </h3>
           <p className="font-sans text-[14px] text-[var(--muted)] mb-4">
             {lang === "de"
-              ? "Kostenloses Inserat erstellen und Käufer aus dem ganzen DACH-Raum erreichen."
-              : "Create a free listing and reach buyers across the DACH region."}
+              ? "Kostenloses Inserat erstellen und Käufer aus dem ganzen Deutschland erreichen."
+              : "Create a free listing and reach buyers across the Germany."}
           </p>
           <Link
             href="/sell"

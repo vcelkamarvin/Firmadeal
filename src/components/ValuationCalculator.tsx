@@ -106,7 +106,7 @@ export default function ValuationCalculator({ variant = "full" }: Props) {
           <h3 style={{ fontSize: "20px", fontWeight: 700, color: "#111", lineHeight: 1.2, marginBottom: "4px" }}>
             Was ist Ihr Unternehmen wert?
           </h3>
-          <p style={{ fontSize: "12px", color: "#888" }}>Echtzeit-Schätzung · DACH-Marktdaten 2025</p>
+          <p style={{ fontSize: "12px", color: "#888" }}>Echtzeit-Schätzung · deutschen Marktdaten 2025</p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>

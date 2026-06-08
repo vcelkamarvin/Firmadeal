@@ -22,8 +22,8 @@ const translations: Record<string, Record<Language, string>> = {
   "nav.post_listing": { de: "Inserat aufgeben →", en: "Post listing →" },
   // Hero
   "hero.eyebrow": {
-    de: "Der DACH-Marktplatz für Unternehmensverkäufe",
-    en: "The DACH marketplace for business sales",
+    de: "Der deutsche Marktplatz für Unternehmensverkäufe",
+    en: "The German marketplace for business sales",
   },
   "hero.h1": {
     de: "Finden Sie den richtigen Käufer für Ihr Unternehmen.",
@@ -36,7 +36,7 @@ const translations: Record<string, Record<Language, string>> = {
   "hero.cta_primary": { de: "Jetzt inserieren →", en: "List now →" },
   "hero.cta_secondary": { de: "Unternehmen suchen", en: "Browse businesses" },
   "hero.trust_commission": { de: "0% Provision", en: "0% Commission" },
-  "hero.trust_dach": { de: "DACH-weit", en: "DACH-wide" },
+  "hero.trust_dach": { de: "deutschlandweit", en: "Germany-wide" },
   "hero.trust_verified": { de: "Verifizierte Inserate", en: "Verified listings" },
   "hero.trust_time": { de: "Ø 4 Min. zum Inserieren", en: "Ø 4 min to list" },
   // Stats

@@ -16,8 +16,8 @@ export default function SaleTimelineSection({ lang }: { lang: string }) {
           </h2>
           <p className="font-sans text-[14px] text-[var(--muted)]">
             {lang === "de"
-              ? "Basierend auf abgeschlossenen Transaktionen im DACH-Raum"
-              : "Based on completed transactions in the DACH region"}
+              ? "Basierend auf abgeschlossenen Transaktionen in Deutschland"
+              : "Based on completed transactions in the Germany"}
           </p>
         </div>
 

@@ -35,7 +35,7 @@ export default function AgbPage() {
             <p>
               Diese Allgemeinen Geschäftsbedingungen (AGB) gelten für alle Leistungen der Plattform
               Firmadeal.de (nachfolgend „Firmadeal" oder „Plattform"). Firmadeal betreibt einen
-              Online-Marktplatz für Unternehmensverkäufe im DACH-Raum (Deutschland, Österreich, Schweiz).
+              Online-Marktplatz für Unternehmensverkäufe in Deutschland (Deutschland, Österreich, Schweiz).
             </p>
             <p>
               Durch die Registrierung oder Nutzung der Plattform stimmen Sie diesen AGB zu.

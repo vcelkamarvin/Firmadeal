@@ -25,12 +25,12 @@ const INDUSTRY_MULTIPLES: Record<string, { lo: number; avg: number; hi: number }
 };
 
 const OP_LABEL: Record<string, string> = {
-  vollstaendige_uebertragung: "Vollständige Übertragung",
-  unternehmensuebertragung:   "Unternehmensübertragung",
-  gewerbeimmobilie:           "Gewerbeimmobilie",
-  anteilsuebertragung:        "Anteilsübertragung",
-  unternehmensverpachtung:    "Unternehmensverpachtung",
-  immobilienvermietung:       "Immobilienvermietung",
+  vollstaendige_uebertragung: "Vollverkauf",
+  unternehmensuebertragung:   "Verkauf ohne Immobilien",
+  gewerbeimmobilie:           "Immobilie verkaufen",
+  anteilsuebertragung:        "Teilverkauf / Investor gesucht",
+  unternehmensverpachtung:    "Betrieb verpachten",
+  immobilienvermietung:       "Gewerbefläche vermieten",
 };
 
 function fmtEur(n: number | null): string {
@@ -468,7 +468,7 @@ export default function ListingDetailClient() {
                   Branchenmultiple im Vergleich
                 </h2>
                 <p className="font-sans text-[12px] text-[var(--muted)] mb-4">
-                  {listing.category} · DACH-Marktdaten 2025
+                  {listing.category} · deutschen Marktdaten 2025
                 </p>
                 {ebitdaMultiple ? (
                   <div className="bg-white border border-[var(--border)] rounded-xl p-5">

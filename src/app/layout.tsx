@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     template: "%s | Firmadeal.de",
   },
   description:
-    "Der DACH-Marktplatz für Unternehmensverkäufe. Verkaufen Sie Ihre Firma direkt an Käufer — 0% Provision, anonym, sofort live. 7 Tage kostenlos.",
+    "Der deutsche Marktplatz für Unternehmensverkäufe. Verkaufen Sie Ihre Firma direkt an Käufer — 0% Provision, anonym, sofort live. 7 Tage kostenlos.",
   keywords: [
     "Firma verkaufen",
     "Unternehmen verkaufen",
@@ -47,8 +47,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Firmadeal.de — Unternehmen verkaufen ohne Makler | DACH",
-    description: "Der führende Marktplatz für den Kauf und Verkauf von Unternehmen im DACH-Raum. 0% Provision, anonym, direkt an Käufer. 7 Tage kostenlos testen.",
+    title: "Firmadeal.de — Unternehmen verkaufen ohne Makler | Deutschland",
+    description: "Der führende Marktplatz für den Kauf und Verkauf von Unternehmen in Deutschland. 0% Provision, anonym, direkt an Käufer. 7 Tage kostenlos testen.",
     url: "https://www.firmadeal.de",
     siteName: "Firmadeal.de",
     locale: "de_DE",
@@ -87,7 +87,7 @@ export default function RootLayout({
     "@type": "WebSite",
     name: "Firmadeal.de",
     url: "https://www.firmadeal.de",
-    description: "DACH-Marktplatz für Unternehmensverkäufe",
+    description: "Deutscher Marktplatz für Unternehmensverkäufe",
     potentialAction: {
       "@type": "SearchAction",
       target: "https://www.firmadeal.de/listings?q={search_term}",
@@ -101,7 +101,7 @@ export default function RootLayout({
     name: "Firmadeal.de",
     url: "https://www.firmadeal.de",
     logo: "https://www.firmadeal.de/logo.png",
-    description: "Unternehmensmarktplatz für den DACH-Raum — Unternehmen kaufen und verkaufen ohne Provision.",
+    description: "Unternehmensmarktplatz für Deutschland — Unternehmen kaufen und verkaufen ohne Provision.",
     contactPoint: {
       "@type": "ContactPoint",
       email: "info@firmadeal.de",

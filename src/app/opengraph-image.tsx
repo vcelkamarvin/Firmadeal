@@ -67,7 +67,7 @@ export default async function Image() {
             marginBottom: 40,
           }}
         >
-          DACH-Marktplatz für Unternehmensverkäufe
+          deutschen Marktplatz für Unternehmensverkäufe
         </div>
 
         {/* Pills */}

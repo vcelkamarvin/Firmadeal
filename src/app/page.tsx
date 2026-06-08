@@ -129,7 +129,7 @@ function MarketCharts({ lang }: { lang: string }) {
               {lang === "de" ? "Marktdaten" : "Market data"}
             </p>
             <h2 className="font-sans text-[24px] font-bold text-[var(--ink)] tracking-tight">
-              {lang === "de" ? "DACH Unternehmensmarkt 2025" : "DACH Business Market 2025"}
+              {lang === "de" ? "deutschen Unternehmensmarkt 2025" : "German Business Market 2025"}
             </h2>
           </div>
           <div className="flex gap-1 bg-[var(--surface2)] rounded-lg p-1">
@@ -688,8 +688,8 @@ function TabSwitcherSection({ lang }: { lang: string }) {
               </h2>
               <p className="font-sans text-[15px] text-[var(--muted)] leading-relaxed mb-6">
                 {lang === "de"
-                  ? "Erreichen Sie über 16.000 vorgeprüfte Investoren im DACH-Raum. Keine Makler, keine Provision."
-                  : "Reach 16,000+ pre-screened investors across DACH. No brokers, no commission."}
+                  ? "Erreichen Sie über 16.000 vorgeprüfte Investoren in Deutschland. Keine Makler, keine Provision."
+                  : "Reach 16,000+ pre-screened investors across Germany. No brokers, no commission."}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
                 {[
@@ -752,8 +752,8 @@ function TabSwitcherSection({ lang }: { lang: string }) {
               </h2>
               <p className="font-sans text-[15px] text-[var(--muted)]">
                 {lang === "de"
-                  ? "Aktuelle Kaufgelegenheiten im DACH-Raum — direkt, ohne Makler."
-                  : "Live acquisition opportunities across DACH — direct, no broker."}
+                  ? "Aktuelle Kaufgelegenheiten in Deutschland — direkt, ohne Makler."
+                  : "Live acquisition opportunities across Germany — direct, no broker."}
               </p>
             </div>
 
@@ -906,7 +906,7 @@ export default function HomePage() {
               {/* Eyebrow */}
               <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "100px", padding: "6px 16px", marginBottom: "24px" }}>
                 <span style={{ color: "#6dbf87", fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                  ⚡ {lang === "de" ? "DACH's #1 Unternehmensmarktplatz" : "DACH's #1 Business Marketplace"}
+                  ⚡ {lang === "de" ? "Deutschlands #1 Unternehmensmarktplatz" : "Deutschlands #1 Business Marketplace"}
                 </span>
               </div>
 
@@ -919,8 +919,8 @@ export default function HomePage() {
 
               <p className="font-sans text-white/75 mb-8" style={{ fontSize: "17px", lineHeight: 1.65, maxWidth: "480px" }}>
                 {lang === "de"
-                  ? "Der direkte Marktplatz für Unternehmensverkäufe im DACH-Raum — 0% Provision, vollständig anonym."
-                  : "The direct marketplace for business sales in the DACH region — 0% commission, fully anonymous."}
+                  ? "Der direkte Marktplatz für Unternehmensverkäufe in Deutschland — 0% Provision, vollständig anonym."
+                  : "The direct marketplace for business sales in the Germany — 0% commission, fully anonymous."}
               </p>
 
               {/* Trust badges */}

@@ -30,12 +30,12 @@ const COUNTRY_LABEL: Record<string, string> = {
 };
 
 const OP_LABEL: Record<string, string> = {
-  vollstaendige_uebertragung: "Vollständige Übertragung",
-  unternehmensuebertragung: "Unternehmensübertragung",
-  gewerbeimmobilie: "Gewerbeimmobilie",
-  anteilsuebertragung: "Anteilsübertragung",
-  unternehmensverpachtung: "Unternehmensverpachtung",
-  immobilienvermietung: "Immobilienvermietung",
+  vollstaendige_uebertragung: "Vollverkauf",
+  unternehmensuebertragung: "Verkauf ohne Immobilien",
+  gewerbeimmobilie: "Immobilie verkaufen",
+  anteilsuebertragung: "Teilverkauf / Investor gesucht",
+  unternehmensverpachtung: "Betrieb verpachten",
+  immobilienvermietung: "Gewerbefläche vermieten",
 };
 
 const INDUSTRY_MULTIPLES: Record<string, { lo: number; avg: number; hi: number }> = {
@@ -429,7 +429,7 @@ export default function ListingModal({ listing, onClose }: ListingModalProps) {
                   <h3 className="font-sans text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--muted)] mb-1">
                     Ø Verkaufsdauer nach Region
                   </h3>
-                  <p className="font-sans text-[12px] text-[var(--muted)] mb-4">Abgeschlossene Transaktionen im DACH-Raum</p>
+                  <p className="font-sans text-[12px] text-[var(--muted)] mb-4">Abgeschlossene Transaktionen in Deutschland</p>
                   <div className="space-y-2.5">
                     {Object.entries(AVG_SALE_DAYS).map(([region, days]) => {
                       const isCurrent =

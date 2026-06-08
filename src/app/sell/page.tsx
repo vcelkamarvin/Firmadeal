@@ -276,12 +276,12 @@ const OPERATION_TYPES: Array<{
   value: OperationType;
   de: string; en: string; icon: string; subtitleDe: string; subtitleEn: string;
 }> = [
-  { value: "vollstaendige_uebertragung", de: "Vollständige Übertragung", en: "Full Transfer",       icon: "🤝", subtitleDe: "Gesamtes Unternehmen inkl. aller Assets",  subtitleEn: "Entire business including all assets"   },
-  { value: "unternehmensuebertragung",   de: "Unternehmensübertragung",  en: "Business Transfer",   icon: "🏢", subtitleDe: "Betrieb ohne Immobilien",                  subtitleEn: "Business without real estate"            },
-  { value: "gewerbeimmobilie",           de: "Gewerbeimmobilie",         en: "Commercial Property", icon: "🏗️", subtitleDe: "Verkauf der Gewerbeimmobilie",             subtitleEn: "Sale of commercial property"             },
-  { value: "anteilsuebertragung",        de: "Anteilsübertragung",       en: "Share Transfer",      icon: "📊", subtitleDe: "Verkauf von Unternehmensanteilen",          subtitleEn: "Sale of company shares"                  },
-  { value: "unternehmensverpachtung",    de: "Unternehmensverpachtung",  en: "Business Lease",      icon: "🔑", subtitleDe: "Verpachtung des gesamten Betriebs",         subtitleEn: "Leasing of the entire business"          },
-  { value: "immobilienvermietung",       de: "Immobilienvermietung",     en: "Property Rental",     icon: "🏠", subtitleDe: "Vermietung von Gewerbeflächen",             subtitleEn: "Rental of commercial space"              },
+  { value: "vollstaendige_uebertragung", de: "Vollverkauf",                  en: "Full Sale",              icon: "🤝", subtitleDe: "Gesamtes Unternehmen verkaufen",           subtitleEn: "Sell the entire business"                },
+  { value: "unternehmensuebertragung",   de: "Verkauf ohne Immobilien",      en: "Sale without Property",  icon: "🏢", subtitleDe: "Betrieb ohne Grundstück & Gebäude",        subtitleEn: "Business without real estate"            },
+  { value: "gewerbeimmobilie",           de: "Immobilie verkaufen",          en: "Sell Property",          icon: "🏗️", subtitleDe: "Gewerbliche Immobilie verkaufen",           subtitleEn: "Sell commercial real estate"             },
+  { value: "anteilsuebertragung",        de: "Teilverkauf / Investor gesucht", en: "Partial Sale / Investor", icon: "📊", subtitleDe: "Anteile abgeben & Kapital aufnehmen",   subtitleEn: "Sell shares & raise capital"             },
+  { value: "unternehmensverpachtung",    de: "Betrieb verpachten",           en: "Lease Business",         icon: "🔑", subtitleDe: "Gesamten Betrieb verpachten",              subtitleEn: "Lease out the entire business"           },
+  { value: "immobilienvermietung",       de: "Gewerbefläche vermieten",      en: "Rent Commercial Space",  icon: "🏠", subtitleDe: "Büro, Laden oder Lager vermieten",         subtitleEn: "Rent out commercial space"               },
 ];
 
 function Step1() {
@@ -1060,10 +1060,10 @@ function Step4() {
   }, []);
 
   const investorCount = INVESTORS_BY_CATEGORY[data.category] ?? 3200;
-  const categoryLabel = data.category || "DACH";
+  const categoryLabel = data.category || "Deutschland";
 
-  const handleSelectPlan = async (planId: "monthly" | "yearly") => {
-    updateData({ plan: planId });
+  const handleSelectPlan = async (planId: string) => {
+    updateData({ plan: planId as "test" });
     setLoadingPlan(planId);
     setCheckoutError(null);
 

@@ -135,7 +135,7 @@ export default function Navbar() {
         >
           {/* Nav items */}
           {[
-            { href: "/listings", label: "Inserate durchsuchen",   icon: "🔍", desc: "100+ Unternehmen im DACH-Raum" },
+            { href: "/listings", label: "Inserate durchsuchen",   icon: "🔍", desc: "100+ Unternehmen in Deutschland" },
             { href: "/sell",     label: "Unternehmen inserieren", icon: "📋", desc: "7 Tage kostenlos · 0% Provision" },
             { href: "/pricing",  label: "Preise & Pläne",         icon: "💳", desc: "Ab €39/Monat" },
             { href: "/blog",     label: "Blog",                   icon: "📖", desc: "Tipps für Käufer & Verkäufer" },

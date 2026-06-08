@@ -99,7 +99,7 @@ function ListingsContent() {
             {lang === "de" ? "Unternehmen kaufen" : "Buy a business"}
           </h1>
           <p className="font-mono text-[12px] text-[var(--muted)]">
-            {lang === "de" ? "DACH-weit — Deutschland, Österreich, Schweiz" : "DACH-wide — Germany, Austria, Switzerland"}
+            {lang === "de" ? "deutschlandweit — Deutschland, Österreich, Schweiz" : "Germany-wide — Germany, Austria, Switzerland"}
           </p>
         </div>
 

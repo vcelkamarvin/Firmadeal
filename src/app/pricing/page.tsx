@@ -1,128 +1,47 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Check, ChevronDown } from "lucide-react";
-
-// ── Sale Duration Bars ────────────────────────────────────────────────────────
-
-function SaleDurationBars() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } },
-      { threshold: 0.25 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  const bars = [
-    { label: "Monatsplan",  days: 89, pct: 100, color: "#9ca3af", bg: "#f3f4f6" },
-    { label: "Jahrespaket", days: 52, pct:  58, color: "#1A5C3A", bg: "#e8f5ed" },
-  ];
-
-  return (
-    <div className="bg-white border border-[var(--border)] rounded-2xl p-5">
-      <p className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-widest mb-4">
-        ⏱ Zeit bis erstes Angebot
-      </p>
-      <div ref={ref} className="space-y-3">
-        {bars.map((bar, i) => (
-          <div key={bar.label}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="font-sans text-[12px] font-semibold text-[var(--ink)]">{bar.label}</span>
-              <span className="font-sans text-[13px] font-bold tabular-nums" style={{ color: bar.color }}>
-                {bar.days}d
-              </span>
-            </div>
-            <div className="h-6 rounded-lg overflow-hidden" style={{ background: bar.bg }}>
-              <div
-                className="h-full rounded-lg flex items-center pl-3"
-                style={{
-                  width: inView ? `${bar.pct}%` : "0%",
-                  background: bar.color,
-                  transition: `width 1.3s cubic-bezier(0.16,1,0.3,1) ${i * 0.18}s`,
-                }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 rounded-xl p-3 flex items-center gap-3" style={{ background: "#e8f5ed" }}>
-        <span className="font-sans text-[22px] font-bold tabular-nums" style={{ color: "#1A5C3A" }}>37d</span>
-        <div>
-          <p className="font-sans text-[12px] font-bold" style={{ color: "#1A5C3A" }}>schneller zum ersten Angebot</p>
-          <p className="font-sans text-[10px] text-[var(--muted)]">mit dem Jahrespaket · 2× mehr Käufer</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Buyer Types sidebar ───────────────────────────────────────────────────────
 
 const BUYERS = [
   { icon: "🏢", label: "Private Equity & Family Offices", count: "3.200" },
   { icon: "👤", label: "Unternehmer & MBI-Kandidaten",    count: "8.900" },
-  { icon: "🔍", label: "Search Funds & ETA",              count: "620" },
+  { icon: "🔍", label: "Search Funds & ETA",              count: "620"   },
   { icon: "🤝", label: "Strategische Käufer",             count: "3.280" },
 ];
 
-// ── Monthly features ──────────────────────────────────────────────────────────
-
-const MONTHLY_FEATURES = [
+const FEATURES = [
   "Listing sichtbar im Marktplatz",
-  "2.000 aktive Käufer/Monat kontaktieren Sie direkt",
-  "Anonymes Inserat — Daten bleiben geschützt",
+  "4.000 aktive Käufer/Monat kontaktieren Sie direkt",
+  "Anonymes Inserat — Ihre Daten bleiben geschützt",
   "Automatische Unternehmensbewertung",
   "7-Tage Markttest-Bericht",
   "0% Provision auf den Verkaufspreis",
-];
-
-const YEARLY_BASE = [
-  "Listing sichtbar im Marktplatz",
-  "4.000 Käufer/Monat — 2× mehr als Monatsplan",
-  "Anonymes Inserat — Daten bleiben geschützt",
-  "Automatische Unternehmensbewertung",
-  "7-Tage Markttest-Bericht",
-  "0% Provision auf den Verkaufspreis",
-  "Top-Platzierung vor allen Monats-Inseraten",
-];
-
-const YEARLY_EXCLUSIVE = [
   "Wöchentlicher Newsletter an 16.000+ aktive Investoren",
-  "Direktes Käufer-Matching nach Branche, Region & Größe — wir leiten Ihr Inserat aktiv an PE-Fonds, Unternehmer und strategische Käufer weiter",
+  "Direktes Käufer-Matching nach Branche, Region & Größe",
 ];
-
-// ── FAQ ───────────────────────────────────────────────────────────────────────
 
 const FAQ = [
   {
     q: "Wie funktioniert das Käufer-Matching genau?",
-    a: "Unser System analysiert Branche, Standort und Unternehmensgröße und leitet Ihr Inserat automatisch an registrierte Käufer weiter, die aktiv in Ihrem Segment suchen. Jahrespaket-Inserate werden dabei priorisiert behandelt.",
+    a: "Unser System analysiert Branche, Standort und Unternehmensgröße und leitet Ihr Inserat automatisch an registrierte Käufer weiter, die aktiv in Ihrem Segment suchen.",
   },
   {
     q: "Bleibt mein Inserat vollständig anonym?",
     a: "Ja. Ihr Name, Ihre Kontaktdaten und alle Unternehmensinformationen bleiben bis zu Ihrer ausdrücklichen Freigabe vollständig geschützt.",
   },
   {
-    q: "Was passiert nach der 7-tägigen Testphase?",
-    a: "Nach 7 Tagen wird automatisch Ihr gewählter Plan aktiviert. Sie können jederzeit vor Ablauf kündigen — ohne Fragen, ohne Aufwand.",
+    q: "Gibt es ein Abo oder versteckte Kosten?",
+    a: "Nein. Sie zahlen einmalig €87 — kein Abo, keine Verlängerung, keine Provision auf den Verkaufspreis.",
   },
 ];
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
 export default function PricingPage() {
-  const [openFaq, setOpenFaq]           = useState<number | null>(null);
-  const [email, setEmail]               = useState("");
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [email, setEmail] = useState("");
   const [newsletterState, setNewsletter] = useState<"idle"|"loading"|"success"|"duplicate"|"error">("idle");
-  const [visible, setVisible]           = useState(false);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => { const t = setTimeout(() => setVisible(true), 60); return () => clearTimeout(t); }, []);
 
@@ -142,8 +61,7 @@ export default function PricingPage() {
     } catch { setNewsletter("error"); }
   };
 
-  const cardBase = "transition-all duration-700";
-  const show     = (delay: number) => ({
+  const show = (delay: number) => ({
     opacity: visible ? 1 : 0,
     transform: visible ? "translateY(0)" : "translateY(14px)",
     transition: `opacity 0.6s ease ${delay}ms, transform 0.6s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
@@ -152,157 +70,88 @@ export default function PricingPage() {
   return (
     <div className="bg-[var(--bg)] min-h-screen">
 
-      {/* ── Compact Header ─────────────────────────────────────────────────── */}
+      {/* Header */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-5 text-center">
         <h1 className="font-sans text-[clamp(20px,3.5vw,36px)] font-bold text-[var(--ink)] tracking-tight mb-2 leading-[1.1]">
-          Wählen Sie Ihren Plan — 7 Tage kostenlos
+          Ihr Inserat — einmalig €87
         </h1>
         <p className="font-sans text-[13px] text-[var(--muted)] mb-4">
-          0% Provision · Kein Makler · Sofort live
+          0% Provision · Kein Abo · Sofort live
         </p>
-        {/* Live stats */}
         <div className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 bg-white border border-[var(--border)] rounded-full px-5 py-2 shadow-sm text-[13px] font-sans font-semibold text-[var(--ink)]">
           <span className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse-dot" />
             127 aktive Inserate
           </span>
           <span className="text-[var(--border)] hidden sm:block">·</span>
-          <span>3.847 registrierte Käufer</span>
+          <span>16.000+ registrierte Käufer</span>
           <span className="text-[var(--border)] hidden sm:block">·</span>
           <span>Ø 94 Tage bis Abschluss</span>
         </div>
       </section>
 
-      {/* ── 3-Column Pricing Grid ───────────────────────────────────────────── */}
+      {/* Pricing + Sidebar */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-14">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1fr_1.15fr_1fr] gap-5 items-start max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-5 items-start max-w-5xl mx-auto">
 
-          {/* ── Monthly Card ── */}
+          {/* Pricing Card */}
           <div
-            className={`${cardBase} relative bg-white border border-[var(--border)] rounded-2xl flex flex-col p-6`}
-            style={show(0)}
+            className="animate-border-glow relative bg-white rounded-2xl flex flex-col p-8"
+            style={{ border: "2.5px solid #1A5C3A", ...show(0) }}
           >
-            <h3 className="font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-3">
+            <h3 className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-widest mb-4">
               Firmadeal Listing
             </h3>
 
             <div className="flex items-baseline gap-1 mb-1">
-              <span className="font-sans text-[44px] font-bold text-[var(--ink)] tracking-tight leading-none tabular-nums">€39</span>
-              <span className="font-sans text-[13px] text-[var(--muted)]">/Monat</span>
+              <span className="font-sans text-[64px] font-bold text-[var(--ink)] tracking-tight leading-none tabular-nums">
+                €87
+              </span>
+              <span className="font-sans text-[15px] text-[var(--muted)]">einmalig</span>
             </div>
-            <p className="font-sans text-[11px] text-[var(--muted)] mb-4">Nach 7 Tagen · Jederzeit kündbar</p>
-
-            {/* Gray pills */}
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {["500 Käufer/Monat", "Ø 90–180 Tage", "0% Provision"].map((p) => (
-                <span key={p} className="font-sans text-[10px] font-medium text-[var(--muted)] bg-[var(--surface2)] border border-[var(--border)] px-2 py-0.5 rounded-full">
-                  {p}
-                </span>
-              ))}
-            </div>
-
-            <ul className="space-y-2 mb-5 flex-1">
-              {MONTHLY_FEATURES.map((f) => (
-                <li key={f} className="flex items-start gap-2">
-                  <Check size={12} className="text-[var(--green)] mt-0.5 flex-shrink-0" />
-                  <span className="font-sans text-[12px] text-[var(--ink)]">{f}</span>
-                </li>
-              ))}
-            </ul>
-
-            <Link
-              href="/sell"
-              className="block text-center w-full py-3 rounded-xl font-sans font-bold text-[13px] border-2 border-[var(--border)] text-[var(--ink)] hover:border-[#1A5C3A] hover:text-[#1A5C3A] transition-all duration-200"
-            >
-              7 Tage kostenlos starten →
-            </Link>
-            <p className="font-sans text-[10px] text-[var(--muted)] text-center mt-2.5 leading-snug">
-              Kein Newsletter · Keine Käufergruppen · Keine Top-Platzierung
+            <p className="font-sans text-[12px] text-[var(--muted)] mb-6">
+              Einmalzahlung · Kein Abo · Keine versteckten Kosten
             </p>
-          </div>
 
-          {/* ── Yearly Card ── */}
-          <div
-            className={`${cardBase} animate-border-glow relative bg-white rounded-2xl flex flex-col p-6`}
-            style={{ border: "2.5px solid #1A5C3A", ...show(80) }}
-          >
-            {/* Badges */}
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              <span className="animate-float-badge font-sans text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-500 text-white whitespace-nowrap">
-                ⭐ Beliebteste Wahl — 59% günstiger
-              </span>
-              <span className="font-sans text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-500 text-white whitespace-nowrap">
-                🔥 Nur noch 3 Plätze
-              </span>
-            </div>
-
-            <h3 className="font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest mb-1">
-              Firmadeal Jahrespaket
-            </h3>
-            <p className="font-sans text-[12px] text-[var(--muted)] line-through mb-0.5">€468/Jahr</p>
-            <div className="flex items-baseline gap-1 mb-0.5">
-              <span className="font-sans font-bold text-[var(--ink)] tracking-tight leading-none tabular-nums" style={{ fontSize: 56 }}>
-                €189
-              </span>
-              <span className="font-sans text-[14px] text-[var(--muted)]">/Jahr</span>
-            </div>
-            <p className="font-sans text-[11px] text-[var(--muted)] mb-2">= €15,75/Monat · Jederzeit kündbar</p>
-            <div className="inline-flex self-start font-sans text-[11px] font-bold px-2.5 py-1 rounded-full mb-4" style={{ background: "#e8f5ed", color: "#1A5C3A" }}>
-              Sie sparen €279
-            </div>
-
-            {/* Green pills */}
-            <div className="flex flex-wrap gap-1.5 mb-4">
+            <div className="flex flex-wrap gap-1.5 mb-6">
               {["4.000 Käufer/Monat", "Ø 60–120 Tage", "0% Provision"].map((p) => (
-                <span key={p} className="font-sans text-[10px] font-bold px-2.5 py-1 rounded-full text-white" style={{ background: "#1A5C3A" }}>
+                <span
+                  key={p}
+                  className="font-sans text-[11px] font-bold px-3 py-1.5 rounded-full text-white"
+                  style={{ background: "#1A5C3A" }}
+                >
                   {p}
                 </span>
               ))}
             </div>
 
-            {/* Features */}
-            <ul className="space-y-2 mb-3 flex-1">
-              {YEARLY_BASE.map((f) => (
-                <li key={f} className="flex items-start gap-2">
-                  <Check size={12} className="text-[var(--green)] mt-0.5 flex-shrink-0" />
-                  <span className="font-sans text-[12px] text-[var(--ink)]">{f}</span>
-                </li>
-              ))}
-              {YEARLY_EXCLUSIVE.map((f) => (
-                <li key={f} className="flex items-start gap-2">
-                  <span className="text-amber-500 text-[12px] mt-0.5 flex-shrink-0">⭐</span>
-                  <span>
-                    <span className="font-sans text-[12px] text-[var(--ink)]">{f} </span>
-                    <span className="inline-block font-sans text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 whitespace-nowrap">
-                      Nur im Jahrespaket
-                    </span>
-                  </span>
+            <ul className="space-y-2.5 mb-7 flex-1">
+              {FEATURES.map((f) => (
+                <li key={f} className="flex items-start gap-2.5">
+                  <Check size={13} className="text-[var(--green)] mt-0.5 flex-shrink-0" />
+                  <span className="font-sans text-[13px] text-[var(--ink)]">{f}</span>
                 </li>
               ))}
             </ul>
 
-            {/* Trust micro-copy */}
-            <p className="font-sans text-[10px] text-[var(--muted)] leading-relaxed border-t border-[var(--border)] pt-3 mb-4">
-              Unser Algorithmus analysiert Branche, Region und Größe — Ihr Inserat erreicht automatisch passende Käufer ohne Makler und ohne Provision.
-            </p>
-
             <Link
               href="/sell"
-              className="animate-cta-pulse block text-center w-full py-3.5 rounded-xl font-sans font-bold text-[14px] text-white hover:opacity-90 transition-opacity duration-200"
+              className="animate-cta-pulse block text-center w-full py-4 rounded-xl font-sans font-bold text-[15px] text-white hover:opacity-90 transition-opacity duration-200"
               style={{ background: "#1A5C3A" }}
             >
-              Jetzt Jahrespaket sichern →
+              Jetzt Inserat starten →
             </Link>
+
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse-dot flex-shrink-0" />
+              <p className="font-sans text-[12px] font-semibold" style={{ color: "#1A5C3A" }}>
+                47 Unternehmer haben in den letzten 30 Tagen ihr Inserat gestartet
+              </p>
+            </div>
           </div>
 
-          {/* ── Stats Sidebar ── */}
-          <div
-            className={`${cardBase} md:col-span-2 xl:col-span-1 space-y-4`}
-            style={show(160)}
-          >
-            {/* Sale duration bars */}
-            <SaleDurationBars />
-
+          {/* Sidebar */}
+          <div className="space-y-4" style={show(100)}>
             {/* Buyer types */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5">
               <h3 className="font-sans text-[12px] font-bold text-[var(--ink)] mb-1">
@@ -327,20 +176,19 @@ export default function PricingPage() {
                   </div>
                 ))}
               </div>
+            </div>
 
-              {/* Priority callout */}
-              <div className="mt-4 rounded-xl p-3 flex items-start gap-2" style={{ background: "#e8f5ed" }}>
-                <span className="text-[16px] flex-shrink-0">🎯</span>
-                <p className="font-sans text-[11px] leading-relaxed" style={{ color: "#1A5C3A" }}>
-                  <strong>Jahrespaket-Inserate</strong> werden priorisiert an alle 4 Käufergruppen weitergeleitet. Monats-Inserate erscheinen nur im allgemeinen Marktplatz.
-                </p>
-              </div>
+            {/* Trust block */}
+            <div className="bg-white border border-[var(--border)] rounded-2xl p-5">
+              <p className="font-sans text-[11px] text-[var(--muted)] leading-relaxed">
+                Unser Algorithmus analysiert Branche, Region und Unternehmensgröße — Ihr Inserat erreicht automatisch passende Käufer ohne Makler und ohne Provision.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── FAQ ────────────────────────────────────────────────────────────── */}
+      {/* FAQ */}
       <section className="bg-white border-t border-[var(--border)]">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h2 className="font-sans text-[20px] font-bold text-[var(--ink)] tracking-tight text-center mb-6">
@@ -370,7 +218,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ── Newsletter ─────────────────────────────────────────────────────── */}
+      {/* Newsletter */}
       <section className="bg-[var(--ink)] border-t border-[var(--border)]">
         <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center">
           <h2 className="font-sans text-[18px] font-bold text-white tracking-tight mb-1">

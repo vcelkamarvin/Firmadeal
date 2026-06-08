@@ -13,12 +13,12 @@ const STATUS_BUSINESS_OPTIONS = [
   { value: "restructuring",     label: "Sanierungsbedarf" },
 ];
 const OPERATION_OPTIONS = [
-  { value: "vollstaendige_uebertragung", label: "Vollständige Übertragung" },
-  { value: "unternehmensuebertragung",   label: "Unternehmensübertragung" },
-  { value: "gewerbeimmobilie",           label: "Gewerbeimmobilie" },
-  { value: "anteilsuebertragung",        label: "Anteilsübertragung" },
-  { value: "unternehmensverpachtung",    label: "Unternehmensverpachtung" },
-  { value: "immobilienvermietung",       label: "Immobilienvermietung" },
+  { value: "vollstaendige_uebertragung", label: "Vollverkauf" },
+  { value: "unternehmensuebertragung",   label: "Verkauf ohne Immobilien" },
+  { value: "gewerbeimmobilie",           label: "Immobilie verkaufen" },
+  { value: "anteilsuebertragung",        label: "Teilverkauf / Investor gesucht" },
+  { value: "unternehmensverpachtung",    label: "Betrieb verpachten" },
+  { value: "immobilienvermietung",       label: "Gewerbefläche vermieten" },
 ];
 const PLAN_OPTIONS = ["basic", "advanced", "premium"];
 const COUNTRY_OPTIONS = [

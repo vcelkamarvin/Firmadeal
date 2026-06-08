@@ -9,7 +9,7 @@ import { buildTrialWelcomeEmail, buildTrialEndingEmail } from "@/lib/emails";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.firmadeal.de";
 
 const PLAN_PRICES: Record<string, string> = {
-  monthly: "39", yearly: "189",
+  monthly: "39", yearly: "189", test: "87",
 };
 
 function adminClient() {
@@ -40,21 +40,18 @@ export async function POST(request: NextRequest) {
   const obj = event.data.object as any;
 
   switch (event.type) {
-    // Trial started — listing goes LIVE immediately
+    // Payment completed — listing goes LIVE immediately
     case "checkout.session.completed": {
       const listingId = obj.metadata?.listing_id;
-      const plan = obj.metadata?.plan;
+      const plan = obj.metadata?.plan ?? "test";
       if (!listingId) break;
 
-      const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      const planExpiresAt = plan === "yearly"
-        ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      const planExpiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
       await supabase.from("listings").update({
         status: "active",
         plan,
-        trial_ends_at: trialEndsAt,
+        trial_ends_at: null,
         plan_expires_at: planExpiresAt,
         stripe_subscription_id: obj.subscription ?? null,
         stripe_customer_id: obj.customer ?? null,
