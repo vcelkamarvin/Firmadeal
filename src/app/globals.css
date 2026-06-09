@@ -258,6 +258,35 @@ input, select, textarea {
     padding: 16px !important;
     padding-bottom: 80px !important;
   }
+  /* Stats grid: 1 col on mobile */
+  .admin-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Two-col panels: stack on mobile */
+  .admin-two-col {
+    grid-template-columns: 1fr !important;
+  }
+  /* Page header: stack on mobile */
+  .admin-page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  /* Filter tabs: horizontal scroll */
+  .admin-filter-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 4px !important;
+  }
+  .admin-filter-tabs::-webkit-scrollbar { display: none; }
+  .admin-filter-tabs > button { flex-shrink: 0 !important; }
+  /* Table containers: horizontal scroll */
+  .admin-table-scroll {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .admin-table-scroll table { min-width: 540px; }
 }
 
 /* Admin bottom tab bar: shown only on mobile */

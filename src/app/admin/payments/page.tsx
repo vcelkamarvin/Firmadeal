@@ -22,7 +22,7 @@ export default async function AdminPayments() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="admin-page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Zahlungen ({payments?.length ?? 0})</h1>
         <div style={{ background: "white", borderRadius: 8, padding: "10px 20px", border: "1px solid #e5e5e5" }}>
           <p style={{ fontSize: 12, color: "#999", margin: 0 }}>Gesamtumsatz</p>
@@ -32,7 +32,7 @@ export default async function AdminPayments() {
         </div>
       </div>
 
-      <div style={{ background: "white", borderRadius: 10, border: "1px solid #e5e5e5", overflow: "hidden" }}>
+      <div className="admin-table-scroll" style={{ background: "white", borderRadius: 10, border: "1px solid #e5e5e5", overflow: "hidden" }}>
         {(!payments || payments.length === 0) ? (
           <p style={{ padding: 40, textAlign: "center", color: "#999" }}>Noch keine Zahlungen.</p>
         ) : (

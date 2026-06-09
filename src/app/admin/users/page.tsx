@@ -25,7 +25,7 @@ export default async function AdminUsers() {
   return (
     <div>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24 }}>Nutzer ({users?.length ?? 0})</h1>
-      <div style={{ background: "white", borderRadius: 10, border: "1px solid #e5e5e5", overflow: "hidden" }}>
+      <div className="admin-table-scroll" style={{ background: "white", borderRadius: 10, border: "1px solid #e5e5e5", overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ background: "#f9f9f9", borderBottom: "1px solid #e5e5e5" }}>

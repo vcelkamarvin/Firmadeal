@@ -55,11 +55,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {NAV_ITEMS.map((item) => (
           <Link key={item.href} href={item.href} style={{
             flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", padding: "8px 4px", color: "rgba(255,255,255,0.7)",
-            textDecoration: "none", fontSize: 10, gap: 2, minHeight: 52,
+            justifyContent: "center", padding: "6px 2px", color: "rgba(255,255,255,0.7)",
+            textDecoration: "none", gap: 2, minHeight: 52,
           }}>
-            <span style={{ fontSize: 18 }}>{item.short}</span>
-            <span style={{ fontSize: 9 }}>{item.label.replace(/^[\S]+ /, "")}</span>
+            <span style={{ fontSize: 20 }}>{item.short}</span>
+            <span style={{ fontSize: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%", textAlign: "center" }}>
+              {item.label.replace(/^[\S]+ /, "")}
+            </span>
           </Link>
         ))}
       </div>

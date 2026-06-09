@@ -77,7 +77,7 @@ export default function AdminListings() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="admin-page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <h1 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>Inserate ({listings.length})</h1>
         <Link href="/sell" target="_blank" style={{
           background: "#1a3329", color: "white", padding: "10px 20px",
@@ -86,7 +86,7 @@ export default function AdminListings() {
       </div>
 
       {/* Filter tabs */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      <div className="admin-filter-tabs" style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         {["all", "active", "draft", "paused", "expired"].map((f) => (
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: "6px 14px", borderRadius: 100, border: "1px solid #e5e5e5", cursor: "pointer",
@@ -141,7 +141,7 @@ export default function AdminListings() {
         </div>
       )}
 
-      <div style={{ background: "white", borderRadius: 10, border: "1px solid #e5e5e5", overflow: "hidden" }}>
+      <div className="admin-table-scroll" style={{ background: "white", borderRadius: 10, border: "1px solid #e5e5e5", overflow: "hidden" }}>
         {loading ? (
           <p style={{ padding: 20, textAlign: "center", color: "#999" }}>Lädt…</p>
         ) : (

@@ -40,7 +40,7 @@ export default async function AdminDashboard() {
     <div>
       <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 24, color: "#111" }}>Übersicht</h1>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
+      <div className="admin-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 32 }}>
         {stats.map((stat) => (
           <div key={stat.label} style={{
             background: "white", borderRadius: 10, padding: 20, border: "1px solid #e5e5e5",
@@ -54,13 +54,14 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+      <div className="admin-two-col" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
         {/* Recent listings */}
         <div style={{ background: "white", borderRadius: 10, border: "1px solid #e5e5e5", overflow: "hidden" }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid #e5e5e5", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>Neueste Inserate</h2>
             <Link href="/admin/listings" style={{ fontSize: 13, color: "#2d5a3d", textDecoration: "none" }}>Alle →</Link>
           </div>
+          <div className="admin-table-scroll">
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
               {(recentListings ?? []).map((listing) => (
@@ -86,6 +87,7 @@ export default async function AdminDashboard() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         {/* Recent users */}
@@ -94,6 +96,7 @@ export default async function AdminDashboard() {
             <h2 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>Neueste Nutzer</h2>
             <Link href="/admin/users" style={{ fontSize: 13, color: "#2d5a3d", textDecoration: "none" }}>Alle →</Link>
           </div>
+          <div className="admin-table-scroll">
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <tbody>
               {(recentUsers ?? []).map((user) => (
@@ -113,6 +116,7 @@ export default async function AdminDashboard() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
