@@ -75,9 +75,6 @@ export const metadata: Metadata = {
       "x-default": "https://www.firmadeal.de",
     },
   },
-  verification: {
-    google: "ADD_YOUR_GOOGLE_SEARCH_CONSOLE_ID",
-  },
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
     shortcut: "/favicon.svg",
