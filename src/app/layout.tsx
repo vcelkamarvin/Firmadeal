@@ -66,7 +66,15 @@ export const metadata: Metadata = {
     description: "0% Provision. Anonym. 7 Tage kostenlos.",
     images: ["https://www.firmadeal.de/opengraph-image.png"],
   },
-  alternates: { canonical: "https://www.firmadeal.de" },
+  alternates: {
+    canonical: "https://www.firmadeal.de",
+    languages: {
+      "de-DE": "https://www.firmadeal.de",
+      "de-AT": "https://www.firmadeal.de",
+      "de-CH": "https://www.firmadeal.de",
+      "x-default": "https://www.firmadeal.de",
+    },
+  },
   verification: {
     google: "ADD_YOUR_GOOGLE_SEARCH_CONSOLE_ID",
   },

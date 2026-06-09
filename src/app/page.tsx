@@ -418,7 +418,7 @@ function InlineCatalog({ lang }: { lang: string }) {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-                {shown.map((l) => <ListingGridCard key={l.id} listing={l} />)}
+                {shown.map((l, i) => <ListingGridCard key={l.id} listing={l} priority={i < 4} />)}
               </div>
             )}
             {hasMore && (

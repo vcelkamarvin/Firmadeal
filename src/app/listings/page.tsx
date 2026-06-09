@@ -393,8 +393,8 @@ function ListingsContent() {
             {filtered.length > 0 ? (
               viewMode === "grid" ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                  {filtered.map((listing) => (
-                    <ListingGridCard key={listing.id} listing={listing} />
+                  {filtered.map((listing, index) => (
+                    <ListingGridCard key={listing.id} listing={listing} priority={index < 6} />
                   ))}
                 </div>
               ) : (

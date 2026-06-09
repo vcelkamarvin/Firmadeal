@@ -8,6 +8,7 @@ import { MapPin } from "lucide-react";
 
 interface ListingGridCardProps {
   listing: Listing;
+  priority?: boolean;
 }
 
 const COUNTRY_FLAG: Record<string, string> = { DE: "🇩🇪", AT: "🇦🇹", CH: "🇨🇭" };
@@ -18,7 +19,7 @@ function fmt(n: number): string {
   return `€${n}`;
 }
 
-export default function ListingGridCard({ listing }: ListingGridCardProps) {
+export default function ListingGridCard({ listing, priority = false }: ListingGridCardProps) {
   const { lang } = useLanguage();
 
   const margin = listing.ebitda && listing.annual_revenue && listing.annual_revenue > 0
@@ -54,7 +55,8 @@ export default function ListingGridCard({ listing }: ListingGridCardProps) {
           src={heroSrc}
           alt={`${listing.title} — Firmeninserat auf Firmadeal`}
           fill
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          priority={priority}
           className="object-cover"
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
         />
