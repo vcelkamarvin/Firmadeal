@@ -302,7 +302,7 @@ function Step1() {
         <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">
           {lang === "de" ? "Art der Transaktion" : "Transaction type"}
         </label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="wizard-op-grid grid grid-cols-2 md:grid-cols-3 gap-3">
           {OPERATION_TYPES.map((op) => (
             <button
               key={op.value}
@@ -606,7 +606,8 @@ function Step2() {
                   key={chip}
                   type="button"
                   onClick={() => toggleChip("business_model_chips", chip)}
-                  className={`px-3 py-1.5 rounded-full font-sans text-[13px] border transition-all ${
+                  style={{ minHeight: 40 }}
+                  className={`px-3 py-2 rounded-full font-sans text-[13px] border transition-all ${
                     active
                       ? "bg-[var(--accent)] text-white border-[var(--accent)]"
                       : "bg-white text-[var(--ink)] border-[var(--border)] hover:border-[var(--accent)]"
@@ -632,7 +633,8 @@ function Step2() {
                   key={chip}
                   type="button"
                   onClick={() => toggleChip("competition_chips", chip)}
-                  className={`px-3 py-1.5 rounded-full font-sans text-[13px] border transition-all ${
+                  style={{ minHeight: 40 }}
+                  className={`px-3 py-2 rounded-full font-sans text-[13px] border transition-all ${
                     active
                       ? "bg-[var(--accent)] text-white border-[var(--accent)]"
                       : "bg-white text-[var(--ink)] border-[var(--border)] hover:border-[var(--accent)]"
