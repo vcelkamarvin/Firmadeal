@@ -24,7 +24,7 @@ export default async function AdminInquiries() {
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {(inquiries ?? []).map((inq) => (
           <div key={inq.id} style={{ background: "white", borderRadius: 10, border: "1px solid #e5e5e5", padding: "16px 20px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+            <div className="admin-inq-header" style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
               <div>
                 <p style={{ fontSize: 14, fontWeight: 600, margin: 0 }}>{inq.sender_name}</p>
                 <p style={{ fontSize: 12, color: "#999", margin: "2px 0 0" }}>{inq.sender_email}</p>

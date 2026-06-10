@@ -287,6 +287,15 @@ input, select, textarea {
     -webkit-overflow-scrolling: touch !important;
   }
   .admin-table-scroll table { min-width: 540px; }
+  /* Inquiry cards: stack header on mobile */
+  .admin-inq-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+  .admin-inq-header > div:last-child {
+    text-align: left !important;
+  }
 }
 
 /* Admin bottom tab bar: shown only on mobile */
