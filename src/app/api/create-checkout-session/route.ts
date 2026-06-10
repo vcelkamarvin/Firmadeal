@@ -6,18 +6,19 @@ import { stripe } from "@/lib/stripe";
 export async function POST(req: Request) {
   const { plan, listingId } = await req.json();
 
-  const priceId = process.env.NEXT_PUBLIC_STRIPE_TEST_PRICE_ID;
-  if (!priceId) {
-    return NextResponse.json({ error: "Stripe price not configured" }, { status: 500 });
-  }
-
   const sessionParams = {
     mode: "payment" as const,
     payment_method_types: ["card" as const],
     allow_promotion_codes: true,
     line_items: [
       {
-        price: priceId,
+        price_data: {
+          currency: "eur",
+          unit_amount: 8700, // €87.00 one-time
+          product_data: {
+            name: "Firmadeal — Unternehmensinserat",
+          },
+        },
         quantity: 1,
       },
     ],
