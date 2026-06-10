@@ -338,18 +338,20 @@ function InlineCatalog({ lang }: { lang: string }) {
 
         {/* Filter bar */}
         <div className="bg-white border border-[var(--border)] rounded-xl p-4 mb-1">
-          <div className="flex flex-wrap gap-3 items-center">
-            <input
-              type="text"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={lang === "de" ? "Suchen..." : "Search..."}
-              className="flex-1 min-w-[160px] px-3 py-2 text-sm font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)]"
-            />
+          {/* Search — full width on its own row */}
+          <input
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={lang === "de" ? "Suchen..." : "Search..."}
+            className="w-full px-3 py-2.5 mb-3 font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)]"
+          />
+          {/* Controls row */}
+          <div className="flex flex-wrap gap-2 items-center">
             <select
               value={cat}
               onChange={(e) => setCat(e.target.value)}
-              className="px-3 py-2 text-sm font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white"
+              className="flex-1 min-w-[120px] px-3 py-2 font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white"
             >
               <option value="">{lang === "de" ? "Alle Branchen" : "All industries"}</option>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -357,7 +359,7 @@ function InlineCatalog({ lang }: { lang: string }) {
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="px-3 py-2 text-sm font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white"
+              className="flex-1 min-w-[100px] px-3 py-2 font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white"
             >
               <option value="newest">{lang === "de" ? "Neueste" : "Newest"}</option>
               <option value="price_asc">{lang === "de" ? "Preis ↑" : "Price ↑"}</option>
@@ -366,10 +368,10 @@ function InlineCatalog({ lang }: { lang: string }) {
             </select>
             <button
               onClick={() => setFiltersOpen(!filtersOpen)}
-              className={`flex items-center gap-2 px-3 py-2 text-sm font-sans border rounded-lg transition-colors ${filtersOpen ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)] text-[var(--muted)]"}`}
+              className={`flex items-center gap-2 px-3 py-2 font-sans border rounded-lg transition-colors whitespace-nowrap ${filtersOpen ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)] text-[var(--muted)]"}`}
             >
               <SlidersHorizontal size={14} />
-              {lang === "de" ? "Mehr Filter" : "More filters"}
+              <span className="hidden sm:inline">{lang === "de" ? "Mehr Filter" : "More filters"}</span>
             </button>
             {hasFilters && (
               <button
@@ -377,7 +379,7 @@ function InlineCatalog({ lang }: { lang: string }) {
                 className="flex items-center gap-1 font-mono text-[11px] text-[var(--muted)] hover:text-[var(--red)]"
               >
                 <X size={12} />
-                {lang === "de" ? "Zurücksetzen" : "Reset"}
+                {lang === "de" ? "Reset" : "Reset"}
               </button>
             )}
           </div>
@@ -889,6 +891,7 @@ export default function HomePage() {
 
       {/* ── HERO ──────────────────────────────────────────────────────────────── */}
       <section
+        className="hero-section"
         style={{
           background: "linear-gradient(135deg, #0d1f17 0%, #1a3329 60%, #2d5a3d 100%)",
           minHeight: "90vh",
@@ -899,7 +902,7 @@ export default function HomePage() {
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 w-full" style={{ position: "relative", zIndex: 1 }}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
             {/* Left: copy */}
             <div>
@@ -971,8 +974,10 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right: hero calculator */}
-            <ValuationCalculator variant="hero" />
+            {/* Right: hero calculator — hidden on mobile to keep hero compact */}
+            <div className="hidden lg:block">
+              <ValuationCalculator variant="hero" />
+            </div>
           </div>
         </div>
       </section>
@@ -1019,7 +1024,7 @@ export default function HomePage() {
           <h2 className="font-sans text-[22px] font-bold text-white tracking-tight text-center mb-10">
             {lang === "de" ? "Vom Inserat zum Abschluss" : "From listing to closing"}
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {[
               { n: "01", de: "Inserat finden",      en: "Find a listing",      de2: "Filter nach Branche, Region, Preis. Alle Kennzahlen sofort sichtbar.",          en2: "Filter by industry, region, price. All key metrics visible immediately." },
               { n: "02", de: "Direkt kontaktieren", en: "Contact directly",    de2: "Schreiben Sie dem Verkäufer direkt. Kein Makler. Kein Zwischenhändler.",        en2: "Message the seller directly. No broker. No middleman." },
