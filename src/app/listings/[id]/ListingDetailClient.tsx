@@ -100,6 +100,8 @@ export default function ListingDetailClient() {
   const [oError, setOError]     = useState("");
 
   const [similarListings, setSimilarListings] = useState<Listing[]>([]);
+  const listingId = listing?.id;
+  const listingCategory = listing?.category;
 
   useEffect(() => {
     createClient()
@@ -111,16 +113,16 @@ export default function ListingDetailClient() {
   }, [id]);
 
   useEffect(() => {
-    if (!listing) return;
+    if (!listingId || !listingCategory) return;
     createClient()
       .from("listings")
       .select("*")
       .eq("status", "active")
-      .eq("category", listing.category)
-      .neq("id", listing.id)
+      .eq("category", listingCategory)
+      .neq("id", listingId)
       .limit(3)
       .then(({ data }) => { if (data) setSimilarListings(data); });
-  }, [listing?.id, listing?.category]);
+  }, [listingId, listingCategory]);
 
   if (listing === undefined) return <div style={{ minHeight: "100vh" }} />;
   if (!listing) return notFound();

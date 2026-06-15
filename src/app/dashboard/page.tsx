@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -62,7 +62,7 @@ function DashboardContent() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     async function loadData() {
@@ -84,7 +84,7 @@ function DashboardContent() {
       setLoading(false);
     }
     loadData();
-  }, []);
+  }, [router, supabase]);
 
   const handleDelete = async (id: string) => {
     if (!confirm(lang === "de" ? "Inserat wirklich löschen?" : "Really delete this listing?"))

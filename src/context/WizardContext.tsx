@@ -91,8 +91,8 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
   // Auto-save draft (data + step) whenever either changes
   useEffect(() => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { images, ...rest } = data;
+      void images;
       localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...rest, _step: step }));
     } catch {
       // localStorage unavailable (private mode, quota exceeded) — ignore

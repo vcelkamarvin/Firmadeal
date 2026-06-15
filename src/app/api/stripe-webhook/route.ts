@@ -15,7 +15,7 @@ const PLAN_PRICES: Record<string, string> = {
 function adminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 }
 
@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = adminClient();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const obj = event.data.object as any;
 
   switch (event.type) {

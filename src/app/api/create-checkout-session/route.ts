@@ -42,11 +42,8 @@ export async function POST(req: Request) {
     cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/sell?step=4`,
   };
 
-  console.log("[checkout] Creating session:", JSON.stringify(sessionParams, null, 2));
-
   try {
     const session = await stripe.checkout.sessions.create(sessionParams);
-    console.log("[checkout] Session created:", session.id, "url:", session.url);
     return NextResponse.json({ url: session.url });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

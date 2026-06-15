@@ -79,7 +79,11 @@ function ListingsContent() {
       default:           list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
     return list;
-  }, [search, selectedCategories, selectedRegion, selectedStatus, priceMin, priceMax, sortBy, listings]);
+  }, [
+    featuredOnly, listings, maxEmployees, minRevenue, photosOnly, priceMax,
+    priceMin, search, selectedCategories, selectedCountry, selectedRegion,
+    selectedStatus, sortBy,
+  ]);
 
   const clearFilters = () => {
     setSearch(""); setSelectedCategories([]); setSelectedCountry(""); setSelectedRegion("");
