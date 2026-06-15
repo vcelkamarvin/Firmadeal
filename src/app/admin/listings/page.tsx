@@ -1,13 +1,11 @@
 "use client";
 
-import { createClient } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const STATUS_OPTIONS = ["active", "draft", "paused", "expired"];
 
 export default function AdminListings() {
-  const supabase = createClient();
   const [listings, setListings] = useState<any[]>([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -19,24 +17,41 @@ export default function AdminListings() {
   async function loadListings() {
     setLoading(true);
     setSelected(new Set());
-    let query = supabase
-      .from("listings")
-      .select("id,title,status,plan,city,category,views_count,inquiries_count,asking_price,created_at")
-      .order("created_at", { ascending: false });
-    if (filter !== "all") query = query.eq("status", filter);
-    const { data } = await query;
-    setListings(data ?? []);
+    const res = await fetch(`/api/admin/listings?filter=${encodeURIComponent(filter)}`);
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      setListings(data.listings ?? []);
+    } else {
+      alert(data.error ?? "Inserate konnten nicht geladen werden.");
+      setListings([]);
+    }
     setLoading(false);
   }
 
   async function updateStatus(id: string, status: string) {
-    await supabase.from("listings").update({ status }).eq("id", id);
+    const res = await fetch("/api/admin/listings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, status }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? "Status konnte nicht geändert werden.");
+    }
     loadListings();
   }
 
   async function deleteListing(id: string) {
     if (!confirm("Inserat wirklich löschen?")) return;
-    await supabase.from("listings").delete().eq("id", id);
+    const res = await fetch("/api/admin/listings", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? "Inserat konnte nicht gelöscht werden.");
+    }
     loadListings();
   }
 
@@ -58,15 +73,27 @@ export default function AdminListings() {
 
   async function bulkDelete() {
     if (!confirm(`${selected.size} Inserate wirklich löschen?`)) return;
-    for (const id of Array.from(selected)) {
-      await supabase.from("listings").delete().eq("id", id);
+    const res = await fetch("/api/admin/listings", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: Array.from(selected) }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? "Inserate konnten nicht gelöscht werden.");
     }
     loadListings();
   }
 
   async function bulkUpdateStatus() {
-    for (const id of Array.from(selected)) {
-      await supabase.from("listings").update({ status: bulkStatus }).eq("id", id);
+    const res = await fetch("/api/admin/listings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: Array.from(selected), status: bulkStatus }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? "Status konnte nicht geändert werden.");
     }
     loadListings();
   }

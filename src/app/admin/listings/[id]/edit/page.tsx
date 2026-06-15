@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
 import { CATEGORIES, REGIONS_BY_COUNTRY } from "@/lib/types";
 import Link from "next/link";
 
@@ -203,16 +202,17 @@ export default function AdminEditListing() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    createClient()
-      .from("listings")
-      .select("*")
-      .eq("id", id)
-      .single()
-      .then(({ data }) => { if (data) setForm(data); });
+    fetch(`/api/admin/listings?id=${encodeURIComponent(id)}`)
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error ?? "Inserat konnte nicht geladen werden.");
+        setForm(data.listing);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Inserat konnte nicht geladen werden."));
   }, [id]);
 
   if (!form) {
-    return <div style={{ padding: 40, color: "#999" }}>Lädt…</div>;
+    return <div style={{ padding: 40, color: error ? "#dc2626" : "#999" }}>{error || "Lädt…"}</div>;
   }
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f!, [key]: value }));

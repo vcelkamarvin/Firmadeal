@@ -1,11 +1,17 @@
 export const dynamic = "force-dynamic";
 
 import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { requireAdmin } from "@/lib/adminAuth";
 import { NextRequest, NextResponse } from "next/server";
 
 const BUCKET = "listing-images";
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
 
 function adminDb() {
   return createClient(
@@ -15,35 +21,21 @@ function adminDb() {
 }
 
 export async function POST(req: NextRequest) {
-  // Verify admin
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_admin")
-    .eq("id", user.id)
-    .single();
-  if (!profile?.is_admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const admin = await requireAdmin();
+  if (!admin.ok) return NextResponse.json({ error: admin.error }, { status: admin.status });
 
   // Parse file from FormData
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
-
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const allowed = ["jpg", "jpeg", "png", "webp", "gif"];
-  if (!allowed.includes(ext)) {
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json({ error: "Datei ist zu groß. Maximal 10 MB erlaubt." }, { status: 400 });
+  }
+  if (!ALLOWED_TYPES[file.type]) {
     return NextResponse.json({ error: "Ungültiges Format. Erlaubt: jpg, png, webp, gif" }, { status: 400 });
   }
 
+  const ext = ALLOWED_TYPES[file.type];
   const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 

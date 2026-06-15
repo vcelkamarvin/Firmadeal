@@ -15,12 +15,13 @@ function fmt(n: number) {
 }
 
 export async function generateMetadata(
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ): Promise<Metadata> {
+  const { id } = await params;
   const { data: l } = await db()
     .from("listings")
     .select("title, category, city, annual_revenue, asking_price, description, images")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (!l) return { title: "Inserat nicht gefunden | Firmadeal" };
@@ -42,19 +43,20 @@ export async function generateMetadata(
       description: parts,
       images:      [{ url: ogImage, width: 1200, height: 630, alt: l.title }],
       type:        "website",
-      url:         `https://www.firmadeal.de/listings/${params.id}`,
+      url:         `https://www.firmadeal.de/listings/${id}`,
     },
-    alternates: { canonical: `https://www.firmadeal.de/listings/${params.id}` },
+    alternates: { canonical: `https://www.firmadeal.de/listings/${id}` },
   };
 }
 
 export default async function ListingDetailPage(
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const { data: l } = await db()
     .from("listings")
     .select("title, description, asking_price, category, city")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   const jsonLd = l

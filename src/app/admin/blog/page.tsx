@@ -1,6 +1,5 @@
 "use client";
 
-import { createClient } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 
 const BLOG_CATEGORIES = ["verkauf", "kauf", "bewertung", "nachfolge", "ratgeber"];
@@ -26,7 +25,6 @@ function slugify(str: string) {
 }
 
 export default function AdminBlog() {
-  const supabase = createClient();
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -39,25 +37,45 @@ export default function AdminBlog() {
 
   async function loadPosts() {
     setLoading(true);
-    const { data } = await supabase
-      .from("blog_posts")
-      .select("id,title,slug,published,category,author,reading_time_minutes,created_at")
-      .order("created_at", { ascending: false });
-    setPosts(data ?? []);
+    const res = await fetch("/api/admin/blog");
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      setPosts(data.posts ?? []);
+    } else {
+      alert(data.error ?? "Artikel konnten nicht geladen werden.");
+      setPosts([]);
+    }
     setLoading(false);
   }
 
   async function togglePublish(id: string, current: boolean) {
-    await supabase.from("blog_posts").update({
-      published: !current,
-      published_at: !current ? new Date().toISOString() : null,
-    }).eq("id", id);
+    const res = await fetch("/api/admin/blog", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id,
+        published: !current,
+        published_at: !current ? new Date().toISOString() : null,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? "Status konnte nicht geändert werden.");
+    }
     loadPosts();
   }
 
   async function deletePost(id: string) {
     if (!confirm("Artikel wirklich löschen?")) return;
-    await supabase.from("blog_posts").delete().eq("id", id);
+    const res = await fetch("/api/admin/blog", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error ?? "Artikel konnte nicht gelöscht werden.");
+    }
     loadPosts();
   }
 
@@ -70,12 +88,13 @@ export default function AdminBlog() {
 
   async function openEdit(id: string) {
     setSaveError("");
-    // Fetch full post including content
-    const { data: post } = await supabase
-      .from("blog_posts")
-      .select("*")
-      .eq("id", id)
-      .single();
+    const res = await fetch(`/api/admin/blog?id=${encodeURIComponent(id)}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setSaveError(data.error ?? "Artikel konnte nicht geladen werden.");
+      return;
+    }
+    const post = data.post;
     if (!post) return;
     setEditingId(id);
     setForm({
@@ -115,10 +134,23 @@ export default function AdminBlog() {
     }
 
     let error;
+    let res;
     if (editingId) {
-      ({ error } = await supabase.from("blog_posts").update(payload).eq("id", editingId));
+      res = await fetch("/api/admin/blog", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: editingId, ...payload }),
+      });
     } else {
-      ({ error } = await supabase.from("blog_posts").insert(payload));
+      res = await fetch("/api/admin/blog", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      error = { message: data.error ?? "Artikel konnte nicht gespeichert werden." };
     }
 
     setSaving(false);

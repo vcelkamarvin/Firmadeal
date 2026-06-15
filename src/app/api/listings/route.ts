@@ -13,7 +13,7 @@ function adminClient() {
 
 export async function POST(request: NextRequest) {
   // Get authenticated user from session cookies
-  const serverSupabase = createServerSupabaseClient();
+  const serverSupabase = await createServerSupabaseClient();
   const { data: { user } } = await serverSupabase.auth.getUser();
 
   if (!user) {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     "business_model", "business_model_chips", "competition", "competition_chips",
     "assets_included", "assets_checklist", "transferability_data",
     "type_of_operation", "vat_number", "company_name", "phone", "show_phone",
-    "images", "plan",
+    "images",
   ];
   const safeFields: Record<string, unknown> = {};
   for (const key of allowed) {

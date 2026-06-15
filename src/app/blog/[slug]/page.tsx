@@ -10,12 +10,13 @@ function db() {
 }
 
 export async function generateMetadata(
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
+  const { slug } = await params;
   const { data: post } = await db()
     .from("blog_posts")
     .select("title, excerpt, cover_image")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .eq("published", true)
     .single();
 
@@ -31,17 +32,18 @@ export async function generateMetadata(
       description: post.excerpt ?? undefined,
       images:      [{ url: ogImage, width: 1200, height: 630, alt: post.title }],
       type:        "article",
-      url:         `https://www.firmadeal.de/blog/${params.slug}`,
+      url:         `https://www.firmadeal.de/blog/${slug}`,
     },
-    alternates: { canonical: `https://www.firmadeal.de/blog/${params.slug}` },
+    alternates: { canonical: `https://www.firmadeal.de/blog/${slug}` },
   };
 }
 
-export default async function BlogArticlePage({ params }: { params: { slug: string } }) {
+export default async function BlogArticlePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const { data: post } = await db()
     .from("blog_posts")
     .select("title, excerpt, published_at, category")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .eq("published", true)
     .single();
 
@@ -59,7 +61,7 @@ export default async function BlogArticlePage({ params }: { params: { slug: stri
         },
         mainEntityOfPage: {
           "@type": "WebPage",
-          "@id": `https://www.firmadeal.de/blog/${params.slug}`,
+          "@id": `https://www.firmadeal.de/blog/${slug}`,
         },
       }
     : null;
