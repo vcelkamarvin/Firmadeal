@@ -582,15 +582,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── CONFIDENTIALITY STRIP ─────────────────────────────────────────────── */}
-      <div className="bg-[var(--ink)] border-b border-white/10 py-3 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-center">
-          {["🔒 Anonym", "Keine öffentliche Ausschreibung ohne Ihre Freigabe", "DSGVO-konform"].map((item) => (
-            <span key={item} className="font-mono text-[11px] text-white/50">{item}</span>
-          ))}
-        </div>
-      </div>
-
       {/* ── MARQUEE ──────────────────────────────────────────────────────────── */}
       <div className="bg-[var(--surface2)] overflow-hidden py-2.5 border-b border-[var(--border)]">
         <div className="animate-marquee">
@@ -773,7 +764,7 @@ export default function HomePage() {
                   <ChevronDown size={15} className={`text-[var(--muted)] flex-shrink-0 ml-4 transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`} />
                 </button>
                 {openFaq === i && (
-                  <div className="px-5 pb-5">
+                  <div className="faq-answer px-5 pb-5">
                     <p className="font-sans text-[13px] text-[var(--muted)] leading-relaxed">{faq.a}</p>
                   </div>
                 )}

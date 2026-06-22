@@ -10,14 +10,14 @@ interface PricingCardsProps {
 }
 
 const FEATURES = [
-  "Listing sichtbar im Marktplatz",
-  "4.000 aktive Käufer/Monat kontaktieren Sie direkt",
-  "Anonymes Inserat — Ihre Daten bleiben geschützt",
-  "Automatische Unternehmensbewertung",
-  "7-Tage Markttest-Bericht",
+  "Vertrauliche Einreichung — Ihr Name bleibt anonym",
+  "Aktives Matching mit geprüften Käufern aus unserem Netzwerk",
+  "Private Equity, Family Offices, Search Funds & strategische Investoren",
+  "Indikativer Unternehmenswert sofort berechnet",
   "0% Provision auf den Verkaufspreis",
-  "Wöchentlicher Newsletter an 16.000+ aktive Investoren",
   "Direktes Käufer-Matching nach Branche, Region & Größe",
+  "NDA-Prozess für Detailunterlagen inklusive",
+  "Käuferanfragen direkt in Ihr Dashboard",
 ];
 
 export default function PricingCards({ onSelectPlan, loadingPlan }: PricingCardsProps) {
@@ -75,7 +75,7 @@ export default function PricingCards({ onSelectPlan, loadingPlan }: PricingCards
 
         {/* Stats pills */}
         <div className="flex flex-wrap gap-1.5 mb-6">
-          {["4.000 Käufer/Monat", "Ø 60–120 Tage", "0% Provision"].map((p) => (
+          {["Privates Netzwerk", "Ø 60–120 Tage", "0% Provision"].map((p) => (
             <span
               key={p}
               className="font-sans text-[11px] font-bold px-3 py-1.5 rounded-full text-white"
@@ -104,7 +104,7 @@ export default function PricingCards({ onSelectPlan, loadingPlan }: PricingCards
         <div className="mt-3 flex items-center justify-center gap-2">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse-dot flex-shrink-0" />
           <p className="font-sans text-[12px] font-semibold" style={{ color: "#1A5C3A" }}>
-            47 Unternehmer haben in den letzten 30 Tagen ihr Inserat gestartet
+            Vertrauliche Einreichungen in DE · AT · CH
           </p>
         </div>
       </div>

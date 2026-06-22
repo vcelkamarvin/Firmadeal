@@ -216,6 +216,53 @@ h1, h2, h3, h4, h5, h6 {
 :focus-visible { outline: 2px solid var(--cta); outline-offset: 2px; }
 ::selection    { background: var(--green-100); color: var(--accent); }
 
+/* Global link transition */
+a { transition: color 0.15s ease, opacity 0.15s ease; }
+
+/* Button tap feedback */
+button:active, a:active { opacity: 0.78; }
+
+/* ── RANGE INPUT ────────────────────────────────────────────────────────────── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--neutral-200);
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  transition: transform 0.1s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+/* ── FAQ ANSWER ANIMATION ───────────────────────────────────────────────────── */
+@keyframes faq-open {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.faq-answer {
+  animation: faq-open 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 /* ─── MOBILE GLOBAL FIXES ──────────────────────────────────────────────────── */
 
 /* Prevent horizontal overflow on all devices.

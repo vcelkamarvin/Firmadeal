@@ -36,42 +36,55 @@ export default function ListingGridCard({ listing, priority = false }: ListingGr
     : "";
 
   const marginBarColor = margin !== null
-    ? margin >= 20 ? "bg-[var(--green)]" : margin >= 10 ? "bg-amber-400" : "bg-[var(--muted)]"
+    ? margin >= 20 ? "bg-[var(--green)]" : margin >= 10 ? "bg-amber-400" : "bg-[var(--neutral-200)]"
     : "";
 
-  // Placeholder image if no photos
-  const heroSrc = listing.images?.[0]
-    ?? `https://picsum.photos/seed/${listing.id.slice(0, 8)}/800/600`;
+  const heroSrc = listing.images?.[0] ?? null;
 
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="bg-white border border-[#e8e8e8] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)] hover:-translate-y-1 flex flex-col no-underline"
+      className="group bg-white border border-[#e8e8e8] rounded-2xl overflow-hidden transition-all duration-200 hover:shadow-[0_8px_32px_rgba(0,0,0,0.10)] hover:-translate-y-0.5 hover:border-[#c8d8ce] flex flex-col no-underline"
       style={{ textDecoration: "none", color: "inherit" }}
     >
-      {/* Photo */}
-      <div className="relative" style={{ height: 220, flexShrink: 0 }}>
-        <Image
-          src={heroSrc}
-          alt={`${listing.title} — Firmeninserat auf Firmadeal`}
-          fill
-          loading={priority ? "eager" : "lazy"}
-          priority={priority}
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-        />
+      {/* Photo / placeholder */}
+      <div className="relative bg-[var(--neutral-100)]" style={{ height: 200, flexShrink: 0 }}>
+        {heroSrc ? (
+          <Image
+            src={heroSrc}
+            alt={`${listing.title} — Firmeninserat auf Firmadeal`}
+            fill
+            loading={priority ? "eager" : "lazy"}
+            priority={priority}
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-end p-3" style={{ background: "linear-gradient(135deg, #1a3329 0%, #2d5a3d 100%)" }}>
+            <span className="font-sans text-[13px] font-semibold text-white/80 line-clamp-2 leading-snug">
+              {listing.title}
+            </span>
+          </div>
+        )}
 
-        {/* Category pill — bottom left */}
+        {/* Category pill */}
         <div
           className="absolute bottom-2.5 left-2.5 font-sans text-[11px] font-semibold text-white px-2.5 py-1 rounded-full"
-          style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+          style={{ background: "rgba(0,0,0,0.52)", backdropFilter: "blur(6px)" }}
         >
           {listing.category}
         </div>
 
-        {/* Featured badge — top right */}
-        {listing.featured && (
-          <div className="absolute top-2.5 right-2.5 font-sans text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded">
+        {/* New badge */}
+        {isNew && (
+          <div className="absolute top-2.5 left-2.5 font-sans text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">
+            Neu
+          </div>
+        )}
+
+        {/* Featured badge */}
+        {listing.featured && !isNew && (
+          <div className="absolute top-2.5 right-2.5 font-sans text-[10px] font-bold bg-amber-400 text-white px-2 py-0.5 rounded-full">
             TOP
           </div>
         )}
@@ -79,29 +92,23 @@ export default function ListingGridCard({ listing, priority = false }: ListingGr
 
       {/* Card body */}
       <div className="p-4 flex flex-col flex-1">
-        {/* Urgency + views row */}
-        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-          {isNew && (
-            <span className="font-sans text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full whitespace-nowrap">
-              🔴 Neu — vor {daysAgo === 0 ? "heute" : `${daysAgo}d`}
-            </span>
-          )}
-          {(listing.views_count ?? 0) > 5 && (
-            <span className="font-sans text-[10px] text-[var(--muted)] whitespace-nowrap">
-              👁 {listing.views_count} Aufrufe
-            </span>
-          )}
-        </div>
-
         {/* Title */}
-        <h3 className="font-sans text-[15px] font-semibold text-[var(--ink)] leading-snug line-clamp-2 mb-1.5">
+        <h3 className="font-sans text-[14px] font-semibold text-[var(--ink)] leading-snug line-clamp-2 mb-2 group-hover:text-[var(--accent)] transition-colors">
           {listing.title}
         </h3>
 
         {/* Location */}
         <div className="flex items-center gap-1 text-[var(--muted)] mb-3">
           <MapPin size={11} />
-          <span className="font-sans text-[12px]">{COUNTRY_FLAG[listing.country] ?? ""} {listing.city} · {listing.category}</span>
+          <span className="font-sans text-[12px]">
+            {COUNTRY_FLAG[listing.country] ?? ""} {listing.city}
+            {listing.region ? ` · ${listing.region}` : ""}
+          </span>
+          {(listing.views_count ?? 0) > 5 && (
+            <span className="font-sans text-[11px] text-[var(--muted)] ml-auto whitespace-nowrap">
+              {listing.views_count} ×
+            </span>
+          )}
         </div>
 
         {/* Divider */}
@@ -109,31 +116,28 @@ export default function ListingGridCard({ listing, priority = false }: ListingGr
 
         {/* Financial row */}
         <div className="grid grid-cols-3 gap-1 mb-2.5">
-          {/* Umsatz */}
           <div>
-            <div className="font-sans text-[10px] text-[#999] uppercase tracking-wide mb-0.5">Umsatz</div>
-            <div className="font-sans text-[14px] font-semibold text-[var(--ink)] tabular-nums">
+            <div className="font-sans text-[10px] text-[#aaa] uppercase tracking-wide mb-0.5">Umsatz</div>
+            <div className="font-sans text-[13px] font-semibold text-[var(--ink)] tabular-nums">
               {listing.annual_revenue ? fmt(listing.annual_revenue) : "—"}
             </div>
           </div>
-          {/* Marge */}
           <div className="text-center">
-            <div className="font-sans text-[10px] text-[#999] uppercase tracking-wide mb-0.5">Marge</div>
+            <div className="font-sans text-[10px] text-[#aaa] uppercase tracking-wide mb-0.5">Marge</div>
             {margin !== null ? (
-              <span className={`font-sans text-[14px] font-semibold tabular-nums ${marginColor}`}>
+              <span className={`font-sans text-[13px] font-semibold tabular-nums ${marginColor}`}>
                 {margin}%
               </span>
             ) : (
-              <span className="font-sans text-[14px] text-[#999]">—</span>
+              <span className="font-sans text-[13px] text-[#ccc]">—</span>
             )}
           </div>
-          {/* Preis */}
           <div className="text-right">
-            <div className="font-sans text-[10px] text-[#999] uppercase tracking-wide mb-0.5">Preis</div>
+            <div className="font-sans text-[10px] text-[#aaa] uppercase tracking-wide mb-0.5">Preis</div>
             {listing.price_confidential || !listing.asking_price ? (
-              <span className="font-sans text-[13px] text-[#666] italic">Auf Anfrage</span>
+              <span className="font-sans text-[12px] text-[#999]">Anfrage</span>
             ) : (
-              <span className="font-sans text-[14px] font-bold text-[var(--ink)] tabular-nums">
+              <span className="font-sans text-[13px] font-bold text-[var(--ink)] tabular-nums">
                 {fmt(listing.asking_price)}
               </span>
             )}
@@ -142,20 +146,20 @@ export default function ListingGridCard({ listing, priority = false }: ListingGr
 
         {/* EBITDA margin bar */}
         {margin !== null && (
-          <div className="h-[5px] bg-[#f0f0f0] rounded-full overflow-hidden mb-3">
+          <div className="h-[4px] bg-[#f0f0f0] rounded-full overflow-hidden mb-3">
             <div
-              className={`h-full rounded-full ${marginBarColor}`}
+              className={`h-full rounded-full transition-all ${marginBarColor}`}
               style={{ width: `${Math.min(100, (margin / 40) * 100)}%` }}
             />
           </div>
         )}
 
-        {/* CTA button */}
-        <div
-          className="mt-auto w-full h-12 font-sans text-[14px] font-bold rounded-lg transition-all duration-150 flex items-center justify-center text-white"
-          style={{ background: "#1A5C3A" }}
-        >
-          {lang === "de" ? "Jetzt anfragen →" : "Inquire now →"}
+        {/* Footer row */}
+        <div className="mt-auto flex items-center justify-between pt-2.5 border-t border-[#f5f5f5]">
+          <span className="font-sans text-[12px] text-[var(--muted)]">
+            {lang === "de" ? "Details ansehen" : "View details"}
+          </span>
+          <span className="font-sans text-[13px] font-semibold text-[var(--accent)] group-hover:translate-x-0.5 transition-transform">→</span>
         </div>
       </div>
     </Link>

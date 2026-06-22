@@ -256,7 +256,7 @@ function Step1() {
       {/* Transaction type */}
       <div className="mb-7">
         <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">Art der Transaktion</label>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="wizard-op-grid grid grid-cols-2 md:grid-cols-3 gap-3">
           {OPERATION_TYPES.map((op) => (
             <button
               key={op.value}

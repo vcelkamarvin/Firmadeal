@@ -76,9 +76,30 @@ export default function Navbar() {
           <>
             {/* Desktop nav links */}
             <div className="desktop-only" style={{ display: "flex", gap: 24, alignItems: "center" }}>
-              <Link href="/listings"  style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Auswahl</Link>
-              <Link href="/pricing"   style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Preise</Link>
-              <Link href="/dashboard" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Dashboard</Link>
+              {[
+                { href: "/listings",  label: "Auswahl"    },
+                { href: "/pricing",   label: "Preise"     },
+                { href: "/dashboard", label: "Dashboard"  },
+              ].map(({ href, label }) => {
+                const active = pathname === href || (href !== "/" && pathname.startsWith(href));
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    style={{
+                      fontSize: 14,
+                      color: active ? "#1a3329" : "#666",
+                      textDecoration: "none",
+                      fontWeight: active ? 600 : 400,
+                      borderBottom: active ? "2px solid #1a3329" : "2px solid transparent",
+                      paddingBottom: 2,
+                      transition: "color 0.15s, border-color 0.15s",
+                    }}
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Inserieren CTA */}
