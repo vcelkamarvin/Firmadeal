@@ -47,6 +47,20 @@ export default function ValuationCalculator({ variant = "full" }: Props) {
   const [growthRate, setGrowthRate]   = useState(15);
   const [askingPrice, setAskingPrice] = useState("");
   const [priceEdited, setPriceEdited] = useState(false);
+  const [heroEmail, setHeroEmail]     = useState("");
+  const [heroEmailState, setHeroEmailState] = useState<"idle" | "shown" | "sent">("idle");
+
+  const handleHeroEmail = async () => {
+    if (!heroEmail || !heroEmail.includes("@")) return;
+    try {
+      await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: heroEmail }),
+      });
+    } catch { /* ignore */ }
+    setHeroEmailState("sent");
+  };
 
   const revenue = sliderToRevenue(revenuePos);
 
@@ -106,7 +120,7 @@ export default function ValuationCalculator({ variant = "full" }: Props) {
           <h3 style={{ fontSize: "20px", fontWeight: 700, color: "#111", lineHeight: 1.2, marginBottom: "4px" }}>
             Was ist Ihr Unternehmen wert?
           </h3>
-          <p style={{ fontSize: "12px", color: "#888" }}>Echtzeit-Schätzung · deutschen Marktdaten 2025</p>
+          <p style={{ fontSize: "12px", color: "#888" }}>Echtzeit-Schätzung · deutsche Marktdaten 2025</p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -195,16 +209,54 @@ export default function ValuationCalculator({ variant = "full" }: Props) {
             </div>
           )}
 
-          <Link
-            href="/sell"
-            style={{
-              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-              padding: "12px", background: "var(--accent)", color: "white",
-              borderRadius: "8px", fontSize: "14px", fontWeight: 700, textDecoration: "none",
-            }}
-          >
-            Jetzt kostenlos inserieren <ArrowRight size={14} />
-          </Link>
+          {result ? (
+            heroEmailState === "idle" ? (
+              <button
+                onClick={() => setHeroEmailState("shown")}
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", padding: "12px", background: "var(--accent)", color: "white", borderRadius: "8px", fontSize: "13px", fontWeight: 700, cursor: "pointer", border: "none" }}
+              >
+                Ergebnis + passende Käufer per E-Mail <ArrowRight size={14} />
+              </button>
+            ) : heroEmailState === "shown" ? (
+              <div>
+                <p style={{ fontSize: "11px", fontWeight: 600, color: "#555", marginBottom: "6px" }}>
+                  Detaillierte Bewertung + Käufer-Matching kostenlos erhalten
+                </p>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <input
+                    type="email"
+                    value={heroEmail}
+                    onChange={(e) => setHeroEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleHeroEmail()}
+                    placeholder="ihre@email.de"
+                    style={{ flex: 1, padding: "9px 12px", borderRadius: "8px", border: "1px solid #e5e5e5", fontSize: "13px", outline: "none" }}
+                  />
+                  <button
+                    onClick={handleHeroEmail}
+                    style={{ padding: "9px 14px", background: "var(--accent)", color: "white", borderRadius: "8px", fontSize: "13px", fontWeight: 700, cursor: "pointer", border: "none", whiteSpace: "nowrap" }}
+                  >
+                    Senden
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p style={{ fontSize: "12px", color: "#2d5a3d", fontWeight: 600, marginBottom: "8px" }}>
+                  ✓ Bewertung & Käufer-Matching erhalten Sie per E-Mail!
+                </p>
+                <Link
+                  href="/sell"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", padding: "12px", background: "var(--accent)", color: "white", borderRadius: "8px", fontSize: "13px", fontWeight: 700, textDecoration: "none" }}
+                >
+                  Unternehmen vertraulich einreichen <ArrowRight size={14} />
+                </Link>
+              </div>
+            )
+          ) : (
+            <div style={{ background: "#f8f8f8", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+              <p style={{ fontSize: "11px", color: "#aaa" }}>Branche & Gewinn eingeben um fortzufahren</p>
+            </div>
+          )}
           <p style={{ fontSize: "10px", color: "#aaa", textAlign: "center" }}>
             Indikative Schätzung · Keine Finanzberatung · Marktdaten 2024/25
           </p>
@@ -391,7 +443,7 @@ export default function ValuationCalculator({ variant = "full" }: Props) {
                       href="/sell"
                       className="flex items-center justify-center gap-2 w-full py-3 bg-[var(--cta)] text-white font-sans font-bold text-sm rounded-xl hover:bg-[var(--cta-hover)] transition-colors"
                     >
-                      Jetzt inserieren <ArrowRight size={14} />
+                      Unternehmen vertraulich einreichen <ArrowRight size={14} />
                     </Link>
                   </div>
                 </div>

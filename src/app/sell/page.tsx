@@ -1,16 +1,75 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Check, ChevronRight, Upload, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, ChevronRight, Info } from "lucide-react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { useLanguage } from "@/context/LanguageContext";
 import { WizardProvider, useWizard } from "@/context/WizardContext";
-import { CATEGORIES, DACH_REGIONS, OperationType, BusinessStatus } from "@/lib/types";
+import { CATEGORIES, DACH_REGIONS, OperationType } from "@/lib/types";
 import PricingCards from "@/components/PricingCards";
-import TransferabilityWizard from "@/components/TransferabilityWizard";
 import { createClient } from "@/lib/supabase";
 
-// ── Step 0 — Auth gate ────────────────────────────────────────────────────────
+// ── Analytics ──────────────────────────────────────────────────────────────────
+
+function trackStep(num: number, label?: string) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).gtag?.("event", `wizard_step_${num}_complete`, { event_category: "wizard", event_label: label ?? `step_${num}` });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).clarity?.("event", `wizard_step_${num}`);
+  } catch {}
+}
+
+function trackEvent(name: string) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).gtag?.("event", name, { event_category: "wizard" });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).clarity?.("event", name);
+  } catch {}
+}
+
+// ── Valuation helpers ─────────────────────────────────────────────────────────
+
+const CATEGORY_MULTIPLES: Record<string, { lo: number; hi: number }> = {
+  "Gastronomie & Lebensmittel": { lo: 2.5, hi: 4.0 },
+  "IT & Software":              { lo: 4.0, hi: 8.0 },
+  "Handwerk & Bau":             { lo: 2.0, hi: 3.5 },
+  "Gesundheit & Pflege":        { lo: 3.0, hi: 5.0 },
+  "E-Commerce & Retail":        { lo: 2.0, hi: 4.0 },
+  "Dienstleistungen":           { lo: 2.0, hi: 4.0 },
+  "Produktion & Industrie":     { lo: 3.0, hi: 5.0 },
+  "Immobilien":                 { lo: 3.0, hi: 6.0 },
+};
+
+const EBITDA_MIDPOINTS: Record<string, number> = {
+  "< 50k":      35_000,
+  "50k–150k":  100_000,
+  "150k–300k": 225_000,
+  "300k–600k": 450_000,
+  "600k–1M":   800_000,
+  "> 1M":    1_500_000,
+};
+
+const REVENUE_MIDPOINTS: Record<string, number> = {
+  "< 250k":    150_000,
+  "250k–500k": 375_000,
+  "500k–1M":   750_000,
+  "1M–2,5M": 1_750_000,
+  "2,5M–5M": 3_750_000,
+  "> 5M":    7_000_000,
+};
+
+const EMPLOYEES_MIDPOINTS: Record<string, number> = {
+  "1": 1, "2–5": 3, "6–15": 10, "16–50": 30, "51–200": 100, "> 200": 250,
+};
+
+function fmtEur(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(".", ",")} Mio. €`;
+  if (n >= 1_000)     return `${Math.round(n / 1_000)}k €`;
+  return `${n.toLocaleString("de-DE")} €`;
+}
+
+// ── Google SVG ─────────────────────────────────────────────────────────────────
 
 const GOOGLE_SVG = (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -20,6 +79,8 @@ const GOOGLE_SVG = (
     <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
   </svg>
 );
+
+// ── Step 0 — Auth gate ────────────────────────────────────────────────────────
 
 function Step0Auth({ onComplete }: { onComplete: () => void }) {
   const [mode, setMode] = useState<"register" | "login">("register");
@@ -50,10 +111,7 @@ function Step0Auth({ onComplete }: { onComplete: () => void }) {
     }
     setLoading(true);
     if (mode === "register") {
-      const { error: err } = await supabase.auth.signUp({
-        email, password,
-        options: { data: { full_name: name } },
-      });
+      const { error: err } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
       if (err) {
         if (err.message.toLowerCase().includes("already")) {
           setMode("login");
@@ -66,28 +124,14 @@ function Step0Auth({ onComplete }: { onComplete: () => void }) {
       }
     } else {
       const { error: err } = await supabase.auth.signInWithPassword({ email, password });
-      if (err) {
-        setError("Falsche E-Mail oder falsches Passwort.");
-        setLoading(false);
-        return;
-      }
+      if (err) { setError("Falsche E-Mail oder falsches Passwort."); setLoading(false); return; }
     }
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      onComplete();
-    } else {
-      setError("Bitte bestätigen Sie Ihre E-Mail-Adresse, dann melden Sie sich hier an.");
-    }
+    if (user) { onComplete(); } else { setError("Bitte bestätigen Sie Ihre E-Mail-Adresse, dann melden Sie sich hier an."); }
     setLoading(false);
   };
 
-  const inputStyle: React.CSSProperties = {
-    height: 52, padding: "0 16px", borderRadius: 10,
-    border: "1.5px solid #e5e5e5", fontSize: 16,
-    fontFamily: "inherit", outline: "none",
-    width: "100%", boxSizing: "border-box" as const,
-    transition: "border-color 0.15s",
-  };
+  const inp: React.CSSProperties = { height: 52, padding: "0 16px", borderRadius: 10, border: "1.5px solid #e5e5e5", fontSize: 16, fontFamily: "inherit", outline: "none", width: "100%", boxSizing: "border-box" };
 
   return (
     <div style={{ maxWidth: 440, margin: "0 auto" }}>
@@ -96,110 +140,51 @@ function Step0Auth({ onComplete }: { onComplete: () => void }) {
           {mode === "register" ? "Konto erstellen" : "Anmelden"}
         </h2>
         <p className="font-sans text-[14px] text-[var(--muted)]">
-          {mode === "register"
-            ? "Damit Ihr Inserat gespeichert wird und Käuferanfragen ankommen."
-            : "Melden Sie sich an, um fortzufahren."}
+          {mode === "register" ? "Damit Ihr Inserat gespeichert wird und Käuferanfragen ankommen." : "Melden Sie sich an, um fortzufahren."}
         </p>
       </div>
 
-      {/* Google OAuth — primary CTA */}
-      <button
-        onClick={handleGoogle}
-        disabled={loading}
-        style={{
-          width: "100%", height: 52, display: "flex", alignItems: "center", justifyContent: "center",
-          gap: 12, background: "white", border: "2px solid #1a3329", borderRadius: 10,
-          fontSize: 16, fontWeight: 600, cursor: "pointer", marginBottom: 20,
-          fontFamily: "inherit", color: "#1a3329",
-        }}
-      >
-        {GOOGLE_SVG}
-        Mit Google fortfahren
+      <button onClick={handleGoogle} disabled={loading} style={{ width: "100%", height: 52, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, background: "white", border: "2px solid #1a3329", borderRadius: 10, fontSize: 16, fontWeight: 600, cursor: "pointer", marginBottom: 20, fontFamily: "inherit", color: "#1a3329" }}>
+        {GOOGLE_SVG} Mit Google fortfahren
       </button>
 
-      {/* Divider */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <div style={{ flex: 1, height: 1, background: "#e5e5e5" }} />
         <span className="font-mono text-[11px] text-[var(--muted)]">oder mit E-Mail</span>
         <div style={{ flex: 1, height: 1, background: "#e5e5e5" }} />
       </div>
 
-      {/* Email form */}
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {mode === "register" && (
-          <input
-            type="text" placeholder="Ihr vollständiger Name"
-            value={name} onChange={(e) => setName(e.target.value)}
-            style={inputStyle} autoComplete="name"
-          />
-        )}
-        <input
-          type="email" placeholder="ihre@email.de"
-          value={email} onChange={(e) => setEmail(e.target.value)}
-          style={inputStyle} autoComplete="email"
-        />
-        <input
-          type="password" placeholder={mode === "register" ? "Passwort (mind. 8 Zeichen)" : "Passwort"}
-          value={password} onChange={(e) => setPassword(e.target.value)}
-          style={inputStyle} autoComplete={mode === "register" ? "new-password" : "current-password"}
-        />
+        {mode === "register" && <input type="text" placeholder="Ihr vollständiger Name" value={name} onChange={(e) => setName(e.target.value)} style={inp} autoComplete="name" />}
+        <input type="email" placeholder="ihre@email.de" value={email} onChange={(e) => setEmail(e.target.value)} style={inp} autoComplete="email" />
+        <input type="password" placeholder={mode === "register" ? "Passwort (mind. 8 Zeichen)" : "Passwort"} value={password} onChange={(e) => setPassword(e.target.value)} style={inp} autoComplete={mode === "register" ? "new-password" : "current-password"} />
 
-        {/* GDPR — required for EU compliance */}
         {mode === "register" && (
           <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", padding: "4px 0" }}>
-            <input
-              type="checkbox" checked={gdpr} onChange={(e) => setGdpr(e.target.checked)}
-              style={{ width: 18, height: 18, marginTop: 2, flexShrink: 0, accentColor: "#1a3329" }}
-            />
+            <input type="checkbox" checked={gdpr} onChange={(e) => setGdpr(e.target.checked)} style={{ width: 18, height: 18, marginTop: 2, flexShrink: 0, accentColor: "#1a3329" }} />
             <span style={{ fontSize: 13, color: "#555", lineHeight: 1.5, fontFamily: "inherit" }}>
-              Ich akzeptiere die{" "}
-              <a href="/agb" target="_blank" rel="noopener noreferrer" style={{ color: "#2d5a3d" }}>AGB</a>{" "}
-              und die{" "}
-              <a href="/datenschutz" target="_blank" rel="noopener noreferrer" style={{ color: "#2d5a3d" }}>Datenschutzerklärung</a>{" "}
-              von Firmadeal.de. *
+              Ich akzeptiere die <a href="/agb" target="_blank" rel="noopener noreferrer" style={{ color: "#2d5a3d" }}>AGB</a> und die <a href="/datenschutz" target="_blank" rel="noopener noreferrer" style={{ color: "#2d5a3d" }}>Datenschutzerklärung</a>. *
             </span>
           </label>
         )}
 
-        {error && (
-          <p style={{ fontSize: 13, color: "#dc2626", margin: 0, fontFamily: "inherit" }}>{error}</p>
-        )}
+        {error && <p style={{ fontSize: 13, color: "#dc2626", margin: 0, fontFamily: "inherit" }}>{error}</p>}
 
-        <button
-          onClick={handleSubmit}
-          disabled={loading || (mode === "register" && !gdpr)}
-          style={{
-            height: 52,
-            background: loading || (mode === "register" && !gdpr) ? "#ccc" : "#1a3329",
-            color: "white", border: "none", borderRadius: 10, fontSize: 16, fontWeight: 600,
-            cursor: loading || (mode === "register" && !gdpr) ? "not-allowed" : "pointer",
-            fontFamily: "inherit", transition: "background 0.15s",
-          }}
-        >
+        <button onClick={handleSubmit} disabled={loading || (mode === "register" && !gdpr)} style={{ height: 52, background: loading || (mode === "register" && !gdpr) ? "#ccc" : "#1a3329", color: "white", border: "none", borderRadius: 10, fontSize: 16, fontWeight: 600, cursor: loading || (mode === "register" && !gdpr) ? "not-allowed" : "pointer", fontFamily: "inherit" }}>
           {loading ? "Bitte warten…" : mode === "register" ? "Kostenlos registrieren →" : "Anmelden →"}
         </button>
       </div>
 
-      {/* Mode toggle */}
       <p style={{ textAlign: "center", marginTop: 16, fontSize: 13, color: "#888", fontFamily: "inherit" }}>
         {mode === "register" ? "Bereits registriert? " : "Noch kein Konto? "}
-        <button
-          onClick={() => { setMode(mode === "register" ? "login" : "register"); setError(""); }}
-          style={{ color: "#2d5a3d", background: "none", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "inherit" }}
-        >
+        <button onClick={() => { setMode(mode === "register" ? "login" : "register"); setError(""); }} style={{ color: "#2d5a3d", background: "none", border: "none", cursor: "pointer", fontWeight: 600, fontSize: 13, fontFamily: "inherit" }}>
           {mode === "register" ? "Hier anmelden" : "Jetzt registrieren"}
         </button>
       </p>
 
-      {/* Trust signals */}
       {mode === "register" && (
         <div style={{ marginTop: 24, padding: "14px 16px", background: "#f5faf7", borderRadius: 10, display: "flex", flexDirection: "column", gap: 5 }}>
-          {[
-            "Kein Spam — nur Käuferanfragen",
-            "Jederzeit kündbar",
-            "0% Provision beim Verkauf",
-            "Ihre Daten sind verschlüsselt (SSL)",
-          ].map((item) => (
+          {["Kein Spam — nur Käuferanfragen", "Jederzeit kündbar", "0% Provision beim Verkauf", "Ihre Daten sind verschlüsselt (SSL)"].map((item) => (
             <p key={item} style={{ fontSize: 12, color: "#2d5a3d", margin: 0, fontFamily: "inherit" }}>✓ {item}</p>
           ))}
         </div>
@@ -208,865 +193,497 @@ function Step0Auth({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-// ── Progress bar ──────────────────────────────────────────────────────────────
+// ── Progress bar — 5 steps ────────────────────────────────────────────────────
+
+const STEP_LABELS = ["Grunddaten", "Finanzen", "Titel & Preis", "Ihre Bewertung", "Einreichen"];
+const TOTAL_STEPS = 5;
 
 function ProgressBar({ step }: { step: number }) {
-  const { lang } = useLanguage();
-  const steps = lang === "de"
-    ? ["Ihr Unternehmen", "Inserat & Finanzen", "Zusammenfassung", "Sichtbarkeit"]
-    : ["Your Business",   "Listing & Financials", "Review",          "Visibility"];
-
   return (
     <div className="mb-8">
-      {/* Fill bar — always visible */}
       <div style={{ height: "4px", background: "#e5e5e5", borderRadius: "2px", marginBottom: "10px" }}>
-        <div style={{
-          height: "100%",
-          width: `${(step / 4) * 100}%`,
-          background: "#1a3329",
-          borderRadius: "2px",
-          transition: "width 0.4s ease",
-        }} />
+        <div style={{ height: "100%", width: `${(step / TOTAL_STEPS) * 100}%`, background: "#1a3329", borderRadius: "2px", transition: "width 0.4s ease" }} />
       </div>
-
-      {/* Mobile: simple text only */}
-      <p className="sm:hidden font-sans text-[14px] text-[var(--muted)] mb-4">
-        {lang === "de"
-          ? `Schritt ${step} von 4 — ${steps[step - 1]}`
-          : `Step ${step} of 4 — ${steps[step - 1]}`}
-      </p>
-
-      {/* Desktop: step circles */}
-      <div className="hidden sm:block">
-        <p className="font-sans text-[13px] text-[var(--muted)] mb-6">
-          {lang === "de" ? `Schritt ${step} von 4` : `Step ${step} of 4`}
+      <div className="flex items-center justify-between">
+        <p className="font-sans text-[13px] text-[var(--muted)]">
+          Schritt {step} von {TOTAL_STEPS} — <span className="font-semibold text-[var(--ink)]">{STEP_LABELS[step - 1]}</span>
         </p>
-        <div className="flex items-center">
-          {steps.map((label, i) => {
-            const idx = i + 1;
-            const done = step > idx;
-            const active = step === idx;
-            return (
-              <div key={label} className="flex items-center flex-1 last:flex-none">
-                <div className="flex flex-col items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-sans font-semibold transition-all ${
-                    done ? "bg-[var(--green)] text-white" : active ? "bg-[var(--accent)] text-white" : "bg-[var(--surface2)] text-[var(--muted)] border border-[var(--border)]"
-                  }`}>
-                    {done ? <Check size={14} /> : idx}
-                  </div>
-                  <span className={`font-sans text-[10px] mt-1.5 text-center ${active ? "text-[var(--accent)]" : "text-[var(--muted)]"}`}>
-                    {label}
-                  </span>
-                </div>
-                {i < steps.length - 1 && (
-                  <div className={`flex-1 h-0.5 mx-2 transition-all ${step > idx ? "bg-[var(--green)]" : "bg-[var(--border)]"}`} />
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {step >= 4 && (
+          <span className="font-sans text-[12px] font-semibold text-[var(--accent)]">
+            noch {TOTAL_STEPS - step + 1} {TOTAL_STEPS - step + 1 === 1 ? "Schritt" : "Schritte"}
+          </span>
+        )}
       </div>
     </div>
   );
 }
 
-// ── Step 1 ────────────────────────────────────────────────────────────────────
+// ── Persistent anonymity reassurance ─────────────────────────────────────────
 
-const OPERATION_TYPES: Array<{
-  value: OperationType;
-  de: string; en: string; icon: string; subtitleDe: string; subtitleEn: string;
-}> = [
-  { value: "vollstaendige_uebertragung", de: "Vollverkauf",                  en: "Full Sale",              icon: "🤝", subtitleDe: "Gesamtes Unternehmen verkaufen",           subtitleEn: "Sell the entire business"                },
-  { value: "unternehmensuebertragung",   de: "Verkauf ohne Immobilien",      en: "Sale without Property",  icon: "🏢", subtitleDe: "Betrieb ohne Grundstück & Gebäude",        subtitleEn: "Business without real estate"            },
-  { value: "gewerbeimmobilie",           de: "Immobilie verkaufen",          en: "Sell Property",          icon: "🏗️", subtitleDe: "Gewerbliche Immobilie verkaufen",           subtitleEn: "Sell commercial real estate"             },
-  { value: "anteilsuebertragung",        de: "Teilverkauf / Investor gesucht", en: "Partial Sale / Investor", icon: "📊", subtitleDe: "Anteile abgeben & Kapital aufnehmen",   subtitleEn: "Sell shares & raise capital"             },
-  { value: "unternehmensverpachtung",    de: "Betrieb verpachten",           en: "Lease Business",         icon: "🔑", subtitleDe: "Gesamten Betrieb verpachten",              subtitleEn: "Lease out the entire business"           },
-  { value: "immobilienvermietung",       de: "Gewerbefläche vermieten",      en: "Rent Commercial Space",  icon: "🏠", subtitleDe: "Büro, Laden oder Lager vermieten",         subtitleEn: "Rent out commercial space"               },
+function AnonBadge() {
+  return (
+    <div className="mt-8 flex items-center gap-2 text-[var(--muted)]">
+      <span className="text-[16px]">🔒</span>
+      <p className="font-sans text-[12px]">
+        Ihr Firmenname bleibt verborgen, bis Sie einen Kontakt einzeln freigeben.
+      </p>
+    </div>
+  );
+}
+
+// ── Operation types ────────────────────────────────────────────────────────────
+
+const OPERATION_TYPES: Array<{ value: OperationType; de: string; icon: string; sub: string }> = [
+  { value: "vollstaendige_uebertragung", de: "Vollverkauf",                     icon: "🤝", sub: "Gesamtes Unternehmen" },
+  { value: "unternehmensuebertragung",   de: "Verkauf ohne Immobilien",         icon: "🏢", sub: "Betrieb ohne Grundstück" },
+  { value: "anteilsuebertragung",        de: "Teilverkauf / Investor gesucht",  icon: "📊", sub: "Anteile + Kapital" },
+  { value: "unternehmensverpachtung",    de: "Betrieb verpachten",              icon: "🔑", sub: "Gesamten Betrieb verpachten" },
+  { value: "gewerbeimmobilie",           de: "Immobilie verkaufen",             icon: "🏗️", sub: "Gewerbliche Immobilie" },
+  { value: "immobilienvermietung",       de: "Gewerbefläche vermieten",         icon: "🏠", sub: "Büro, Laden, Lager" },
 ];
+
+// ── Step 1 — Grunddaten ───────────────────────────────────────────────────────
 
 function Step1() {
   const { data, updateData, setStep } = useWizard();
-  const { lang } = useLanguage();
-  const canProceed = true;
+  const canProceed = !!data.category;
 
   return (
     <div>
-      <h2 className="font-sans text-[26px] font-bold text-[var(--ink)] tracking-tight mb-2">
-        {lang === "de" ? "Ihr Unternehmen" : "Your Business"}
-      </h2>
-      <p className="font-sans text-[14px] text-[var(--muted)] mb-8">
-        {lang === "de" ? "Erzählen Sie uns von Ihrem Unternehmen" : "Tell us about your business"}
-      </p>
+      <h2 className="font-sans text-[26px] font-bold text-[var(--ink)] tracking-tight mb-1">Ihr Unternehmen</h2>
+      <p className="font-sans text-[14px] text-[var(--muted)] mb-8">Ein paar Grunddaten — dauert 60 Sekunden.</p>
 
-      <div className="mb-8">
-        <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">
-          {lang === "de" ? "Art der Transaktion" : "Transaction type"}
-        </label>
-        <div className="wizard-op-grid grid grid-cols-2 md:grid-cols-3 gap-3">
+      {/* Transaction type */}
+      <div className="mb-7">
+        <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">Art der Transaktion</label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {OPERATION_TYPES.map((op) => (
             <button
               key={op.value}
               onClick={() => updateData({ type_of_operation: op.value })}
-              className={`text-left p-4 rounded-xl border-2 transition-all ${
-                data.type_of_operation === op.value
-                  ? "border-[var(--accent)] bg-[var(--accent-light)]"
-                  : "border-[var(--border)] bg-white hover:border-[var(--accent)] hover:bg-[var(--accent-light)]"
-              }`}
+              className={`text-left p-4 rounded-xl border-2 transition-all ${data.type_of_operation === op.value ? "border-[var(--accent)] bg-[var(--accent-light)]" : "border-[var(--border)] bg-white hover:border-[var(--accent)] hover:bg-[var(--accent-light)]"}`}
             >
               <div className="text-2xl mb-2">{op.icon}</div>
-              <div className="font-sans text-sm font-semibold text-[var(--ink)]">{lang === "de" ? op.de : op.en}</div>
-              <div className="font-sans text-[12px] text-[var(--muted)] mt-1">{lang === "de" ? op.subtitleDe : op.subtitleEn}</div>
+              <div className="font-sans text-[13px] font-semibold text-[var(--ink)]">{op.de}</div>
+              <div className="font-sans text-[11px] text-[var(--muted)] mt-0.5">{op.sub}</div>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-        <div>
-          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-            {lang === "de" ? "Branche" : "Industry"}
-          </label>
-          <select
-            value={data.category}
-            onChange={(e) => updateData({ category: e.target.value })}
-            className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none"
-            style={{ height: 52, fontSize: 16, padding: "0 16px", cursor: "pointer", WebkitAppearance: "none", appearance: "none" }}
-          >
-            <option value="">{lang === "de" ? "Branche wählen..." : "Choose industry..."}</option>
-            {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
-          </select>
-        </div>
+      {/* Industry — required */}
+      <div className="mb-5">
+        <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
+          Branche <span className="text-red-400">*</span>
+        </label>
+        <select value={data.category} onChange={(e) => updateData({ category: e.target.value })} className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none" style={{ height: 52, fontSize: 16, padding: "0 16px", WebkitAppearance: "none", appearance: "none" }}>
+          <option value="">Branche wählen…</option>
+          {CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+        </select>
+      </div>
 
+      {/* Location */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
         <div>
-          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-            {lang === "de" ? "Stadt" : "City"}
-          </label>
-          <input
-            type="text"
-            value={data.city}
-            onChange={(e) => updateData({ city: e.target.value })}
-            placeholder={lang === "de" ? "z.B. München" : "e.g. Munich"}
-            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)]"
-          />
+          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">Stadt</label>
+          <input type="text" value={data.city} onChange={(e) => updateData({ city: e.target.value })} placeholder="z.B. München" className="w-full px-4 py-3 border border-[var(--border)] rounded-lg font-sans outline-none focus:border-[var(--accent)]" style={{ fontSize: 16 }} />
         </div>
-
         <div>
           <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">Region</label>
-          <select
-            value={data.region}
-            onChange={(e) => updateData({ region: e.target.value })}
-            className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none"
-            style={{ height: 52, fontSize: 16, padding: "0 16px", cursor: "pointer", WebkitAppearance: "none", appearance: "none" }}
-          >
-            <option value="">{lang === "de" ? "Region wählen..." : "Choose region..."}</option>
+          <select value={data.region} onChange={(e) => updateData({ region: e.target.value })} className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none" style={{ height: 52, fontSize: 16, padding: "0 16px", WebkitAppearance: "none", appearance: "none" }}>
+            <option value="">Region wählen…</option>
             {DACH_REGIONS.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
         </div>
-
         <div>
-          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-            {lang === "de" ? "Land" : "Country"}
-          </label>
-          <select
-            value={data.country}
-            onChange={(e) => updateData({ country: e.target.value })}
-            className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none"
-            style={{ height: 52, fontSize: 16, padding: "0 16px", cursor: "pointer", WebkitAppearance: "none", appearance: "none" }}
-          >
-            <option value="DE">Deutschland</option>
-            <option value="AT">Österreich</option>
-            <option value="CH">Schweiz</option>
+          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">Land</label>
+          <select value={data.country} onChange={(e) => updateData({ country: e.target.value })} className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none" style={{ height: 52, fontSize: 16, padding: "0 16px", WebkitAppearance: "none", appearance: "none" }}>
+            <option value="DE">🇩🇪 Deutschland</option>
+            <option value="AT">🇦🇹 Österreich</option>
+            <option value="CH">🇨🇭 Schweiz</option>
           </select>
         </div>
+      </div>
 
+      {/* Founded year + company name */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <div>
-          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-            {lang === "de" ? "Firmenname (optional)" : "Company name (optional)"}
-          </label>
-          <input
-            type="text"
-            value={data.company_name}
-            onChange={(e) => updateData({ company_name: e.target.value })}
-            placeholder="Muster GmbH"
-            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)]"
-          />
-        </div>
-
-        <div>
-          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-            {lang === "de" ? "Gründungsjahr (optional)" : "Founded year (optional)"}
-          </label>
-          <select
-            value={data.founded_year}
-            onChange={(e) => updateData({ founded_year: e.target.value })}
-            className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none"
-            style={{ height: 52, fontSize: 16, padding: "0 16px", cursor: "pointer", WebkitAppearance: "none", appearance: "none" }}
-          >
-            <option value="">{lang === "de" ? "Jahr wählen…" : "Choose year…"}</option>
+          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">Gründungsjahr (optional)</label>
+          <select value={data.founded_year} onChange={(e) => updateData({ founded_year: e.target.value })} className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none" style={{ height: 52, fontSize: 16, padding: "0 16px", WebkitAppearance: "none", appearance: "none" }}>
+            <option value="">Jahr wählen…</option>
             {Array.from({ length: new Date().getFullYear() - 1899 }, (_, i) => new Date().getFullYear() - i).map((y) => (
               <option key={y} value={String(y)}>{y}</option>
             ))}
           </select>
         </div>
+        <div>
+          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">Firmenname (optional)</label>
+          <input type="text" value={data.company_name} onChange={(e) => updateData({ company_name: e.target.value })} placeholder="Muster GmbH" className="w-full px-4 py-3 border border-[var(--border)] rounded-lg font-sans outline-none focus:border-[var(--accent)]" style={{ fontSize: 16 }} />
+        </div>
       </div>
 
       <div className="wizard-nav">
-        <button
-          onClick={() => setStep(2)}
-          disabled={!canProceed}
-          className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          {lang === "de" ? "Weiter" : "Continue"}
-          <ChevronRight size={16} />
+        <button onClick={() => { trackStep(1, "grunddaten"); setStep(2); }} disabled={!canProceed} className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          Weiter <ChevronRight size={16} />
         </button>
       </div>
+      <AnonBadge />
     </div>
   );
 }
 
-// ── Step 2 ────────────────────────────────────────────────────────────────────
+// ── Step 2 — Finanzen ─────────────────────────────────────────────────────────
 
-const BIZ_MODEL_CHIPS = ["B2B", "B2C", "SaaS", "E-Commerce", "Abo-Modell", "Franchise", "Dienstleistung", "Produktion", "Beratung", "Handel"];
-const COMPETITION_CHIPS = ["Kein direkter Wettbewerb", "Lokaler Wettbewerb", "Nationaler Wettbewerb", "Internationaler Wettbewerb", "Nische / Marktführer", "Starker Preiskampf"];
-const ASSETS_LIST = [
-  "Kundenstamm / CRM", "Marke & Domain", "Maschinen & Equipment",
-  "Lagerbestand", "Immobilie (Eigentum)", "Mietvertrag (übertragbar)",
-  "Softwarelizenzen", "Patente & IP", "Mitarbeiter (übernommen)",
-  "Lieferantenverträge", "Rezepte & Know-how", "Fahrzeugflotte",
-];
-const REASON_OPTIONS = [
-  "Ich gehe in Rente",
-  "Ich möchte etwas Neues starten",
-  "Gesundheitliche Gründe",
-  "Kein geeigneter Nachfolger",
-  "Strategischer Verkauf",
-  "Finanzielle Gründe",
-  "Partnerschaftliche Veränderungen",
-  "Sonstiges",
-];
-const STATUS_PILLS: Array<{ value: BusinessStatus; label: string; color: string }> = [
-  { value: "active_profitable", label: "Aktiv & Profitabel", color: "var(--green)" },
-  { value: "in_development",    label: "In Entwicklung",    color: "#f59e0b"       },
-  { value: "restructuring",     label: "Sanierungsbedarf",  color: "var(--red)"   },
-];
+const REVENUE_RANGES = ["< 250k", "250k–500k", "500k–1M", "1M–2,5M", "2,5M–5M", "> 5M"];
+const EBITDA_RANGES  = ["< 50k", "50k–150k", "150k–300k", "300k–600k", "600k–1M", "> 1M"];
+const EMPLOYEES_RANGES = ["1", "2–5", "6–15", "16–50", "51–200", "> 200"];
+const REASON_CHIPS = ["Ruhestand / Nachfolge", "Neuausrichtung", "Gesundheitliche Gründe", "Kein Nachfolger", "Strategischer Verkauf", "Sonstiges"];
+
+function RangeButtons({ options, value, onSelect }: { options: string[]; value: string; onSelect: (v: string) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          type="button"
+          onClick={() => onSelect(opt)}
+          style={{ minHeight: 48 }}
+          className={`px-4 py-2 rounded-xl border-2 font-sans text-[14px] font-semibold transition-all ${value === opt ? "border-[var(--accent)] bg-[var(--accent)] text-white" : "border-[var(--border)] bg-white text-[var(--ink)] hover:border-[var(--accent)] hover:bg-[var(--accent-light)]"}`}
+        >
+          {opt}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Tooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-flex">
+      <button type="button" onClick={() => setOpen(!open)} className="text-[var(--muted)] hover:text-[var(--accent)] transition-colors ml-1.5">
+        <Info size={14} />
+      </button>
+      {open && (
+        <span className="absolute left-6 top-0 z-20 bg-[var(--ink)] text-white font-sans text-[12px] rounded-lg px-3 py-2 w-56 shadow-xl" style={{ lineHeight: 1.5 }}>
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
 
 function Step2() {
   const { data, updateData, setStep } = useWizard();
-  const [dragOver, setDragOver] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const uploadRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  // Create object URLs once when images array changes; revoke old ones to prevent memory leaks.
-  useEffect(() => {
-    const urls = data.images.map((f) => {
-      try { return URL.createObjectURL(f); } catch { return ""; }
-    });
-    setImageUrls(urls);
-    return () => { urls.forEach((u) => { if (u) URL.revokeObjectURL(u); }); };
-  }, [data.images]);
-
-  const canProceed = true;
-
-  const toggleChip = (field: "business_model_chips" | "competition_chips", val: string) => {
-    const arr = data[field] as string[];
-    updateData({ [field]: arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val] } as never);
-  };
-
-  const toggleAsset = (asset: string) => {
-    const arr = data.assets_checklist;
-    updateData({ assets_checklist: arr.includes(asset) ? arr.filter((a) => a !== asset) : [...arr, asset] });
-  };
-
-  const handleImageDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const MAX_SIZE = 10 * 1024 * 1024;
-    const files = Array.from(e.dataTransfer.files).filter((f) => {
-      if (!f.type.startsWith("image/")) return false;
-      if (f.size > MAX_SIZE) { setUploadError(`"${f.name}" ist zu groß (max. 10 MB)`); return false; }
-      return true;
-    });
-    if (files.length > 0) { setUploadError(null); updateData({ images: [...data.images, ...files].slice(0, 10) }); }
-  };
-
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return;
-    const MAX_SIZE = 10 * 1024 * 1024;
-    const oversized = Array.from(e.target.files).find((f) => f.size > MAX_SIZE);
-    if (oversized) { setUploadError(`"${oversized.name}" ist zu groß (max. 10 MB)`); return; }
-    setUploadError(null);
-    updateData({ images: [...data.images, ...Array.from(e.target.files)].slice(0, 10) });
-    // Reset input so the same file can be re-selected after removal
-    e.target.value = "";
-  };
-
-  const wordCount = (data.description ?? "").trim().split(/\s+/).filter(Boolean).length;
+  const canProceed = !!data.revenue_range;
 
   return (
     <div>
-      <h2 className="font-sans text-[26px] font-bold text-[var(--ink)] tracking-tight mb-2">
-        Inserat & Finanzdaten
-      </h2>
-      <p className="font-sans text-[14px] text-[var(--muted)] mb-8">
-        Vollständige Angaben erhöhen Anfragen um bis zu 4×.
-      </p>
+      <h2 className="font-sans text-[26px] font-bold text-[var(--ink)] tracking-tight mb-1">Finanzen</h2>
+      <p className="font-sans text-[14px] text-[var(--muted)] mb-8">Grobe Angaben genügen — wir berechnen sofort Ihren indikativen Wert.</p>
 
-      <div className="space-y-8">
-
-        {/* 1. Title */}
-        {(() => {
-          const len = data.title.length;
-          const EXAMPLE_CHIPS = [
-            "Etabliertes Restaurant mit Biergarten — 15 Jahre",
-            "E-Commerce-Shop mit 50k Besuchern/Monat",
-            "Physiotherapiepraxis mit Kassenzulassung",
-            "SaaS für KMU — 200 Kunden — Berlin",
-            "Familiengeführte Bäckerei — 3 Filialen",
-          ];
-          return (
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide">
-                  Inseratstitel
-                </label>
-                <span className="hidden sm:inline font-mono text-[11px] text-[var(--muted)]">{len}/80</span>
-              </div>
-              <p className="font-sans text-[11px] text-[var(--muted)] mb-2">
-                Struktur: <strong>Was</strong> — <strong>USP</strong> — <strong>Standort</strong>
-              </p>
-              <input
-                type="text"
-                value={data.title}
-                onChange={(e) => updateData({ title: e.target.value.slice(0, 80) })}
-                placeholder="z.B. Etabliertes Restaurant mit Biergarten — 15 Jahre — München"
-                className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)]"
-              />
-              {/* Fill bar — neutral green progress */}
-              {len > 0 && (
-                <div className="h-1 rounded-full mt-1.5 transition-all hidden sm:block" style={{
-                  background: `linear-gradient(to right, #4e9a66 ${Math.min(100, (len / 70) * 100)}%, #e5e5e5 ${Math.min(100, (len / 70) * 100)}%)`,
-                }} />
-              )}
-              {/* Example chips */}
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                <span className="font-sans text-[11px] text-[var(--muted)]">Beispiel:</span>
-                {EXAMPLE_CHIPS.map((chip) => (
-                  <button
-                    key={chip}
-                    type="button"
-                    onClick={() => updateData({ title: chip.slice(0, 80) })}
-                    className="font-sans text-[11px] text-[var(--accent)] bg-[var(--accent-light)] hover:bg-[var(--accent)] hover:text-white px-2 py-0.5 rounded transition-colors"
-                  >
-                    {chip}
-                  </button>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* 2. Description */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide">
-              Unternehmensbeschreibung
-            </label>
-            <span className="hidden sm:inline font-sans text-[11px] text-[var(--muted)]">
-              {wordCount} Wörter · {data.description.length} Zeichen
-            </span>
-          </div>
-          <textarea
-            value={data.description}
-            onChange={(e) => updateData({ description: e.target.value })}
-            rows={5}
-            placeholder="Beispiel: Gut etabliertes Familienrestaurant mit 15 Jahren Geschichte im Herzen von München. Stammkundschaft von 300+ Haushalten, voll eingespieltes 8-köpfiges Team. Verkauf aus Altersgründen — Übergabe ist fließend möglich."
-            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)] resize-none"
-          />
-        </div>
-
-        {/* 3. Business model chips */}
-        <div>
-          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">
-            Geschäftsmodell (mehrere möglich)
+      {/* Revenue */}
+      <div className="mb-7">
+        <div className="flex items-center mb-3">
+          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide">
+            Jahresumsatz <span className="text-red-400">*</span>
           </label>
-          <div className="flex flex-wrap gap-2">
-            {BIZ_MODEL_CHIPS.map((chip) => {
-              const active = data.business_model_chips.includes(chip);
-              return (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => toggleChip("business_model_chips", chip)}
-                  style={{ minHeight: 40 }}
-                  className={`px-3 py-2 rounded-full font-sans text-[13px] border transition-all ${
-                    active
-                      ? "bg-[var(--accent)] text-white border-[var(--accent)]"
-                      : "bg-white text-[var(--ink)] border-[var(--border)] hover:border-[var(--accent)]"
-                  }`}
-                >
-                  {active && <span className="mr-1">✓</span>}{chip}
-                </button>
-              );
-            })}
-          </div>
+          <Tooltip text="Gesamtumsatz vor Abzug aller Kosten (Bruttoumsatz). Grobe Angabe reicht." />
         </div>
+        <RangeButtons
+          options={REVENUE_RANGES}
+          value={data.revenue_range}
+          onSelect={(v) => updateData({ revenue_range: v, annual_revenue: String(REVENUE_MIDPOINTS[v] ?? "") })}
+        />
+      </div>
 
-        {/* 4. Competition chips + free text */}
-        <div>
-          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">
-            Wettbewerbssituation
+      {/* EBITDA */}
+      <div className="mb-7">
+        <div className="flex items-center mb-3">
+          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide">
+            EBITDA / Jahresgewinn
           </label>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {COMPETITION_CHIPS.map((chip) => {
-              const active = data.competition_chips.includes(chip);
-              return (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => toggleChip("competition_chips", chip)}
-                  style={{ minHeight: 40 }}
-                  className={`px-3 py-2 rounded-full font-sans text-[13px] border transition-all ${
-                    active
-                      ? "bg-[var(--accent)] text-white border-[var(--accent)]"
-                      : "bg-white text-[var(--ink)] border-[var(--border)] hover:border-[var(--accent)]"
-                  }`}
-                >
-                  {active && <span className="mr-1">✓</span>}{chip}
-                </button>
-              );
-            })}
-          </div>
-          <textarea
-            value={data.competition}
-            onChange={(e) => updateData({ competition: e.target.value })}
-            rows={3}
-            placeholder="Beschreiben Sie Ihre Wettbewerber (optional) — z.B. Hauptkonkurrenten, Alleinstellungsmerkmale, Marktposition..."
-            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)] resize-none"
-          />
+          <Tooltip text="Gewinn vor Zinsen, Steuern, Abschreibungen. Falls unbekannt: Ihr Jahresgewinn reicht als Näherung." />
         </div>
+        <RangeButtons
+          options={EBITDA_RANGES}
+          value={data.ebitda_range}
+          onSelect={(v) => updateData({ ebitda_range: v, ebitda: String(EBITDA_MIDPOINTS[v] ?? "") })}
+        />
+        <p className="font-sans text-[11px] text-[var(--muted)] mt-2">Optional — aber wichtig für die Bewertung</p>
+      </div>
 
-        {/* 5. Assets checklist */}
-        <div>
-          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">
-            Im Kaufpreis enthaltene Assets
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            {ASSETS_LIST.map((asset) => {
-              const checked = data.assets_checklist.includes(asset);
-              return (
-                <label
-                  key={asset}
-                  style={{
-                    display: "flex", alignItems: "center", gap: "12px",
-                    padding: "12px 14px", minHeight: "52px", cursor: "pointer",
-                    borderRadius: "8px",
-                    border: `1.5px solid ${checked ? "#1a3329" : "#e5e5e5"}`,
-                    background: checked ? "#e8f5ed" : "white",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => toggleAsset(asset)}
-                    style={{ width: "18px", height: "18px", flexShrink: 0, accentColor: "#1a3329" }}
-                  />
-                  <span style={{ fontSize: "14px", fontFamily: "inherit", color: "var(--ink)" }}>{asset}</span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 6. Status radio pills */}
-        <div>
-          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">
-            Unternehmensstatus
-          </label>
-          <div className="flex flex-col sm:flex-row flex-wrap gap-3">
-            {STATUS_PILLS.map((s) => {
-              const active = data.status_business === s.value;
-              return (
-                <button
-                  key={s.value}
-                  type="button"
-                  onClick={() => updateData({ status_business: s.value })}
-                  className={`flex items-center gap-2 px-4 rounded-xl border-2 font-sans text-[14px] font-semibold transition-all ${
-                    active
-                      ? "text-white border-transparent"
-                      : "bg-white text-[var(--ink)] border-[var(--border)] hover:border-[var(--muted)]"
-                  }`}
-                  style={{
-                    minHeight: "52px",
-                    ...(active ? { background: s.color, borderColor: s.color } : {}),
-                  }}
-                >
-                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: active ? "rgba(255,255,255,0.7)" : s.color }} />
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 7. Reason for sale + notes */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-              Verkaufsgrund (optional)
-            </label>
-            <select
-              value={data.reason_for_sale}
-              onChange={(e) => updateData({ reason_for_sale: e.target.value })}
-              className="w-full border border-[var(--border)] rounded-lg font-sans bg-white outline-none"
-              style={{ height: 52, fontSize: 16, padding: "0 16px", cursor: "pointer", WebkitAppearance: "none", appearance: "none" }}
-            >
-              <option value="">Bitte wählen…</option>
-              {REASON_OPTIONS.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-              Zusätzliche Notizen (optional)
-            </label>
-            <textarea
-              value={data.reason_for_sale_notes}
-              onChange={(e) => updateData({ reason_for_sale_notes: e.target.value })}
-              rows={3}
-              placeholder="z.B. Übergabe innerhalb von 3 Monaten möglich…"
-              className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)] resize-none"
-            />
-          </div>
-        </div>
-
-        {/* 8. Financials */}
-        <div className="bg-[var(--surface2)] rounded-xl p-5 border border-[var(--border)]">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="font-sans text-[11px] font-bold uppercase tracking-widest text-[var(--accent)]">
-              Finanzkennzahlen
-            </span>
-            <span className="font-sans text-[10px] font-bold text-white bg-[var(--green)] px-2 py-0.5 rounded">
-              +4× Anfragen
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="font-sans text-[11px] font-bold text-[var(--ink)] block mb-1">Jahresumsatz</label>
-              <p className="font-sans text-[11px] text-[var(--muted)] mb-2">Gesamtumsatz vor Abzug aller Kosten</p>
-              <input type="number" value={data.annual_revenue} onChange={(e) => updateData({ annual_revenue: e.target.value })}
-                placeholder="1200000" className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans bg-white outline-none focus:border-[var(--accent)]" />
-            </div>
-            <div>
-              <label className="font-sans text-[11px] font-bold text-[var(--ink)] block mb-1">
-                EBITDA <span className="font-normal text-[var(--muted)]">(optional)</span>
-              </label>
-              <p className="font-sans text-[11px] text-[var(--muted)] mb-2">Vor Steuern & Bankzinsen</p>
-              <input type="number" value={data.ebitda} onChange={(e) => updateData({ ebitda: e.target.value })}
-                placeholder="240000" className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans bg-white outline-none focus:border-[var(--accent)]" />
-            </div>
-            <div>
-              <label className="font-sans text-[11px] font-bold text-[var(--ink)] block mb-1">Mitarbeiter</label>
-              <p className="font-sans text-[11px] text-[var(--muted)] mb-2">Aktuell (inkl. Teilzeit)</p>
-              <input type="number" value={data.employees} onChange={(e) => updateData({ employees: e.target.value })}
-                placeholder="8" min="0" className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans bg-white outline-none focus:border-[var(--accent)]" />
-            </div>
-          </div>
-          {data.annual_revenue && data.ebitda && Number(data.annual_revenue) > 0 && (
-            <div className="mt-3 flex items-center gap-3">
-              <span className="font-sans text-[11px] text-[var(--muted)]">EBITDA-Marge:</span>
-              <span className="font-sans text-[12px] font-bold text-[var(--green)]">
-                {((Number(data.ebitda) / Number(data.annual_revenue)) * 100).toFixed(1)}%
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* 9. Price */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-              Kaufpreis (€)
-            </label>
-            <input
-              type="number" value={data.asking_price}
-              onChange={(e) => updateData({ asking_price: e.target.value })}
-              disabled={data.price_confidential} placeholder="350000"
-              className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)] disabled:opacity-50 disabled:bg-[var(--surface2)]"
-            />
-          </div>
-          <div className="flex items-end pb-2">
-            <label style={{
-              display: "flex", alignItems: "center", gap: "12px",
-              padding: "12px 14px", minHeight: "52px", cursor: "pointer",
-              borderRadius: "8px", border: `1.5px solid ${data.price_confidential ? "#1a3329" : "#e5e5e5"}`,
-              background: data.price_confidential ? "#e8f5ed" : "white", width: "100%",
-            }}>
-              <input
-                type="checkbox"
-                checked={data.price_confidential}
-                onChange={(e) => updateData({ price_confidential: e.target.checked })}
-                style={{ width: "18px", height: "18px", flexShrink: 0, accentColor: "#1a3329" }}
-              />
-              <span className="font-sans text-sm text-[var(--ink)]">Vertrauliche Verhandlung</span>
-            </label>
-          </div>
-        </div>
-
-        {/* 10. Photos (max 10) */}
-        <div>
-          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-            Fotos (optional, max. 10) — {data.images.length}/10
-          </label>
-
-          {/* Hidden file input */}
-          <input
-            ref={uploadRef}
-            type="file"
-            accept="image/jpeg,image/png,image/heic,image/heif,image/webp,image/*"
-            multiple
-            onChange={handleImageSelect}
-            style={{ display: "none" }}
-          />
-
-          {isMobile ? (
-            /* Mobile: large tap-friendly button */
+      {/* Employees */}
+      <div className="mb-7">
+        <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">Mitarbeiter</label>
+        <div className="flex flex-wrap gap-2">
+          {EMPLOYEES_RANGES.map((opt) => (
             <button
+              key={opt}
               type="button"
-              onClick={() => uploadRef.current?.click()}
-              disabled={data.images.length >= 10}
-              style={{
-                width: "100%", height: "80px",
-                background: "#F9FAFB",
-                border: "2px dashed #D1D5DB",
-                borderRadius: "12px",
-                fontSize: "16px", color: "#374151",
-                cursor: data.images.length >= 10 ? "not-allowed" : "pointer",
-                fontFamily: "inherit",
-                display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center", gap: "6px",
-                WebkitTapHighlightColor: "transparent",
-                opacity: data.images.length >= 10 ? 0.5 : 1,
-              }}
+              onClick={() => updateData({ employees: String(EMPLOYEES_MIDPOINTS[opt] ?? opt) })}
+              style={{ minHeight: 48 }}
+              className={`px-5 py-2 rounded-xl border-2 font-sans text-[14px] font-semibold transition-all ${
+                data.employees === String(EMPLOYEES_MIDPOINTS[opt] ?? opt)
+                  ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                  : "border-[var(--border)] bg-white text-[var(--ink)] hover:border-[var(--accent)] hover:bg-[var(--accent-light)]"
+              }`}
             >
-              <span style={{ fontSize: 28 }}>📷</span>
-              <span>Fotos hinzufügen</span>
+              {opt}
             </button>
-          ) : (
-            /* Desktop: drag-and-drop zone */
-            <div
-              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleImageDrop}
-              onClick={() => uploadRef.current?.click()}
-              style={{ cursor: "pointer" }}
+          ))}
+        </div>
+      </div>
+
+      {/* Reason for sale */}
+      <div className="mb-8">
+        <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">Verkaufsgrund (optional)</label>
+        <div className="flex flex-wrap gap-2">
+          {REASON_CHIPS.map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => updateData({ reason_for_sale: data.reason_for_sale === chip ? "" : chip })}
+              style={{ minHeight: 44 }}
+              className={`px-4 py-2 rounded-full border font-sans text-[13px] transition-all ${data.reason_for_sale === chip ? "bg-[var(--accent)] text-white border-[var(--accent)]" : "bg-white text-[var(--ink)] border-[var(--border)] hover:border-[var(--accent)]"}`}
             >
-              <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-                dragOver ? "border-[var(--accent)] bg-[var(--accent-light)]" : "border-[var(--border)] bg-[var(--surface2)]"
-              } ${data.images.length >= 10 ? "opacity-50 pointer-events-none" : ""}`}>
-                <Upload size={24} className="mx-auto mb-3 text-[var(--muted)]" />
-                <p className="font-sans text-sm text-[var(--muted)] mb-1">Fotos hierher ziehen oder</p>
-                <span className="font-sans text-sm text-[var(--accent)] hover:underline">Dateien auswählen</span>
-              </div>
-            </div>
-          )}
-
-          {/* Error message */}
-          {uploadError && (
-            <p style={{ fontSize: "13px", color: "#dc2626", marginTop: "8px", fontFamily: "inherit" }}>
-              {uploadError}
-            </p>
-          )}
-
-          {/* Thumbnails */}
-          {imageUrls.length > 0 && (
-            <div className="grid grid-cols-4 sm:grid-cols-4 gap-2 mt-3">
-              {imageUrls.map((url, i) => url ? (
-                <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-[var(--surface2)]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="Hochgeladenes Foto für das Firmeninserat" loading="lazy" className="w-full h-full object-cover" />
-                  {/* Green checkmark overlay */}
-                  <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                    <Check size={10} className="text-white" />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => updateData({ images: data.images.filter((_, idx) => idx !== i) })}
-                    className="absolute top-1 right-1 bg-white rounded-full p-0.5 shadow-sm"
-                  >
-                    <X size={12} className="text-[var(--red)]" />
-                  </button>
-                </div>
-              ) : null)}
-            </div>
-          )}
-
-          {/* Skip option */}
-          <button
-            type="button"
-            onClick={() => setStep(3)}
-            style={{
-              width: "100%", marginTop: "12px", padding: "12px",
-              color: "#6b7280", background: "transparent", border: "none",
-              fontSize: "14px", cursor: "pointer", fontFamily: "inherit",
-            }}
-          >
-            Ohne Fotos fortfahren →
-          </button>
+              {data.reason_for_sale === chip && "✓ "}{chip}
+            </button>
+          ))}
         </div>
-
-        {/* 11. Phone */}
-        <div>
-          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-2">
-            Telefon (optional)
-          </label>
-          <input type="tel" value={data.phone} onChange={(e) => updateData({ phone: e.target.value })}
-            placeholder="+49 89 12345678"
-            className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg text-sm font-sans outline-none focus:border-[var(--accent)]" />
-        </div>
-
-        {/* 12. Transferability sliders */}
-        <div className="bg-white border border-[var(--border)] rounded-xl p-5">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-sans text-[11px] font-bold uppercase tracking-widest text-[var(--accent)]">
-              Übertragbarkeits-Analyse
-            </span>
-            <span className="font-sans text-[10px] font-bold text-white bg-[var(--accent)] px-2 py-0.5 rounded">
-              Vertrauensboost
-            </span>
-          </div>
-          <p className="font-sans text-[12px] text-[var(--muted)] mb-5">
-            Wie gut läuft das Unternehmen ohne Sie? Ehrliche Angaben steigern das Käufervertrauen erheblich.
-          </p>
-          <TransferabilityWizard
-            values={data.transferability_data}
-            onChange={(key, value) =>
-              updateData({ transferability_data: { ...data.transferability_data, [key]: value } })
-            }
-          />
-        </div>
-
       </div>
 
       <div className="wizard-nav">
         <div className="flex items-center justify-between">
-          <button onClick={() => setStep(1)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
-            ← Zurück
-          </button>
-          <button
-            onClick={() => setStep(3)}
-            disabled={!canProceed}
-            className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+          <button onClick={() => setStep(1)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">← Zurück</button>
+          <button onClick={() => { trackStep(2, "finanzen"); setStep(3); }} disabled={!canProceed} className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
             Weiter <ChevronRight size={16} />
           </button>
         </div>
       </div>
+      <AnonBadge />
     </div>
   );
 }
 
-// ── Step 3 ────────────────────────────────────────────────────────────────────
+// ── Step 3 — Titel & Preis ────────────────────────────────────────────────────
+
+const TITLE_CHIPS = [
+  "Etabliertes Restaurant mit Biergarten — 15 Jahre",
+  "E-Commerce-Shop mit 50k Besuchern/Monat",
+  "Physiotherapiepraxis mit Kassenzulassung",
+  "SaaS für KMU — 200 Kunden — Berlin",
+  "Familiengeführte Bäckerei — 3 Filialen",
+];
 
 function Step3() {
-  const { data, setStep } = useWizard();
-
-  const fmt = (s: string) => {
-    const n = parseInt(s);
-    if (!n) return "—";
-    return `€${n.toLocaleString("de-DE")}`;
-  };
-
-  const margin = data.annual_revenue && data.ebitda && Number(data.annual_revenue) > 0
-    ? ((Number(data.ebitda) / Number(data.annual_revenue)) * 100).toFixed(1) + "%"
-    : "—";
-
-  const rows = [
-    { key: "Transaktionsart", value: data.type_of_operation || "—", step: 1 },
-    { key: "Branche",         value: data.category || "—",          step: 1 },
-    { key: "Standort",        value: [data.city, data.country].filter(Boolean).join(", ") || "—", step: 1 },
-    { key: "Titel",           value: data.title || "—",             step: 2 },
-    { key: "Kaufpreis",       value: data.price_confidential ? "Vertraulich" : fmt(data.asking_price), step: 2 },
-    { key: "Jahresumsatz",    value: fmt(data.annual_revenue),      step: 2 },
-    { key: "EBITDA",          value: fmt(data.ebitda),              step: 2 },
-    { key: "Gewinnmarge",     value: margin,                        step: 2 },
-    { key: "Mitarbeiter",     value: data.employees || "—",         step: 2 },
-    { key: "Fotos",           value: `${data.images.length}`,       step: 2 },
-  ];
+  const { data, updateData, setStep } = useWizard();
+  const canProceed = !!data.title;
 
   return (
     <div>
-      <h2 className="font-sans text-[26px] font-bold text-[var(--ink)] tracking-tight mb-2">
-        Zusammenfassung
-      </h2>
-      <p className="font-sans text-[14px] text-[var(--muted)] mb-8">
-        Überprüfen Sie Ihre Angaben vor der Veröffentlichung
-      </p>
+      <h2 className="font-sans text-[26px] font-bold text-[var(--ink)] tracking-tight mb-1">Titel & Kaufpreis</h2>
+      <p className="font-sans text-[14px] text-[var(--muted)] mb-8">Wie soll Ihr Inserat heißen? Und welchen Preis stellen Sie vor?</p>
 
-      <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden mb-6">
-        {rows.map((row, i) => (
-          <div key={row.key} className={`flex items-center justify-between px-5 py-3.5 ${i < rows.length - 1 ? "border-b border-[var(--border)]" : ""}`}>
-            <span className="font-sans text-[12px] text-[var(--muted)]">{row.key}</span>
-            <div className="flex items-center gap-3">
-              <span className="font-sans text-[13px] font-semibold text-[var(--ink)] tabular-nums max-w-[280px] truncate">{row.value}</span>
-              <button
-                onClick={() => setStep(row.step)}
-                className="font-sans text-[11px] font-semibold text-[var(--accent)] hover:underline flex-shrink-0"
-              >
-                Bearbeiten
-              </button>
-            </div>
-          </div>
-        ))}
+      {/* Title */}
+      <div className="mb-7">
+        <div className="flex items-center justify-between mb-2">
+          <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide">
+            Inseratstitel <span className="text-red-400">*</span>
+          </label>
+          <span className="font-mono text-[11px] text-[var(--muted)]">{data.title.length}/80</span>
+        </div>
+        <p className="font-sans text-[11px] text-[var(--muted)] mb-2">Struktur: <strong>Was</strong> — <strong>USP</strong> — <strong>Standort</strong></p>
+        <input
+          type="text"
+          value={data.title}
+          onChange={(e) => updateData({ title: e.target.value.slice(0, 80) })}
+          placeholder="z.B. Etabliertes Restaurant mit Biergarten — 15 Jahre — München"
+          className="w-full px-4 py-3 border border-[var(--border)] rounded-lg font-sans outline-none focus:border-[var(--accent)]"
+          style={{ fontSize: 16 }}
+        />
+        {data.title.length > 0 && (
+          <div className="h-1 rounded-full mt-1.5 hidden sm:block" style={{ background: `linear-gradient(to right, #4e9a66 ${Math.min(100, (data.title.length / 70) * 100)}%, #e5e5e5 ${Math.min(100, (data.title.length / 70) * 100)}%)` }} />
+        )}
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          <span className="font-sans text-[11px] text-[var(--muted)]">Beispiel:</span>
+          {TITLE_CHIPS.map((chip) => (
+            <button key={chip} type="button" onClick={() => updateData({ title: chip.slice(0, 80) })} className="font-sans text-[11px] text-[var(--accent)] bg-[var(--accent-light)] hover:bg-[var(--accent)] hover:text-white px-2 py-0.5 rounded transition-colors">
+              {chip}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div className="bg-[var(--accent-light)] border border-[var(--accent)]/20 rounded-xl p-5 mb-8">
-        <p className="font-sans text-sm text-[var(--accent)]">
-          Ihr Inserat wird nach Auswahl eines Plans sofort veröffentlicht.
-        </p>
+      {/* Asking price */}
+      <div className="mb-8">
+        <label className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide block mb-3">Kaufpreisvorstellung</label>
+        <div className="flex gap-3 items-start flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-sans font-bold text-[var(--muted)]">€</span>
+            <input
+              type="number"
+              value={data.asking_price}
+              onChange={(e) => updateData({ asking_price: e.target.value })}
+              disabled={data.price_confidential}
+              placeholder="350000"
+              className="w-full pl-8 pr-4 py-3 border border-[var(--border)] rounded-lg font-sans outline-none focus:border-[var(--accent)] disabled:opacity-50 disabled:bg-[var(--surface2)] tabular-nums"
+              style={{ fontSize: 16 }}
+            />
+          </div>
+          <label style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", minHeight: 52, cursor: "pointer", borderRadius: 10, border: `1.5px solid ${data.price_confidential ? "#1a3329" : "#e5e5e5"}`, background: data.price_confidential ? "#e8f5ed" : "white", whiteSpace: "nowrap" }}>
+            <input type="checkbox" checked={data.price_confidential} onChange={(e) => updateData({ price_confidential: e.target.checked })} style={{ width: 18, height: 18, flexShrink: 0, accentColor: "#1a3329" }} />
+            <span className="font-sans text-[14px] text-[var(--ink)]">Auf Anfrage</span>
+          </label>
+        </div>
       </div>
 
       <div className="wizard-nav">
         <div className="flex items-center justify-between">
-          <button onClick={() => setStep(2)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
-            ← Zurück
-          </button>
-          <button
-            onClick={() => setStep(4)}
-            className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors"
-          >
-            Bestätigen & Plan wählen →
+          <button onClick={() => setStep(2)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">← Zurück</button>
+          <button onClick={() => { trackStep(3, "titel_preis"); setStep(4); }} disabled={!canProceed} className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+            Weiter <ChevronRight size={16} />
           </button>
         </div>
       </div>
+      <AnonBadge />
     </div>
   );
 }
 
-// ── Step 4 ────────────────────────────────────────────────────────────────────
-
-const INVESTORS_BY_CATEGORY: Record<string, number> = {
-  "Gastronomie & Lebensmittel": 2100,
-  "IT & Software":              3000,
-  "Handwerk & Bau":             1600,
-  "Gesundheit & Pflege":        2300,
-  "E-Commerce & Retail":        2700,
-  "Produktion & Industrie":     1000,
-  "Immobilien":                 1900,
-  "Dienstleistungen":           1400,
-};
+// ── Step 4 — Bewertung + E-Mail ───────────────────────────────────────────────
 
 function Step4() {
+  const { data, setStep } = useWizard();
+  const [userEmail, setUserEmail] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  // Prefill email from auth session
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: d }) => {
+      if (d.user?.email) setUserEmail(d.user.email);
+    });
+  }, []);
+
+  // Compute valuation
+  const m = CATEGORY_MULTIPLES[data.category] ?? { lo: 2.5, hi: 4.5 };
+  const ebitdaNum = EBITDA_MIDPOINTS[data.ebitda_range] ?? (data.ebitda ? parseInt(data.ebitda) : 0);
+  const hasValuation = ebitdaNum > 0;
+  const lo = Math.round(ebitdaNum * m.lo);
+  const hi = Math.round(ebitdaNum * m.hi);
+
+  const handleSend = async () => {
+    if (!userEmail) return;
+    setSending(true);
+    try {
+      await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail }),
+      });
+    } catch { /* ignore */ }
+    trackEvent("email_captured");
+    setEmailSent(true);
+    setSending(false);
+  };
+
+  return (
+    <div>
+      <h2 className="font-sans text-[28px] font-bold text-[var(--ink)] tracking-tight mb-2">
+        Ihre Bewertung ist fertig.
+      </h2>
+      <p className="font-sans text-[14px] text-[var(--muted)] mb-6">
+        Auf Basis Ihrer Angaben und Branchenmultiplikatoren für {data.category || "Ihr Segment"}.
+      </p>
+
+      {/* Valuation block */}
+      {hasValuation ? (
+        <div className="bg-[var(--accent)] rounded-2xl p-6 mb-6">
+          <p className="font-mono text-[11px] text-white/50 uppercase tracking-widest mb-2">Indikativer Unternehmenswert</p>
+          <div className="font-sans text-[36px] sm:text-[42px] font-bold text-white tracking-tight leading-none mb-2">
+            {fmtEur(lo)} – {fmtEur(hi)}
+          </div>
+          <p className="font-sans text-[12px] text-white/60">
+            Basis: {m.lo}×–{m.hi}× EBITDA · {data.category} · Indikative Schätzung, keine Finanzberatung
+          </p>
+        </div>
+      ) : (
+        <div className="bg-[var(--surface2)] border border-[var(--border)] rounded-2xl p-6 mb-6">
+          <p className="font-sans text-[14px] text-[var(--muted)]">
+            Für eine Bewertung bitte in Schritt 2 den EBITDA angeben. Wir schicken Ihnen eine manuelle Einschätzung per E-Mail.
+          </p>
+        </div>
+      )}
+
+      {/* Key details summary */}
+      <div className="bg-white border border-[var(--border)] rounded-xl px-5 py-4 mb-6 space-y-2">
+        {[
+          { k: "Branche", v: data.category || "—" },
+          { k: "Umsatz", v: data.revenue_range || "—" },
+          { k: "EBITDA", v: data.ebitda_range || "—" },
+          { k: "Mitarbeiter", v: data.employees || "—" },
+        ].map((row) => (
+          <div key={row.k} className="flex justify-between">
+            <span className="font-sans text-[12px] text-[var(--muted)]">{row.k}</span>
+            <span className="font-sans text-[13px] font-semibold text-[var(--ink)]">{row.v}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Email capture */}
+      <div className="bg-[var(--surface2)] border border-[var(--border)] rounded-xl p-5 mb-6">
+        <p className="font-sans text-[14px] font-semibold text-[var(--ink)] mb-1">
+          Wohin sollen wir die detaillierte Bewertung und passende Käufer senden?
+        </p>
+        <p className="font-sans text-[12px] text-[var(--muted)] mb-4">Kostenlos · kein Spam · DSGVO-konform</p>
+
+        {emailSent ? (
+          <div className="flex items-center gap-2 text-green-600">
+            <Check size={16} />
+            <p className="font-sans text-[14px] font-semibold">Wird zugestellt! Weiter zur Einreichung →</p>
+          </div>
+        ) : (
+          <div className="flex gap-3 flex-wrap">
+            <input
+              type="email"
+              value={userEmail}
+              onChange={(e) => setUserEmail(e.target.value)}
+              placeholder="ihre@email.de"
+              className="flex-1 min-w-[200px] px-4 py-3 border border-[var(--border)] rounded-xl font-sans outline-none focus:border-[var(--accent)]"
+              style={{ fontSize: 16 }}
+            />
+            <button
+              onClick={handleSend}
+              disabled={sending || !userEmail}
+              className="px-5 py-3 bg-[var(--accent)] text-white font-sans font-semibold rounded-xl hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50 whitespace-nowrap"
+            >
+              {sending ? "Wird gesendet…" : "Bewertung + Käufer-Matching erhalten →"}
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="wizard-nav">
+        <div className="flex items-center justify-between">
+          <button onClick={() => setStep(3)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">← Zurück</button>
+          <button
+            onClick={() => { trackStep(4, "bewertung_email"); setStep(5); }}
+            className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors"
+          >
+            Aktiv vor Investoren bringen →
+          </button>
+        </div>
+      </div>
+      <AnonBadge />
+    </div>
+  );
+}
+
+// ── Step 5 — Zahlung ──────────────────────────────────────────────────────────
+
+function Step5() {
   const { data, updateData, setStep, listingId, setListingId } = useWizard();
-  const { lang } = useLanguage();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [savedPromo, setSavedPromo] = useState<string | null>(null);
@@ -1075,47 +692,37 @@ function Step4() {
     try { setSavedPromo(localStorage.getItem("firmadeal_promo")); } catch {}
   }, []);
 
-  const investorCount = INVESTORS_BY_CATEGORY[data.category] ?? 3200;
-  const categoryLabel = data.category || "Deutschland";
-
   const handleSelectPlan = async (planId: string) => {
     updateData({ plan: planId as "test" });
     setLoadingPlan(planId);
     setCheckoutError(null);
+    trackEvent("payment_started");
 
     try {
-      // Require authentication before creating a listing
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        window.location.href = "/login?redirect=/sell";
-        return;
-      }
+      if (!user) { window.location.href = "/login?redirect=/sell"; return; }
 
-      // Save listing as draft if not already saved
       let id = listingId;
       if (!id) {
         const listingRes = await fetch("/api/listings", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            // Step 1
             type_of_operation: data.type_of_operation,
             category: data.category,
             city: data.city,
             region: data.region,
             country: data.country,
             company_name: data.company_name || null,
-            vat_number: data.vat_number || null,
             founded_year: data.founded_year ? Number(data.founded_year) : null,
-            // Step 2
             title: data.title,
             asking_price: data.asking_price ? Number(data.asking_price) : null,
             price_confidential: data.price_confidential,
             annual_revenue: data.annual_revenue ? Number(data.annual_revenue) : null,
             ebitda: data.ebitda ? Number(data.ebitda) : null,
             employees: data.employees ? Number(data.employees) : null,
-            description: data.description,
+            description: data.description || null,
             phone: data.phone || null,
             show_phone: data.show_phone,
             status_business: data.status_business || "active_profitable",
@@ -1123,7 +730,6 @@ function Step4() {
             business_model: data.business_model || null,
             business_model_chips: data.business_model_chips,
             competition_chips: data.competition_chips,
-            assets_included: null,
             assets_checklist: data.assets_checklist,
             transferability_data: data.transferability_data,
             plan: planId,
@@ -1135,22 +741,16 @@ function Step4() {
         setListingId(listingJson.id);
       }
 
-      // Create Stripe checkout session (pass saved promo code if present)
       const promoCode = typeof window !== "undefined" ? localStorage.getItem("firmadeal_promo") : null;
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(promoCode ? { "x-promo-code": promoCode } : {}),
-        },
+        headers: { "Content-Type": "application/json", ...(promoCode ? { "x-promo-code": promoCode } : {}) },
         body: JSON.stringify({ plan: planId, listingId: id }),
       });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-
-      // Clear saved promo after using it
       try { localStorage.removeItem("firmadeal_promo"); } catch {}
-      // Redirect to Stripe hosted checkout
+      trackEvent("payment_redirect_stripe");
       window.location.href = json.url;
     } catch (err) {
       setCheckoutError(err instanceof Error ? err.message : "Unbekannter Fehler");
@@ -1161,22 +761,19 @@ function Step4() {
   return (
     <div>
       <h2 className="font-sans text-[26px] font-bold text-[var(--ink)] tracking-tight mb-2">
-        {lang === "de" ? "Sichtbarkeit wählen" : "Choose visibility"}
+        Aktiv vor unsere Investoren bringen
       </h2>
+      <p className="font-sans text-[14px] text-[var(--muted)] mb-4">
+        Einmalig €87 · 0% Provision · keine Verlängerung
+      </p>
 
-      {/* Investor count banner */}
-      <div className="text-center mb-8 mt-4">
-        <p className="font-sans font-bold text-[var(--ink)] mb-2" style={{ fontSize: "clamp(16px, 4vw, 22px)" }}>
-          {lang === "de" ? "Ihr Inserat wird " : "Your listing will reach "}
-          <span className="text-[var(--green)]">
-            {investorCount.toLocaleString("de-DE")} aktiven {categoryLabel}-Investor{investorCount === 1 ? "" : "en"}
-          </span>
-          {lang === "de" ? " präsentiert." : "."}
+      {/* Risk reversal */}
+      <div className="bg-[var(--accent-light)] border border-[var(--accent)]/30 rounded-xl px-5 py-4 mb-6">
+        <p className="font-sans text-[14px] font-semibold text-[var(--accent)] mb-1">
+          14 Tage Geld-zurück, wenn kein Käuferkontakt zustande kommt.
         </p>
-        <p className="font-sans text-[15px] text-[var(--muted)]">
-          {lang === "de"
-            ? "Wählen Sie Ihre Reichweite für den 7-tägigen Markttest:"
-            : "Choose your reach for the 7-day market test:"}
+        <p className="font-sans text-[13px] text-[var(--muted)]">
+          Nach Zahlung: Ihr Profil geht sofort in unser Investoren-Netzwerk und Sie erhalten Zugang zu Ihrem Dashboard.
         </p>
       </div>
 
@@ -1189,38 +786,36 @@ function Step4() {
       )}
 
       {checkoutError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 font-sans text-[13px] px-4 py-3 rounded-lg mb-6">
-          {checkoutError}
-        </div>
+        <div className="bg-red-50 border border-red-200 text-red-700 font-sans text-[13px] px-4 py-3 rounded-lg mb-6">{checkoutError}</div>
       )}
 
-      <PricingCards
-        onSelectPlan={handleSelectPlan}
-        loadingPlan={loadingPlan}
-      />
+      <PricingCards onSelectPlan={handleSelectPlan} loadingPlan={loadingPlan} />
 
-      <div className="wizard-nav">
-        <button onClick={() => setStep(3)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
-          ← {lang === "de" ? "Zurück" : "Back"}
-        </button>
+      {/* Trust row */}
+      <div className="flex flex-wrap items-center justify-center gap-4 mt-6 pt-4 border-t border-[var(--border)]">
+        {["🔒 Sichere Zahlung", "Stripe", "Anonym bis Abschluss", "0% Provision", "Kein Abo"].map((item) => (
+          <span key={item} className="font-sans text-[12px] text-[var(--muted)]">{item}</span>
+        ))}
+      </div>
+
+      <div className="wizard-nav mt-6">
+        <button onClick={() => setStep(4)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">← Zurück</button>
       </div>
     </div>
   );
 }
 
-// ── Wizard shell ──────────────────────────────────────────────────────────────
+// ── Wizard shell ───────────────────────────────────────────────────────────────
 
 function WizardShell() {
   const { step, resetWizard } = useWizard();
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [showResumeBanner, setShowResumeBanner] = useState(false);
 
-  // Check auth on mount — null = still checking, false = not logged in, true = logged in
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setAuthed(!!data.user));
   }, []);
 
-  // Show resume banner if there's a saved draft with meaningful content
   useEffect(() => {
     try {
       const raw = localStorage.getItem("firmadeal_wizard_draft");
@@ -1245,39 +840,19 @@ function WizardShell() {
     <div className="bg-[var(--bg)] min-h-screen">
       <div className="wizard-page-body max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {!authed ? (
-          /* Step 0: Auth gate — register/login before filling wizard */
           <Step0Auth onComplete={() => setAuthed(true)} />
         ) : (
           <>
             {showResumeBanner && (
-              <div style={{
-                background: "#E8F5EE", border: "1px solid #1A5C3A", borderRadius: "10px",
-                padding: "12px 16px", marginBottom: "20px",
-                display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px",
-                flexWrap: "wrap",
-              }}>
-                <span style={{ fontSize: "14px", color: "#1A5C3A", fontFamily: "inherit" }}>
-                  ✓ Sie haben ein angefangenes Inserat — Schritt {step} von 4
+              <div style={{ background: "#E8F5EE", border: "1px solid #1A5C3A", borderRadius: 10, padding: "12px 16px", marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 14, color: "#1A5C3A", fontFamily: "inherit" }}>
+                  ✓ Sie haben ein angefangenes Inserat — Schritt {step} von {TOTAL_STEPS}
                 </span>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button
-                    onClick={() => setShowResumeBanner(false)}
-                    style={{
-                      padding: "6px 14px", background: "#1A5C3A", color: "white",
-                      border: "none", borderRadius: "6px", fontSize: "13px",
-                      cursor: "pointer", fontFamily: "inherit",
-                    }}
-                  >
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => setShowResumeBanner(false)} style={{ padding: "6px 14px", background: "#1A5C3A", color: "white", border: "none", borderRadius: 6, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
                     Weiter machen
                   </button>
-                  <button
-                    onClick={() => { resetWizard(); setShowResumeBanner(false); }}
-                    style={{
-                      padding: "6px 14px", background: "transparent", color: "#6B7280",
-                      border: "1px solid #E2E8E4", borderRadius: "6px", fontSize: "13px",
-                      cursor: "pointer", fontFamily: "inherit",
-                    }}
-                  >
+                  <button onClick={() => { resetWizard(); setShowResumeBanner(false); }} style={{ padding: "6px 14px", background: "transparent", color: "#6B7280", border: "1px solid #E2E8E4", borderRadius: 6, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>
                     Neu beginnen
                   </button>
                 </div>
@@ -1288,6 +863,7 @@ function WizardShell() {
             {step === 2 && <Step2 />}
             {step === 3 && <Step3 />}
             {step === 4 && <Step4 />}
+            {step === 5 && <Step5 />}
           </>
         )}
       </div>

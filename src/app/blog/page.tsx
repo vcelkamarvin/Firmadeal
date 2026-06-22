@@ -165,14 +165,14 @@ export default function BlogPage() {
           </h3>
           <p className="font-sans text-[14px] text-[var(--muted)] mb-4">
             {lang === "de"
-              ? "Kostenloses Inserat erstellen und Käufer aus dem ganzen Deutschland erreichen."
-              : "Create a free listing and reach buyers across the Germany."}
+              ? "Vertraulich einreichen und Käufer aus unserem privaten Netzwerk erreichen — 0% Provision."
+              : "Submit confidentially and reach buyers from our private network — 0% commission."}
           </p>
           <Link
             href="/sell"
             className="inline-block px-6 py-2.5 bg-[var(--accent)] text-white font-sans font-bold text-[14px] rounded-full hover:bg-[var(--accent-hover)] transition-colors"
           >
-            {lang === "de" ? "Jetzt inserieren" : "List now"}
+            {lang === "de" ? "Unternehmen vertraulich einreichen" : "Submit confidentially"}
           </Link>
         </div>
       </div>

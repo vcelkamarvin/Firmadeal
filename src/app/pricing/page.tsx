@@ -5,27 +5,25 @@ import Link from "next/link";
 import { Check, ChevronDown } from "lucide-react";
 
 const BUYERS = [
-  { icon: "🏢", label: "Private Equity & Family Offices", count: "3.200" },
-  { icon: "👤", label: "Unternehmer & MBI-Kandidaten",    count: "8.900" },
-  { icon: "🔍", label: "Search Funds & ETA",              count: "620"   },
-  { icon: "🤝", label: "Strategische Käufer",             count: "3.280" },
+  { icon: "🏢", label: "Private Equity & Family Offices" },
+  { icon: "👤", label: "Unternehmer & MBI-Kandidaten"    },
+  { icon: "🔍", label: "Search Funds & ETA"              },
+  { icon: "🤝", label: "Strategische Käufer"             },
 ];
 
 const FEATURES = [
-  "Listing sichtbar im Marktplatz",
-  "4.000 aktive Käufer/Monat kontaktieren Sie direkt",
-  "Anonymes Inserat — Ihre Daten bleiben geschützt",
+  "Aufnahme in unser privates Investoren-Netzwerk",
+  "Gezielte Ansprache passender Käufer (PE, Family Offices, Search Funds, Strategen)",
+  "Optional: kuratierte öffentliche Listung für mehr Reichweite",
+  "Anonymes Profil — Ihre Daten bleiben geschützt",
   "Automatische Unternehmensbewertung",
-  "7-Tage Markttest-Bericht",
   "0% Provision auf den Verkaufspreis",
-  "Wöchentlicher Newsletter an 16.000+ aktive Investoren",
-  "Direktes Käufer-Matching nach Branche, Region & Größe",
 ];
 
 const FAQ = [
   {
     q: "Wie funktioniert das Käufer-Matching genau?",
-    a: "Unser System analysiert Branche, Standort und Unternehmensgröße und leitet Ihr Inserat automatisch an registrierte Käufer weiter, die aktiv in Ihrem Segment suchen.",
+    a: "Unser Team analysiert Branche, Standort und Unternehmensgröße und spricht passende Käufer aus unserem privaten Netzwerk direkt an.",
   },
   {
     q: "Bleibt mein Inserat vollständig anonym?",
@@ -34,6 +32,10 @@ const FAQ = [
   {
     q: "Gibt es ein Abo oder versteckte Kosten?",
     a: "Nein. Sie zahlen einmalig €87 — kein Abo, keine Verlängerung, keine Provision auf den Verkaufspreis.",
+  },
+  {
+    q: "Warum sehe ich nur wenige öffentliche Inserate?",
+    a: "Die meisten Mandate sind vertraulich und werden nicht öffentlich gezeigt — das schützt Verkäufer und Mitarbeiter. Öffentlich erscheint nur eine kuratierte Auswahl.",
   },
 ];
 
@@ -73,20 +75,17 @@ export default function PricingPage() {
       {/* Header */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-5 text-center">
         <h1 className="font-sans text-[clamp(20px,3.5vw,36px)] font-bold text-[var(--ink)] tracking-tight mb-2 leading-[1.1]">
-          Ihr Inserat — einmalig €87
+          Vertrauliche Einreichung — einmalig €87
         </h1>
         <p className="font-sans text-[13px] text-[var(--muted)] mb-4">
-          0% Provision · Kein Abo · Sofort live
+          0% Provision · Kein Abo · Anonym
         </p>
         <div className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 bg-white border border-[var(--border)] rounded-full px-5 py-2 shadow-sm text-[13px] font-sans font-semibold text-[var(--ink)]">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse-dot" />
-            127 aktive Inserate
-          </span>
+          <span>0% Provision</span>
           <span className="text-[var(--border)] hidden sm:block">·</span>
-          <span>16.000+ registrierte Käufer</span>
+          <span>Kein Abo</span>
           <span className="text-[var(--border)] hidden sm:block">·</span>
-          <span>Ø 94 Tage bis Abschluss</span>
+          <span>Anonym bis zum Abschluss</span>
         </div>
       </section>
 
@@ -100,7 +99,7 @@ export default function PricingPage() {
             style={{ border: "2.5px solid #1A5C3A", ...show(0) }}
           >
             <h3 className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-widest mb-4">
-              Firmadeal Listing
+              Vertrauliche Einreichung
             </h3>
 
             <div className="flex items-baseline gap-1 mb-1">
@@ -114,7 +113,7 @@ export default function PricingPage() {
             </p>
 
             <div className="flex flex-wrap gap-1.5 mb-6">
-              {["4.000 Käufer/Monat", "Ø 60–120 Tage", "0% Provision"].map((p) => (
+              {["Gezielte Ansprache passender Käufer", "Privates Netzwerk", "0% Provision"].map((p) => (
                 <span
                   key={p}
                   className="font-sans text-[11px] font-bold px-3 py-1.5 rounded-full text-white"
@@ -139,15 +138,8 @@ export default function PricingPage() {
               className="animate-cta-pulse block text-center w-full py-4 rounded-xl font-sans font-bold text-[15px] text-white hover:opacity-90 transition-opacity duration-200"
               style={{ background: "#1A5C3A" }}
             >
-              Jetzt Inserat starten →
+              Unternehmen vertraulich einreichen →
             </Link>
-
-            <div className="mt-3 flex items-center justify-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse-dot flex-shrink-0" />
-              <p className="font-sans text-[12px] font-semibold" style={{ color: "#1A5C3A" }}>
-                47 Unternehmer haben in den letzten 30 Tagen ihr Inserat gestartet
-              </p>
-            </div>
           </div>
 
           {/* Sidebar */}
@@ -158,7 +150,7 @@ export default function PricingPage() {
                 Wer kauft auf Firmadeal?
               </h3>
               <p className="font-sans text-[10px] text-[var(--muted)] mb-3">
-                Ihr Inserat wird automatisch weitergeleitet
+                Wir gleichen Ihr Profil gezielt ab
               </p>
               <div className="space-y-2.5">
                 {BUYERS.map((b) => (
@@ -167,12 +159,6 @@ export default function PricingPage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-sans text-[11px] font-semibold text-[var(--ink)] leading-snug truncate">{b.label}</p>
                     </div>
-                    <span
-                      className="font-sans text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0"
-                      style={{ background: "#e8f5ed", color: "#1A5C3A" }}
-                    >
-                      {b.count}
-                    </span>
                   </div>
                 ))}
               </div>
@@ -181,7 +167,7 @@ export default function PricingPage() {
             {/* Trust block */}
             <div className="bg-white border border-[var(--border)] rounded-2xl p-5">
               <p className="font-sans text-[11px] text-[var(--muted)] leading-relaxed">
-                Unser Algorithmus analysiert Branche, Region und Unternehmensgröße — Ihr Inserat erreicht automatisch passende Käufer ohne Makler und ohne Provision.
+                Wir gleichen Ihr Profil gezielt mit passenden Käufern ab — diskret, ohne Makler und ohne Provision.
               </p>
             </div>
           </div>

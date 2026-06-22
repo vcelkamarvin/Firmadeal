@@ -108,6 +108,8 @@ export interface WizardData {
   annual_revenue: string;
   ebitda: string;
   employees: string;
+  revenue_range: string;
+  ebitda_range: string;
   // Step 3 - review only
   // Transferability sliders
   transferability_data: {

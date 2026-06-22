@@ -76,9 +76,8 @@ export default function Navbar() {
           <>
             {/* Desktop nav links */}
             <div className="desktop-only" style={{ display: "flex", gap: 24, alignItems: "center" }}>
-              <Link href="/listings" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Inserate</Link>
-              <Link href="/pricing"  style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Preise</Link>
-              <Link href="/blog"     style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Blog</Link>
+              <Link href="/listings"  style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Auswahl</Link>
+              <Link href="/pricing"   style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Preise</Link>
               <Link href="/dashboard" style={{ fontSize: 14, color: "#555", textDecoration: "none" }}>Dashboard</Link>
             </div>
 
@@ -89,7 +88,7 @@ export default function Navbar() {
               fontSize: 14, fontWeight: 600, textDecoration: "none",
               display: "flex", alignItems: "center", whiteSpace: "nowrap", flexShrink: 0,
             }}>
-              Inserieren
+              Unternehmen einreichen
             </Link>
 
             {/* Hamburger — mobile only */}
@@ -135,10 +134,9 @@ export default function Navbar() {
         >
           {/* Nav items */}
           {[
-            { href: "/listings", label: "Inserate durchsuchen",   icon: "🔍", desc: "100+ Unternehmen in Deutschland" },
-            { href: "/sell",     label: "Unternehmen inserieren", icon: "📋", desc: "7 Tage kostenlos · 0% Provision" },
-            { href: "/pricing",  label: "Preise & Pläne",         icon: "💳", desc: "Ab €39/Monat" },
-            { href: "/blog",     label: "Blog",                   icon: "📖", desc: "Tipps für Käufer & Verkäufer" },
+            { href: "/listings", label: "Kuratierte Auswahl ansehen",           icon: "🔍", desc: "Öffentliche Mandate" },
+            { href: "/sell",     label: "Unternehmen vertraulich einreichen", icon: "📋", desc: "Einmalig €87 · 0% Provision" },
+            { href: "/pricing",  label: "Preise & Pläne",                    icon: "💳", desc: "Einmalig €87" },
           ].map(item => (
             <Link
               key={item.href}
@@ -172,10 +170,10 @@ export default function Navbar() {
             border: "1px solid #c6e6d0",
           }}>
             <p style={{ fontSize: 13, fontWeight: 700, color: "#1a3329", margin: "0 0 4px", fontFamily: "inherit" }}>
-              🎁 1 Monat kostenlos
+              🎁 Aktionscode einlösen
             </p>
             <p style={{ fontSize: 12, color: "#555", margin: "0 0 10px", fontFamily: "inherit" }}>
-              Code eingeben und ersten Monat gratis inserieren
+              Code eingeben und Rabatt auf die einmalige Gebühr erhalten
             </p>
             <div style={{ display: "flex", gap: 8 }}>
               <input
@@ -219,10 +217,10 @@ export default function Navbar() {
               fontFamily: "inherit",
             }}
           >
-            Jetzt kostenlos inserieren →
+            Unternehmen vertraulich einreichen →
           </Link>
           <p style={{ textAlign: "center", fontSize: 12, color: "#aaa", marginTop: 8, fontFamily: "inherit" }}>
-            7 Tage gratis · 0% Provision · Jederzeit kündbar
+            Einmalig €87 · 0% Provision · Anonym bis zum Abschluss
           </p>
 
           {/* Auth links */}

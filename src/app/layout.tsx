@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     template: "%s | Firmadeal.de",
   },
   description:
-    "Der deutsche Marktplatz für Unternehmensverkäufe. Verkaufen Sie Ihre Firma direkt an Käufer — 0% Provision, anonym, sofort live. 7 Tage kostenlos.",
+    "Diskreter Unternehmensverkauf mit privatem Investoren-Netzwerk. Anonym, 0% Provision, €87 einmalig — keine öffentliche Ausschreibung ohne Ihre Freigabe.",
   keywords: [
     "Firma verkaufen",
     "Unternehmen verkaufen",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Firmadeal.de — Unternehmen verkaufen ohne Makler | Deutschland",
-    description: "Der führende Marktplatz für den Kauf und Verkauf von Unternehmen in Deutschland. 0% Provision, anonym, direkt an Käufer. 7 Tage kostenlos testen.",
+    description: "Diskreter Unternehmensverkauf mit privatem Investoren-Netzwerk. Anonym, 0% Provision, €87 einmalig.",
     url: "https://www.firmadeal.de",
     siteName: "Firmadeal.de",
     locale: "de_DE",
@@ -64,7 +64,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Firmadeal.de — Unternehmen verkaufen ohne Makler",
-    description: "0% Provision. Anonym. 7 Tage kostenlos.",
+    description: "Diskreter Unternehmensverkauf. Anonym, 0% Provision, €87 einmalig.",
     images: ["https://www.firmadeal.de/opengraph-image.png"],
   },
   alternates: {

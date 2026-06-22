@@ -4,11 +4,13 @@ import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import Link from "next/link";
 import ListingCard from "@/components/ListingCard";
 import ListingGridCard from "@/components/ListingGridCard";
 import { createClient } from "@/lib/supabase";
 import { CATEGORIES, REGIONS_BY_COUNTRY } from "@/lib/types";
 import type { BusinessStatus, Listing } from "@/lib/types";
+import KaufgesucheSection from "@/components/KaufgesucheSection";
 
 const COUNTRY_OPTIONS = [
   { value: "DE", label: "🇩🇪 Deutschland" },
@@ -100,10 +102,10 @@ function ListingsContent() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="font-sans text-[26px] font-bold text-[var(--ink)] tracking-tight mb-1">
-            {lang === "de" ? "Unternehmen kaufen" : "Buy a business"}
+            {lang === "de" ? "Kuratierte Auswahl" : "Curated selection"}
           </h1>
           <p className="font-mono text-[12px] text-[var(--muted)]">
-            {lang === "de" ? "deutschlandweit — Deutschland, Österreich, Schweiz" : "Germany-wide — Germany, Austria, Switzerland"}
+            {lang === "de" ? "Deutschland, Österreich, Schweiz — die meisten Mandate sind vertraulich" : "Germany, Austria, Switzerland — most mandates are confidential"}
           </p>
         </div>
 
@@ -324,7 +326,10 @@ function ListingsContent() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-3">
               <p className="font-sans text-[12px] text-[var(--muted)]">
-                <span className="text-[var(--ink)] font-semibold">{filtered.length}</span> {lang === "de" ? "Inserate" : "listings"}
+                {filtered.length > 0
+                  ? <><span className="text-[var(--ink)] font-semibold">{filtered.length}</span> {lang === "de" ? "Inserate" : "listings"}</>
+                  : <span>{lang === "de" ? "Kuratierte Auswahl" : "Curated selection"}</span>
+                }
               </p>
               <div className="flex items-center gap-2">
                 {/* View toggle */}
@@ -428,13 +433,37 @@ function ListingsContent() {
                 </>
               )
             ) : (
-              <div className="text-center py-20 bg-white border border-[var(--border)] rounded-xl">
-                <p className="font-sans text-sm text-[var(--muted)] mb-3">
-                  {lang === "de" ? "Keine Inserate gefunden." : "No listings found."}
-                </p>
-                <button onClick={clearFilters} className="font-sans text-sm text-[var(--accent)] hover:underline">
-                  {lang === "de" ? "Filter zurücksetzen" : "Reset filters"}
-                </button>
+              <div className="text-center py-20 bg-white border border-[var(--border)] rounded-xl px-6">
+                {hasFilters ? (
+                  <>
+                    <p className="font-sans text-sm text-[var(--muted)] mb-3">
+                      {lang === "de" ? "Keine Inserate für diese Filter." : "No listings for these filters."}
+                    </p>
+                    <button onClick={clearFilters} className="font-sans text-sm text-[var(--accent)] hover:underline">
+                      {lang === "de" ? "Filter zurücksetzen" : "Reset filters"}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-4xl mb-4">🔒</div>
+                    <h3 className="font-sans text-[18px] font-bold text-[var(--ink)] mb-3">
+                      {lang === "de" ? "Die meisten Mandate sind vertraulich" : "Most mandates are confidential"}
+                    </h3>
+                    <p className="font-sans text-[14px] text-[var(--muted)] leading-relaxed mb-6 max-w-md mx-auto">
+                      {lang === "de"
+                        ? "Aus Diskretionsgründen zeigen wir nur einen kleinen, kuratierten Teil unserer Mandate öffentlich. Suchen Sie etwas Bestimmtes? Hinterlegen Sie Ihr Suchprofil — wir melden uns, sobald ein passendes Unternehmen verfügbar ist."
+                        : "For discretion reasons, only a small curated portion of our mandates are shown publicly. Looking for something specific? Leave your search profile and we'll reach out when a match becomes available."}
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Link
+                        href="/sell"
+                        className="inline-flex items-center justify-center gap-2 bg-[var(--accent)] text-white font-sans font-bold px-6 py-3 rounded-xl hover:bg-[var(--accent-hover)] transition-colors text-[14px]"
+                      >
+                        {lang === "de" ? "Unternehmen vertraulich einreichen" : "Submit your business confidentially"}
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -447,8 +476,11 @@ function ListingsContent() {
 
 export default function ListingsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[var(--bg)]" />}>
-      <ListingsContent />
-    </Suspense>
+    <>
+      <KaufgesucheSection />
+      <Suspense fallback={<div className="min-h-screen bg-[var(--bg)]" />}>
+        <ListingsContent />
+      </Suspense>
+    </>
   );
 }

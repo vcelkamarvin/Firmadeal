@@ -44,6 +44,8 @@ const defaultData: WizardData = {
   annual_revenue: "",
   ebitda: "",
   employees: "",
+  revenue_range: "",
+  ebitda_range: "",
   plan: "",
 };
 
@@ -79,7 +81,7 @@ export function WizardProvider({ children }: { children: React.ReactNode }) {
           },
         }));
         // Restore the wizard step (1–4) so a page refresh returns user to where they were
-        if (typeof _step === "number" && _step >= 1 && _step <= 4) {
+        if (typeof _step === "number" && _step >= 1 && _step <= 5) {
           setStep(_step);
         }
       }

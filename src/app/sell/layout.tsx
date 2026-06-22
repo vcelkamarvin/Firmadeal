@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Firma verkaufen — Kostenlos inserieren",
+  title: "Unternehmen vertraulich einreichen — Einmalig €87",
   description:
-    "Inserieren Sie Ihr Unternehmen in 5 Minuten. 7 Tage kostenlos, 0% Provision, anonym bis zum Abschluss.",
+    "Vertrauliche Einreichung in 5 Minuten. Einmalig €87, 0% Provision, anonym bis zum Abschluss. Wir bringen Ihr Unternehmen vor geprüfte Investoren.",
   alternates: { canonical: "https://www.firmadeal.de/sell" },
   openGraph: {
-    title: "Firma verkaufen — Kostenlos inserieren | Firmadeal.de",
-    description: "Inserieren Sie Ihr Unternehmen in 5 Minuten. 7 Tage kostenlos, 0% Provision, anonym bis zum Abschluss.",
+    title: "Unternehmen vertraulich einreichen | Firmadeal.de",
+    description: "Vertrauliche Einreichung in 5 Minuten. Einmalig €87, 0% Provision, anonym bis zum Abschluss.",
     url: "https://www.firmadeal.de/sell",
   },
 };

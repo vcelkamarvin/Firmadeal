@@ -144,6 +144,33 @@ h1, h2, h3, h4, h5, h6 {
 }
 .animate-marquee:hover { animation-play-state: paused; }
 
+/* Kaufgesuche marquee — slower, for wide cards */
+@keyframes kaufgesuche-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.animate-kaufgesuche {
+  animation: kaufgesuche-scroll 55s linear infinite;
+  display: flex;
+  width: max-content;
+}
+.animate-kaufgesuche:hover { animation-play-state: paused; }
+
+/* Scroll-reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease-out, transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.in-view { opacity: 1; transform: translateY(0); }
+
+/* Honour prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee,
+  .animate-kaufgesuche { animation: none; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
 /* Fade-up */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }

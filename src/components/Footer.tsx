@@ -17,8 +17,8 @@ export default function Footer() {
             </div>
             <p className="font-sans text-[13px] text-white/50 max-w-xs leading-relaxed">
               {lang === "de"
-                ? "Der führende Marktplatz für Unternehmensverkäufe in Deutschland, Österreich und der Schweiz."
-                : "The leading marketplace for business sales in Germany, Austria and Switzerland."}
+                ? "Diskreter Unternehmensverkauf in Deutschland, Österreich und der Schweiz — mit privatem Investoren-Netzwerk."
+                : "Discreet business sales in Germany, Austria and Switzerland — with a private investor network."}
             </p>
           </div>
 
@@ -28,8 +28,8 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2">
               {[
-                { href: "/listings", de: "Inserate durchsuchen", en: "Browse listings" },
-                { href: "/sell",     de: "Inserat aufgeben",     en: "Post listing"    },
+                { href: "/listings", de: "Auswahl ansehen",         en: "View selection"  },
+                { href: "/sell",     de: "Unternehmen einreichen", en: "Submit business" },
                 { href: "/pricing",  de: "Preise",               en: "Pricing"         },
               ].map((l) => (
                 <li key={l.href}>
@@ -78,7 +78,7 @@ export default function Footer() {
               </svg>
             </a>
             <p className="font-mono text-[11px] text-white/25">
-              DE · AT · CH — deutschen Marktplatz
+              DE · AT · CH — deutscher Marktplatz
             </p>
           </div>
         </div>

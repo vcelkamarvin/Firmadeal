@@ -1,249 +1,30 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import ListingCard from "@/components/ListingCard";
 import ListingGridCard from "@/components/ListingGridCard";
-import { MOCK_LISTINGS } from "@/lib/mockData";
 import { CATEGORIES } from "@/lib/types";
 import type { Listing } from "@/lib/types";
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
 import type { BusinessStatus } from "@/lib/types";
 import ValuationCalculator from "@/components/ValuationCalculator";
-import SaleTimelineSection from "@/components/SaleTimelineSection";
+import KaufgesucheSection from "@/components/KaufgesucheSection";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const BIZ_TYPES = ["KFZ-Werkstatt", "Bäckerei", "IT-Firma", "Restaurant", "Praxis", "Online-Shop"];
+const BIZ_TYPES = ["Handwerksbetrieb", "Gastronomiebetrieb", "IT-Unternehmen", "Produktionsbetrieb", "Dienstleister", "Online-Business"];
 
 const ANON_LISTINGS = [
-  { id: 1, cat: "Gastronomie",   city: "München",   revenue: "€420k", ebitda: "€85k",  price: "€280k",    emp: 8,  years: 12 },
-  { id: 2, cat: "IT & Software", city: "Hamburg",   revenue: "€680k", ebitda: "€190k", price: "€1,1M",    emp: 5,  years: 7  },
-  { id: 3, cat: "Handwerk",      city: "Berlin",    revenue: "€310k", ebitda: "€62k",  price: "€195k",    emp: 6,  years: 18 },
-  { id: 4, cat: "Einzelhandel",  city: "Frankfurt", revenue: "€520k", ebitda: "€78k",  price: "Auf Anfrage", emp: 12, years: 9 },
+  { id: 1, cat: "Gastronomie",   city: "München",   revenue: "€420k", ebitda: "€85k",  price: "€280k",       emp: 8,  years: 12 },
+  { id: 2, cat: "IT & Software", city: "Hamburg",   revenue: "€680k", ebitda: "€190k", price: "€1,1M",       emp: 5,  years: 7  },
+  { id: 3, cat: "Handwerk",      city: "Berlin",    revenue: "€310k", ebitda: "€62k",  price: "€195k",       emp: 6,  years: 18 },
+  { id: 4, cat: "Einzelhandel",  city: "Frankfurt", revenue: "€520k", ebitda: "€78k",  price: "Auf Anfrage", emp: 12, years: 9  },
 ];
 
 const CAT_PILLS = ["Alle", "Gastronomie", "IT & Software", "Handwerk", "Einzelhandel", "Produktion", "Dienstleistung"];
-
-const TESTIMONIALS = [
-  {
-    name: "Michael K.",
-    role: "Maschinenbau GmbH · München",
-    quote: "Innerhalb von 6 Wochen hatte ich drei ernsthafte Kaufinteressenten. Vollständig anonym, ohne Maklergebühren — genau wie versprochen.",
-    badge: "Verkäufer",
-    badgeStyle: { background: "#e8f5ed", color: "#1a3329" } as React.CSSProperties,
-    result: "Verkauft in 4 Monaten",
-    resultStyle: "text-green-700 bg-green-100",
-  },
-  {
-    name: "Sarah M.",
-    role: "Online-Shop Käuferin · Hamburg",
-    quote: "Ich habe genau das richtige Unternehmen gefunden. Die Kennzahlen waren transparent, der Kontakt direkt — kein Makler dazwischen.",
-    badge: "Käuferin",
-    badgeStyle: { background: "#dbeafe", color: "#1d4ed8" } as React.CSSProperties,
-    result: "Acquisition erfolgreich",
-    resultStyle: "text-blue-700 bg-blue-100",
-  },
-  {
-    name: "Thomas W.",
-    role: "Steuerberatung · Frankfurt",
-    quote: "0% Provision bedeutete für mich €47.000 mehr in der Tasche. Firmadeal hat das in 3 Monaten möglich gemacht.",
-    badge: "Verkäufer",
-    badgeStyle: { background: "#e8f5ed", color: "#1a3329" } as React.CSSProperties,
-    result: "€47k gespart",
-    resultStyle: "text-green-700 bg-green-100",
-  },
-  {
-    name: "Anna L.",
-    role: "Gastronomie Käuferin · Wien",
-    quote: "Als Erstkäuferin war ich unsicher. Die Bewertungstools und transparenten Daten gaben mir die Sicherheit für die richtige Entscheidung.",
-    badge: "Käuferin",
-    badgeStyle: { background: "#dbeafe", color: "#1d4ed8" } as React.CSSProperties,
-    result: "Erstes Unternehmen gekauft",
-    resultStyle: "text-blue-700 bg-blue-100",
-  },
-];
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
-
-function fmt(n: number): string {
-  if (n >= 1_000_000) return `€${(n / 1_000_000).toFixed(1).replace(".", ",")}M`;
-  if (n >= 1_000)     return `€${Math.round(n / 1_000)}k`;
-  return `€${n}`;
-}
-
-// ── Market stats ───────────────────────────────────────────────────────────────
-
-const ALL = MOCK_LISTINGS.filter((l) => l.status === "active");
-const avgRevenue = Math.round(ALL.reduce((s, l) => s + (l.annual_revenue ?? 0), 0) / ALL.filter((l) => l.annual_revenue).length);
-const avgPrice   = Math.round(ALL.filter((l) => l.asking_price && !l.price_confidential).reduce((s, l) => s + (l.asking_price ?? 0), 0) / ALL.filter((l) => l.asking_price && !l.price_confidential).length);
-const avgMargin  = Math.round(ALL.filter((l) => l.ebitda && l.annual_revenue).reduce((s, l) => s + ((l.ebitda! / l.annual_revenue!) * 100), 0) / ALL.filter((l) => l.ebitda && l.annual_revenue).length);
-
-// Industry breakdown
-const BY_CAT: Record<string, { count: number; avgPrice: number; avgMargin: number }> = {};
-ALL.forEach((l) => {
-  if (!BY_CAT[l.category]) BY_CAT[l.category] = { count: 0, avgPrice: 0, avgMargin: 0 };
-  BY_CAT[l.category].count++;
-  if (l.asking_price && !l.price_confidential) BY_CAT[l.category].avgPrice += l.asking_price;
-  if (l.ebitda && l.annual_revenue) BY_CAT[l.category].avgMargin += (l.ebitda / l.annual_revenue) * 100;
-});
-const CAT_DATA = Object.entries(BY_CAT)
-  .map(([cat, d]) => ({
-    cat,
-    count: d.count,
-    avgPrice: d.count > 0 ? Math.round(d.avgPrice / d.count) : 0,
-    avgMargin: d.count > 0 ? Math.round(d.avgMargin / d.count) : 0,
-  }))
-  .sort((a, b) => b.count - a.count);
-
-const MAX_CAT_COUNT = Math.max(...CAT_DATA.map((d) => d.count));
-const MAX_CAT_PRICE = Math.max(...CAT_DATA.map((d) => d.avgPrice));
-
-// Price distribution buckets
-const PRICE_BUCKETS = [
-  { label: "<€200k", min: 0, max: 200_000 },
-  { label: "€200k–500k", min: 200_000, max: 500_000 },
-  { label: "€500k–1M", min: 500_000, max: 1_000_000 },
-  { label: "€1M–3M", min: 1_000_000, max: 3_000_000 },
-  { label: ">€3M", min: 3_000_000, max: Infinity },
-];
-const PRICE_DIST = PRICE_BUCKETS.map((b) => ({
-  ...b,
-  count: ALL.filter((l) => l.asking_price && !l.price_confidential && l.asking_price >= b.min && l.asking_price < b.max).length,
-}));
-const MAX_DIST = Math.max(...PRICE_DIST.map((d) => d.count));
-
-// ── Components ─────────────────────────────────────────────────────────────────
-
-function MarketCharts({ lang }: { lang: string }) {
-  const [chart, setChart] = useState<"industries" | "prices" | "margins">("industries");
-
-  return (
-    <section className="bg-white border-b border-[var(--border)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="flex items-end justify-between mb-8 gap-4 flex-wrap">
-          <div>
-            <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-1">
-              {lang === "de" ? "Marktdaten" : "Market data"}
-            </p>
-            <h2 className="font-sans text-[24px] font-bold text-[var(--ink)] tracking-tight">
-              {lang === "de" ? "deutschen Unternehmensmarkt 2025" : "German Business Market 2025"}
-            </h2>
-          </div>
-          <div className="flex gap-1 bg-[var(--surface2)] rounded-lg p-1">
-            {[
-              { id: "industries" as const, de: "Branchen", en: "Industries" },
-              { id: "prices"     as const, de: "Preise",   en: "Prices"     },
-              { id: "margins"    as const, de: "Margen",   en: "Margins"    },
-            ].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setChart(t.id)}
-                className={`font-mono text-[11px] px-3 py-1.5 rounded-md transition-all ${
-                  chart === t.id ? "bg-[var(--accent)] text-white" : "text-[var(--muted)] hover:text-[var(--ink)]"
-                }`}
-              >
-                {lang === "de" ? t.de : t.en}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Industry count chart */}
-        {chart === "industries" && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
-              {CAT_DATA.map((d) => (
-                <div key={d.cat}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-sans text-[13px] text-[var(--ink)]">{d.cat}</span>
-                    <span className="font-mono text-[11px] text-[var(--muted)]">{d.count} {lang === "de" ? "Inserate" : "listings"}</span>
-                  </div>
-                  <div className="h-2 bg-[var(--surface2)] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[var(--accent)] rounded-full transition-all duration-700"
-                      style={{ width: `${(d.count / MAX_CAT_COUNT) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Price distribution chart */}
-        {chart === "prices" && (
-          <div>
-            <p className="font-mono text-[11px] text-[var(--muted)] mb-6">
-              {lang === "de" ? "Verteilung nach Kaufpreisbereichen" : "Distribution by asking price range"}
-            </p>
-            <div className="flex items-end gap-3 h-40">
-              {PRICE_DIST.map((b) => (
-                <div key={b.label} className="flex-1 flex flex-col items-center gap-2">
-                  <span className="font-mono text-[11px] text-[var(--muted)]">{b.count}</span>
-                  <div className="w-full relative" style={{ height: `${Math.max(4, (b.count / MAX_DIST) * 100)}%` }}>
-                    <div className="w-full h-full bg-[var(--accent)] rounded-t-md opacity-80 hover:opacity-100 transition-opacity" />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3 mt-2">
-              {PRICE_DIST.map((b) => (
-                <div key={b.label} className="flex-1 text-center">
-                  <span className="font-mono text-[10px] text-[var(--muted)]">{b.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* EBITDA margin by industry */}
-        {chart === "margins" && (
-          <div className="space-y-3">
-            <p className="font-mono text-[11px] text-[var(--muted)] mb-4">
-              {lang === "de" ? "Ø EBITDA-Marge pro Branche" : "Avg. EBITDA margin per industry"}
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
-              {CAT_DATA.filter((d) => d.avgMargin > 0).sort((a, b) => b.avgMargin - a.avgMargin).map((d) => (
-                <div key={d.cat}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-sans text-[13px] text-[var(--ink)]">{d.cat}</span>
-                    <span className={`font-mono text-[11px] font-semibold ${d.avgMargin >= 25 ? "text-[var(--green)]" : d.avgMargin >= 15 ? "text-amber-600" : "text-[var(--muted)]"}`}>
-                      {d.avgMargin}%
-                    </span>
-                  </div>
-                  <div className="h-2 bg-[var(--surface2)] rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ${d.avgMargin >= 25 ? "bg-[var(--green)]" : d.avgMargin >= 15 ? "bg-amber-400" : "bg-[var(--muted)]"}`}
-                      style={{ width: `${Math.min(100, d.avgMargin * 2.5)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* KPI row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10 pt-8 border-t border-[var(--border)]">
-          {[
-            { value: fmt(avgRevenue), label: lang === "de" ? "Ø Jahresumsatz" : "Avg. Annual Revenue", sub: lang === "de" ? "aller Inserate" : "across all listings" },
-            { value: fmt(avgPrice),   label: lang === "de" ? "Ø Kaufpreis"    : "Avg. Asking Price",   sub: lang === "de" ? "exkl. vertraulich" : "excl. confidential" },
-            { value: `${avgMargin}%`, label: lang === "de" ? "Ø EBITDA-Marge" : "Avg. EBITDA Margin",  sub: lang === "de" ? "aller Inserate" : "across all listings" },
-          ].map((k) => (
-            <div key={k.label} className="text-center">
-              <div className="font-sans text-[32px] font-bold text-[var(--accent)] tracking-tight leading-none">{k.value}</div>
-              <div className="font-mono text-[11px] text-[var(--ink)] mt-1">{k.label}</div>
-              <div className="font-mono text-[10px] text-[var(--muted)]">{k.sub}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // ── Inline catalog ─────────────────────────────────────────────────────────────
 
@@ -286,10 +67,29 @@ function InlineCatalog({ lang }: { lang: string }) {
     return list;
   }, [q, cat, status, priceMax, sort, listings]);
 
-  // Homepage shows max 12 (4×3 grid)
   const shown = filtered.slice(0, 12);
   const hasMore = filtered.length > 12;
   const hasFilters = q || cat || status || priceMax;
+
+  const EmptyState = () => (
+    <div className="py-16 text-center max-w-lg mx-auto px-4">
+      <div className="text-4xl mb-4">🔒</div>
+      <h3 className="font-sans text-[18px] font-bold text-[var(--ink)] mb-3">
+        {lang === "de" ? "Die meisten Mandate sind vertraulich" : "Most mandates are confidential"}
+      </h3>
+      <p className="font-sans text-[14px] text-[var(--muted)] leading-relaxed mb-6">
+        {lang === "de"
+          ? "Aus Diskretionsgründen zeigen wir nur einen kleinen, kuratierten Teil unserer Mandate öffentlich. Suchen Sie etwas Bestimmtes? Hinterlegen Sie Ihr Suchprofil — wir melden uns, sobald ein passendes Unternehmen verfügbar ist."
+          : "For discretion reasons, only a small curated portion of our mandates are shown publicly. Looking for something specific? Leave your search profile and we'll reach out when a match becomes available."}
+      </p>
+      <Link
+        href="/sell"
+        className="inline-flex items-center justify-center gap-2 bg-[var(--accent)] text-white font-sans font-bold px-6 py-3 rounded-xl hover:bg-[var(--accent-hover)] transition-colors text-[14px]"
+      >
+        {lang === "de" ? "Unternehmen vertraulich einreichen" : "Submit your business confidentially"}
+      </Link>
+    </div>
+  );
 
   return (
     <section id="listings" className="bg-[var(--bg)]">
@@ -298,47 +98,33 @@ function InlineCatalog({ lang }: { lang: string }) {
         <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
           <div>
             <p className="font-sans text-[11px] font-bold text-[var(--accent)] uppercase tracking-[0.2em] mb-1">
-              {lang === "de" ? "Live Marktplatz" : "Live marketplace"}
+              {lang === "de" ? "Kuratierte Auswahl" : "Curated selection"}
             </p>
             <h2 className="font-sans text-[24px] font-bold text-[var(--ink)] tracking-tight">
-              {lang === "de" ? "Unternehmen kaufen" : "Businesses for sale"}
+              {lang === "de" ? "Öffentliche Mandate" : "Public mandates"}
             </h2>
           </div>
           <div className="flex items-center gap-3">
-            {/* View toggle */}
             <div style={{ display: "flex", gap: 4 }}>
               <button
                 onClick={() => setViewMode("grid")}
                 title="Kachelansicht"
-                style={{
-                  width: 34, height: 34, borderRadius: 6,
-                  border: "1px solid #e5e5e5",
-                  background: viewMode === "grid" ? "#2d5a3d" : "transparent",
-                  color: viewMode === "grid" ? "white" : "#888",
-                  cursor: "pointer", fontSize: 16,
-                }}
+                style={{ width: 34, height: 34, borderRadius: 6, border: "1px solid #e5e5e5", background: viewMode === "grid" ? "#2d5a3d" : "transparent", color: viewMode === "grid" ? "white" : "#888", cursor: "pointer", fontSize: 16 }}
               >⊞</button>
               <button
                 onClick={() => setViewMode("list")}
                 title="Listenansicht"
-                style={{
-                  width: 34, height: 34, borderRadius: 6,
-                  border: "1px solid #e5e5e5",
-                  background: viewMode === "list" ? "#2d5a3d" : "transparent",
-                  color: viewMode === "list" ? "white" : "#888",
-                  cursor: "pointer", fontSize: 16,
-                }}
+                style={{ width: 34, height: 34, borderRadius: 6, border: "1px solid #e5e5e5", background: viewMode === "list" ? "#2d5a3d" : "transparent", color: viewMode === "list" ? "white" : "#888", cursor: "pointer", fontSize: 16 }}
               >☰</button>
             </div>
             <Link href="/sell" className="font-sans text-[13px] font-semibold text-[var(--accent)] hover:underline">
-              {lang === "de" ? "+ Inserat aufgeben" : "+ List your business"}
+              {lang === "de" ? "Unternehmen vertraulich einreichen" : "Submit your business"}
             </Link>
           </div>
         </div>
 
         {/* Filter bar */}
         <div className="bg-white border border-[var(--border)] rounded-xl p-4 mb-1">
-          {/* Search — full width on its own row */}
           <input
             type="text"
             value={q}
@@ -346,21 +132,12 @@ function InlineCatalog({ lang }: { lang: string }) {
             placeholder={lang === "de" ? "Suchen..." : "Search..."}
             className="w-full px-3 py-2.5 mb-3 font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)]"
           />
-          {/* Controls row */}
           <div className="flex flex-wrap gap-2 items-center">
-            <select
-              value={cat}
-              onChange={(e) => setCat(e.target.value)}
-              className="flex-1 min-w-[120px] px-3 py-2 font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white"
-            >
+            <select value={cat} onChange={(e) => setCat(e.target.value)} className="flex-1 min-w-[120px] px-3 py-2 font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white">
               <option value="">{lang === "de" ? "Alle Branchen" : "All industries"}</option>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="flex-1 min-w-[100px] px-3 py-2 font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white"
-            >
+            <select value={sort} onChange={(e) => setSort(e.target.value)} className="flex-1 min-w-[100px] px-3 py-2 font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white">
               <option value="newest">{lang === "de" ? "Neueste" : "Newest"}</option>
               <option value="price_asc">{lang === "de" ? "Preis ↑" : "Price ↑"}</option>
               <option value="price_desc">{lang === "de" ? "Preis ↓" : "Price ↓"}</option>
@@ -374,22 +151,14 @@ function InlineCatalog({ lang }: { lang: string }) {
               <span className="hidden sm:inline">{lang === "de" ? "Mehr Filter" : "More filters"}</span>
             </button>
             {hasFilters && (
-              <button
-                onClick={() => { setQ(""); setCat(""); setStatus(""); setPriceMax(""); }}
-                className="flex items-center gap-1 font-mono text-[11px] text-[var(--muted)] hover:text-[var(--red)]"
-              >
-                <X size={12} />
-                {lang === "de" ? "Reset" : "Reset"}
+              <button onClick={() => { setQ(""); setCat(""); setStatus(""); setPriceMax(""); }} className="flex items-center gap-1 font-mono text-[11px] text-[var(--muted)] hover:text-[var(--red)]">
+                <X size={12} /> {lang === "de" ? "Reset" : "Reset"}
               </button>
             )}
           </div>
           {filtersOpen && (
             <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[var(--border)]">
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value as BusinessStatus | "")}
-                className="px-3 py-2 text-sm font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white"
-              >
+              <select value={status} onChange={(e) => setStatus(e.target.value as BusinessStatus | "")} className="px-3 py-2 text-sm font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white">
                 <option value="">{lang === "de" ? "Alle Status" : "All statuses"}</option>
                 <option value="active_profitable">{lang === "de" ? "Aktiv & Profitabel" : "Active & Profitable"}</option>
                 <option value="in_development">{lang === "de" ? "In Entwicklung" : "In development"}</option>
@@ -397,13 +166,7 @@ function InlineCatalog({ lang }: { lang: string }) {
               </select>
               <div className="flex items-center gap-2">
                 <span className="font-mono text-[11px] text-[var(--muted)]">{lang === "de" ? "Max. Preis" : "Max price"}</span>
-                <input
-                  type="number"
-                  value={priceMax}
-                  onChange={(e) => setPriceMax(e.target.value)}
-                  placeholder="T€"
-                  className="w-24 px-3 py-2 text-sm font-mono border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)]"
-                />
+                <input type="number" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} placeholder="T€" className="w-24 px-3 py-2 text-sm font-mono border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)]" />
               </div>
             </div>
           )}
@@ -413,11 +176,7 @@ function InlineCatalog({ lang }: { lang: string }) {
         {viewMode === "grid" ? (
           <>
             {shown.length === 0 ? (
-              <div className="py-16 text-center">
-                <p className="font-sans text-sm text-[var(--muted)]">
-                  {lang === "de" ? "Keine Inserate gefunden." : "No listings found."}
-                </p>
-              </div>
+              <EmptyState />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
                 {shown.map((l, i) => <ListingGridCard key={l.id} listing={l} priority={i < 4} />)}
@@ -425,59 +184,34 @@ function InlineCatalog({ lang }: { lang: string }) {
             )}
             {hasMore && (
               <div className="text-center mt-8">
-                <Link
-                  href="/listings"
-                  className="inline-flex items-center gap-2 border border-[var(--accent)] text-[var(--accent)] font-sans font-semibold px-8 py-3 rounded-full hover:bg-[var(--accent)] hover:text-white transition-all"
-                >
-                  {lang === "de" ? `Alle ${filtered.length} Inserate ansehen →` : `View all ${filtered.length} listings →`}
+                <Link href="/listings" className="inline-flex items-center gap-2 border border-[var(--accent)] text-[var(--accent)] font-sans font-semibold px-8 py-3 rounded-full hover:bg-[var(--accent)] hover:text-white transition-all">
+                  {lang === "de" ? `Alle ${filtered.length} ansehen →` : `View all ${filtered.length} →`}
                 </Link>
               </div>
             )}
           </>
         ) : (
           <>
-            {/* List view header */}
             <div className="hidden md:flex items-center gap-4 px-5 py-2">
               <div className="w-14 flex-shrink-0" />
-              <div className="flex-1 font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">
-                {lang === "de" ? "Unternehmen" : "Business"}
-              </div>
-              <div className="w-[90px] text-right font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">
-                {lang === "de" ? "Umsatz" : "Revenue"}
-              </div>
+              <div className="flex-1 font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">{lang === "de" ? "Unternehmen" : "Business"}</div>
+              <div className="w-[90px] text-right font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">{lang === "de" ? "Umsatz" : "Revenue"}</div>
               <div className="w-[96px] font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">EBITDA</div>
-              <div className="w-[100px] text-right font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">
-                {lang === "de" ? "Preis" : "Price"}
-              </div>
+              <div className="w-[100px] text-right font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">{lang === "de" ? "Preis" : "Price"}</div>
               <div className="w-[22px]" />
             </div>
             <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden">
-              {shown.length === 0 ? (
-                <div className="py-16 text-center">
-                  <p className="font-sans text-sm text-[var(--muted)]">
-                    {lang === "de" ? "Keine Inserate gefunden." : "No listings found."}
-                  </p>
-                </div>
-              ) : (
-                shown.map((l) => <ListingCard key={l.id} listing={l} />)
-              )}
+              {shown.length === 0 ? <EmptyState /> : shown.map((l) => <ListingCard key={l.id} listing={l} />)}
             </div>
             {hasMore && (
               <div className="text-center mt-4">
-                <Link
-                  href="/listings"
-                  className="inline-flex items-center gap-2 border border-[var(--accent)] text-[var(--accent)] font-sans font-semibold px-8 py-3 rounded-full hover:bg-[var(--accent)] hover:text-white transition-all"
-                >
-                  {lang === "de" ? `Alle ${filtered.length} Inserate →` : `All ${filtered.length} listings →`}
+                <Link href="/listings" className="inline-flex items-center gap-2 border border-[var(--accent)] text-[var(--accent)] font-sans font-semibold px-8 py-3 rounded-full hover:bg-[var(--accent)] hover:text-white transition-all">
+                  {lang === "de" ? `Alle ${filtered.length} →` : `All ${filtered.length} →`}
                 </Link>
               </div>
             )}
           </>
         )}
-
-        <p className="font-sans text-[11px] text-[var(--muted)] text-center mt-4">
-          {filtered.length} {lang === "de" ? "Inserate" : "listings"} · {lang === "de" ? "Live-Daten" : "Live data"}
-        </p>
       </div>
     </section>
   );
@@ -526,111 +260,11 @@ function BlogTeaser({ lang }: { lang: string }) {
             <Link key={post.id} href={`/blog/${post.slug}`} className="group bg-white border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-md hover:border-[var(--accent)] transition-all flex flex-col">
               <div className="h-1.5" style={{ background: CATEGORY_COLORS[post.category] ?? "#2d5a3d" }} />
               <div className="p-5 flex flex-col flex-1">
-                <h3 className="font-sans text-[15px] font-bold text-[var(--ink)] leading-snug mb-2 group-hover:text-[var(--accent)] transition-colors flex-1">
-                  {post.title}
-                </h3>
+                <h3 className="font-sans text-[15px] font-bold text-[var(--ink)] leading-snug mb-2 group-hover:text-[var(--accent)] transition-colors flex-1">{post.title}</h3>
                 <p className="font-sans text-[12px] text-[var(--muted)] line-clamp-2 mb-3">{post.excerpt}</p>
                 <span className="font-sans text-[11px] text-[var(--muted)]">{post.reading_time_minutes} Min. Lesezeit</span>
               </div>
             </Link>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// ── Testimonial card ───────────────────────────────────────────────────────────
-
-function TestimonialCard({ t }: { t: typeof TESTIMONIALS[0] }) {
-  return (
-    <div className="bg-white border border-[var(--border)] rounded-2xl p-6 flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <span className="font-sans text-[11px] font-bold px-2.5 py-1 rounded-full" style={t.badgeStyle}>
-          {t.badge}
-        </span>
-        <span className={`font-sans text-[11px] font-bold px-2.5 py-1 rounded-full ${t.resultStyle}`}>
-          {t.result}
-        </span>
-      </div>
-      <p className="font-sans text-[14px] text-[var(--ink)] leading-relaxed mb-4 flex-1">
-        &ldquo;{t.quote}&rdquo;
-      </p>
-      <div className="border-t border-[var(--border)] pt-3 mt-auto">
-        <div className="font-sans text-[13px] font-bold text-[var(--ink)]">{t.name}</div>
-        <div className="font-sans text-[12px] text-[var(--muted)]">{t.role}</div>
-      </div>
-    </div>
-  );
-}
-
-// ── Testimonials section ────────────────────────────────────────────────────────
-
-function TestimonialsSection({ lang }: { lang: string }) {
-  const [activeDot, setActiveDot] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const handleScroll = () => {
-    if (!scrollRef.current) return;
-    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-    const pct = scrollLeft / (scrollWidth - clientWidth || 1);
-    setActiveDot(Math.round(pct * (TESTIMONIALS.length - 1)));
-  };
-
-  return (
-    <section className="bg-[var(--surface2)] border-b border-[var(--border)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
-        <div className="text-center mb-10">
-          <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-2">
-            {lang === "de" ? "Erfolgsgeschichten" : "Success stories"}
-          </p>
-          <h2 className="font-sans text-[26px] sm:text-[32px] font-bold text-[var(--ink)] tracking-tight">
-            {lang === "de" ? "Was unsere Nutzer sagen" : "What our users say"}
-          </h2>
-        </div>
-
-        {/* Desktop grid */}
-        <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-5">
-          {TESTIMONIALS.map((t) => <TestimonialCard key={t.name} t={t} />)}
-        </div>
-
-        {/* Mobile horizontal carousel */}
-        <div className="sm:hidden">
-          <div
-            ref={scrollRef}
-            onScroll={handleScroll}
-            className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4"
-            style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
-          >
-            {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="flex-shrink-0 snap-start" style={{ width: "85vw" }}>
-                <TestimonialCard t={t} />
-              </div>
-            ))}
-          </div>
-          {/* Dots */}
-          <div className="flex justify-center gap-1.5 mt-3">
-            {TESTIMONIALS.map((_, i) => (
-              <div
-                key={i}
-                className={`rounded-full transition-all ${activeDot === i ? "bg-[var(--accent)]" : "bg-[var(--border)]"}`}
-                style={{ width: activeDot === i ? 16 : 8, height: 8 }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Trust row */}
-        <div className="mt-10 pt-8 border-t border-[var(--border)] flex flex-wrap justify-center gap-8">
-          {[
-            { stat: "4.8 ★", label: lang === "de" ? "Ø Bewertung" : "Avg. rating" },
-            { stat: "120+",  label: lang === "de" ? "Verifizierte Bewertungen" : "Verified reviews" },
-            { stat: "93%",   label: lang === "de" ? "Empfehlungsrate" : "Recommend rate" },
-          ].map((k) => (
-            <div key={k.stat} className="text-center">
-              <div className="font-sans text-[22px] font-bold text-[var(--accent)]">{k.stat}</div>
-              <div className="font-sans text-[12px] text-[var(--muted)] mt-0.5">{k.label}</div>
-            </div>
           ))}
         </div>
       </div>
@@ -655,7 +289,6 @@ function TabSwitcherSection({ lang }: { lang: string }) {
     <section className="bg-white border-b border-[var(--border)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
-        {/* Tab toggles */}
         <div className="flex justify-center mb-10">
           <div className="flex bg-[var(--surface2)] rounded-xl p-1 gap-1">
             {(["verkaufen", "kaufen"] as const).map((id) => (
@@ -663,9 +296,7 @@ function TabSwitcherSection({ lang }: { lang: string }) {
                 key={id}
                 onClick={() => setTab(id)}
                 className={`font-sans font-semibold text-[14px] sm:text-[15px] px-5 sm:px-8 py-3 rounded-lg transition-all duration-200 ${
-                  tab === id
-                    ? "bg-[var(--accent)] text-white shadow-sm"
-                    : "text-[var(--muted)] hover:text-[var(--ink)]"
+                  tab === id ? "bg-[var(--accent)] text-white shadow-sm" : "text-[var(--muted)] hover:text-[var(--ink)]"
                 }`}
               >
                 {id === "verkaufen"
@@ -685,22 +316,19 @@ function TabSwitcherSection({ lang }: { lang: string }) {
               </p>
               <h2 className="font-sans text-[26px] sm:text-[34px] font-bold text-[var(--ink)] tracking-tight leading-tight mb-4">
                 {lang === "de"
-                  ? "Verkaufen Sie Ihr Unternehmen — direkt, anonym, provisionsfrei."
-                  : "Sell your business — directly, anonymously, commission-free."}
+                  ? "Verkaufen Sie Ihr Unternehmen — diskret und direkt."
+                  : "Sell your business — discreetly and directly."}
               </h2>
               <p className="font-sans text-[15px] text-[var(--muted)] leading-relaxed mb-6">
                 {lang === "de"
-                  ? "Erreichen Sie über 16.000 vorgeprüfte Investoren in Deutschland. Keine Makler, keine Provision."
-                  : "Reach 16,000+ pre-screened investors across Germany. No brokers, no commission."}
+                  ? "Wir sprechen passende Käufer aus unserem privaten Netzwerk gezielt an — anonym, ohne Makler, 0% Provision."
+                  : "We reach out to suitable buyers from our private network — anonymous, no broker, 0% commission."}
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+              <div className="grid grid-cols-3 gap-3 mb-8">
                 {[
-                  { stat: "0%",      label: lang === "de" ? "Provision" : "Commission"        },
-                  { stat: "7 Tage",  label: lang === "de" ? "Markttest gratis" : "Free trial" },
-                  { stat: "16.000+", label: lang === "de" ? "Aktive Investoren" : "Active investors" },
-                  { stat: "100%",    label: lang === "de" ? "Anonym" : "Anonymous"             },
-                  { stat: "Ø 90d",   label: lang === "de" ? "Bis Erstangebot" : "To 1st offer"},
-                  { stat: "DSGVO",   label: lang === "de" ? "Konform" : "Compliant"            },
+                  { stat: "0%",    label: lang === "de" ? "Provision" : "Commission" },
+                  { stat: "100%",  label: lang === "de" ? "Anonym"    : "Anonymous"  },
+                  { stat: "DSGVO", label: lang === "de" ? "Konform"   : "Compliant"  },
                 ].map((k) => (
                   <div key={k.stat} className="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-3 text-center">
                     <div className="font-sans text-[18px] font-bold text-[var(--accent)]">{k.stat}</div>
@@ -712,24 +340,22 @@ function TabSwitcherSection({ lang }: { lang: string }) {
                 href="/sell"
                 className="inline-flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-bold px-7 py-4 rounded-xl hover:bg-[var(--accent-hover)] transition-colors text-[15px]"
               >
-                {lang === "de" ? "Kostenlos inserieren →" : "List for free →"}
+                {lang === "de" ? "Unternehmen vertraulich einreichen →" : "Submit confidentially →"}
               </Link>
               <p className="font-sans text-[12px] text-[var(--muted)] mt-2">
-                {lang === "de" ? "7 Tage gratis · Keine Kreditkarte nötig" : "7 days free · No credit card required"}
+                {lang === "de" ? "Einmalig €87 · 0% Provision · Anonym bis zum Abschluss" : "One-time €87 · 0% commission · Anonymous until closing"}
               </p>
             </div>
             <div className="hidden lg:block">
               <div className="bg-[var(--surface2)] rounded-2xl p-6 space-y-3">
                 {[
-                  { step: lang === "de" ? "Inserat erstellen" : "Create listing", done: true },
-                  { step: lang === "de" ? "16.000+ Investoren benachrichtigt" : "16,000+ investors notified", done: true },
-                  { step: lang === "de" ? "Anfragen direkt empfangen" : "Receive inquiries directly", done: true },
-                  { step: lang === "de" ? "Verkauf abschließen" : "Close the sale", done: false },
+                  { step: lang === "de" ? "Vertraulich einreichen" : "Submit confidentially", done: true },
+                  { step: lang === "de" ? "Wir matchen mit passenden Käufern" : "We match with suitable buyers", done: true },
+                  { step: lang === "de" ? "Anonym in Kontakt treten" : "Connect anonymously", done: true },
+                  { step: lang === "de" ? "Abschluss" : "Close the sale", done: false },
                 ].map((s, i) => (
                   <div key={s.step} className="flex items-center gap-4 bg-white rounded-xl p-4 border border-[var(--border)] shadow-sm">
-                    <div className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-bold text-[13px] flex items-center justify-center flex-shrink-0">
-                      {i + 1}
-                    </div>
+                    <div className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-bold text-[13px] flex items-center justify-center flex-shrink-0">{i + 1}</div>
                     <span className="font-sans text-[14px] text-[var(--ink)] font-medium flex-1">{s.step}</span>
                     {s.done
                       ? <span className="font-sans text-[11px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full whitespace-nowrap">{lang === "de" ? "Erledigt" : "Done"}</span>
@@ -759,7 +385,6 @@ function TabSwitcherSection({ lang }: { lang: string }) {
               </p>
             </div>
 
-            {/* Search */}
             <div className="max-w-xl mx-auto mb-5">
               <input
                 type="text"
@@ -770,7 +395,6 @@ function TabSwitcherSection({ lang }: { lang: string }) {
               />
             </div>
 
-            {/* Category pills */}
             <div className="flex gap-2 overflow-x-auto pb-3 mb-6" style={{ scrollbarWidth: "none" }}>
               {CAT_PILLS.map((p) => (
                 <button
@@ -787,20 +411,17 @@ function TabSwitcherSection({ lang }: { lang: string }) {
               ))}
             </div>
 
-            {/* Anonymous listing cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {filteredAnon.length === 0 ? (
                 <div className="col-span-full text-center py-10">
                   <p className="font-sans text-[14px] text-[var(--muted)]">
-                    {lang === "de" ? "Keine Inserate gefunden." : "No listings found."}
+                    {lang === "de" ? "Keine Ergebnisse." : "No results."}
                   </p>
                 </div>
               ) : filteredAnon.map((l) => (
                 <Link href="/listings" key={l.id} className="bg-white border border-[var(--border)] rounded-xl p-5 hover:border-[var(--accent)] hover:shadow-md transition-all flex flex-col">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="font-sans text-[11px] font-bold text-[var(--accent)] bg-[var(--accent-light)] px-2.5 py-1 rounded-full">
-                      {l.cat}
-                    </span>
+                    <span className="font-sans text-[11px] font-bold text-[var(--accent)] bg-[var(--accent-light)] px-2.5 py-1 rounded-full">{l.cat}</span>
                     <span className="font-sans text-[11px] text-[var(--muted)]">Anonym</span>
                   </div>
                   <p className="font-sans text-[12px] text-[var(--muted)] mb-3">{l.city} · {l.years} {lang === "de" ? "Jahre" : "years"}</p>
@@ -828,25 +449,13 @@ function TabSwitcherSection({ lang }: { lang: string }) {
               ))}
             </div>
 
-            {/* Buyer CTA */}
             <div className="text-center">
-              <p className="font-sans text-[14px] text-[var(--muted)] mb-4">
-                {lang === "de"
-                  ? "Registrieren Sie sich kostenlos — erhalten Sie Zugang zu allen Inseraten inklusive direktem Verkäuferkontakt."
-                  : "Register for free — get access to all listings including direct seller contact."}
-              </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   href="/listings"
                   className="inline-flex items-center justify-center gap-2 bg-[var(--accent)] text-white font-sans font-bold px-7 py-4 rounded-xl hover:bg-[var(--accent-hover)] transition-colors text-[15px]"
                 >
-                  {lang === "de" ? "Alle Inserate ansehen →" : "View all listings →"}
-                </Link>
-                <Link
-                  href="/auth"
-                  className="inline-flex items-center justify-center gap-2 border-2 border-[var(--accent)] text-[var(--accent)] font-sans font-bold px-7 py-4 rounded-xl hover:bg-[var(--accent-light)] transition-colors text-[15px]"
-                >
-                  {lang === "de" ? "Kostenlos registrieren" : "Register for free"}
+                  {lang === "de" ? "Kuratierte Auswahl ansehen →" : "View curated selection →"}
                 </Link>
               </div>
             </div>
@@ -873,17 +482,19 @@ export default function HomePage() {
   }, []);
 
   const faqs = lang === "de" ? [
-    { q: "Gibt es eine Provision?",                  a: "Nein. 0% Provision. Sie behalten 100% des Verkaufspreises." },
-    { q: "Wie lange dauert ein Verkauf?",            a: "Im Schnitt 4–9 Monate. Vollständige Finanzdaten beschleunigen den Prozess erheblich." },
-    { q: "Bleibt mein Inserat anonym?",              a: "Ja. Sie entscheiden, wann Sie Ihren Namen und Firmennamen freigeben." },
-    { q: "Welche Unterlagen brauche ich?",           a: "BWA der letzten 3 Jahre, Jahresabschlüsse, anonymisierte Kundenliste, Mietverträge." },
-    { q: "Wie kontaktiere ich einen Verkäufer?",     a: "Direkt über das Kontaktformular im Inserat. Kein Makler, keine Wartezeit." },
+    { q: "Gibt es eine Provision?",                          a: "Nein. 0% Provision. Sie behalten 100% des Verkaufspreises." },
+    { q: "Wie lange dauert ein Verkauf?",                    a: "Im Schnitt 4–9 Monate. Vollständige Finanzdaten beschleunigen den Prozess erheblich." },
+    { q: "Bleibt mein Inserat anonym?",                      a: "Ja. Sie entscheiden, wann Sie Ihren Namen und Firmennamen freigeben." },
+    { q: "Welche Unterlagen brauche ich?",                   a: "BWA der letzten 3 Jahre, Jahresabschlüsse, anonymisierte Kundenliste, Mietverträge." },
+    { q: "Wie kontaktiere ich einen Verkäufer?",             a: "Direkt über das Kontaktformular im Inserat. Kein Makler, keine Wartezeit." },
+    { q: "Warum sehe ich nur wenige öffentliche Inserate?",  a: "Die meisten Mandate sind vertraulich und werden nicht öffentlich gezeigt — das schützt Verkäufer und Mitarbeiter. Öffentlich erscheint nur eine kuratierte Auswahl." },
   ] : [
-    { q: "Is there a commission?",                   a: "No. 0% commission. You keep 100% of the sale price." },
-    { q: "How long does a sale take?",               a: "On average 4–9 months. Complete financial data significantly speeds up the process." },
-    { q: "Does my listing stay anonymous?",          a: "Yes. You decide when to reveal your name and company." },
-    { q: "What documents do I need?",               a: "P&L for last 3 years, annual accounts, anonymized customer list, rental agreements." },
-    { q: "How do I contact a seller?",               a: "Directly via the contact form in the listing. No broker, no waiting." },
+    { q: "Is there a commission?",                           a: "No. 0% commission. You keep 100% of the sale price." },
+    { q: "How long does a sale take?",                       a: "On average 4–9 months. Complete financial data significantly speeds up the process." },
+    { q: "Does my listing stay anonymous?",                  a: "Yes. You decide when to reveal your name and company." },
+    { q: "What documents do I need?",                        a: "P&L for last 3 years, annual accounts, anonymized customer list, rental agreements." },
+    { q: "How do I contact a seller?",                       a: "Directly via the contact form in the listing. No broker, no waiting." },
+    { q: "Why do I see only a few public listings?",         a: "Most mandates are confidential and not shown publicly — this protects sellers and employees. Only a curated selection appears publicly." },
   ];
 
   return (
@@ -909,30 +520,29 @@ export default function HomePage() {
               {/* Eyebrow */}
               <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "100px", padding: "6px 16px", marginBottom: "24px" }}>
                 <span style={{ color: "#6dbf87", fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                  ⚡ {lang === "de" ? "Deutschlands #1 Unternehmensmarktplatz" : "Deutschlands #1 Business Marketplace"}
+                  {lang === "de" ? "Diskret · Direkt · 0% Provision" : "Discreet · Direct · 0% Commission"}
                 </span>
               </div>
 
-              {/* Rotating headline */}
+              {/* Headline */}
               <h1 className="hero-headline font-sans font-bold text-white tracking-tight mb-6" style={{ fontSize: "clamp(28px, 5vw, 58px)", lineHeight: 1.08 }}>
                 {lang === "de"
-                  ? <>Den richtigen Käufer finden<br />für Ihre{" "}<span style={{ color: "#6dbf87" }}>{BIZ_TYPES[bizTypeIdx]}.</span></>
-                  : <>Find the right buyer<br />for your{" "}<span style={{ color: "#6dbf87" }}>{BIZ_TYPES[bizTypeIdx]}.</span></>}
+                  ? "Verkaufen Sie Ihr Unternehmen — diskret und direkt."
+                  : "Sell your business — discreetly and directly."}
               </h1>
 
               <p className="font-sans text-white/75 mb-8" style={{ fontSize: "17px", lineHeight: 1.65, maxWidth: "480px" }}>
                 {lang === "de"
-                  ? "Der direkte Marktplatz für Unternehmensverkäufe in Deutschland — 0% Provision, vollständig anonym."
-                  : "The direct marketplace for business sales in the Germany — 0% commission, fully anonymous."}
+                  ? "Wir bringen Ihr Unternehmen vertraulich vor geprüfte Investoren. Die meisten Mandate laufen off-market — eine kuratierte Auswahl zeigen wir öffentlich. Kein Makler, 0% Provision."
+                  : "We bring your business confidentially to vetted investors. Most mandates run off-market — we show a curated selection publicly. No broker, 0% commission."}
               </p>
 
-              {/* Trust badges */}
+              {/* Trust badges — 3 clean ones */}
               <div className="flex flex-wrap gap-2 mb-8">
                 {[
-                  { stat: "0%",      label: lang === "de" ? "Provision beim Verkauf"    : "Commission on sale"      },
-                  { stat: "#1",      label: lang === "de" ? "Plattform für Käufersuche" : "Platform for buyers"     },
-                  { stat: "4–9 Mo.", label: lang === "de" ? "Ø Verkaufsdauer"            : "Avg. sale duration"      },
-                  { stat: "🔒",      label: lang === "de" ? "Anonymes Inserat"           : "Anonymous listing"       },
+                  { stat: "0%",  label: lang === "de" ? "Provision"                    : "Commission"              },
+                  { stat: "🔒",  label: lang === "de" ? "Anonym bis zum Abschluss"     : "Anonymous to close"       },
+                  { stat: "✓",   label: lang === "de" ? "Privates Investoren-Netzwerk" : "Private investor network" },
                 ].map((b) => (
                   <div key={b.stat} style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: "100px", padding: "8px 16px" }}>
                     <span className="font-sans font-bold text-white text-[13px]">{b.stat}</span>
@@ -944,37 +554,27 @@ export default function HomePage() {
               {/* CTAs */}
               <div className="hero-cta-row flex flex-wrap gap-4 items-center mb-8">
                 <Link href="/sell" className="hero-cta-primary font-sans font-bold text-white rounded-lg hover:opacity-90 transition-opacity" style={{ background: "#2d5a3d", padding: "14px 28px", fontSize: "16px", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}>
-                  {lang === "de" ? "Unternehmen inserieren" : "List your business"} →
+                  {lang === "de" ? "Unternehmen vertraulich einreichen →" : "Submit confidentially →"}
                 </Link>
-                <a href="#listings" className="hero-cta-secondary font-sans font-semibold text-white/80 hover:text-white transition-colors" style={{ fontSize: "16px" }}>
-                  {lang === "de" ? "Inserate durchsuchen" : "Browse listings"}
-                </a>
+                <Link href="/listings" className="hero-cta-secondary font-sans font-semibold text-white/80 hover:text-white transition-colors" style={{ fontSize: "16px" }}>
+                  {lang === "de" ? "Kuratierte Auswahl ansehen" : "View curated selection"}
+                </Link>
               </div>
 
-              {/* Trial note */}
+              {/* Trust line */}
               <div className="flex flex-wrap gap-x-4 gap-y-1 mb-8">
                 {(lang === "de"
-                  ? ["✓ 7 Tage Markttest kostenlos", "✓ Keine Provision", "✓ Jederzeit kündbar"]
-                  : ["✓ 7-day market test free", "✓ No commission", "✓ Cancel anytime"]
+                  ? ["✓ Einmalig €87", "✓ 0% Provision", "✓ Anonym bis zum Abschluss"]
+                  : ["✓ One-time €87", "✓ 0% commission", "✓ Anonymous until closing"]
                 ).map((item) => (
                   <span key={item} className="font-sans text-[13px]" style={{ color: "rgba(255,255,255,0.65)" }}>
                     {item}
                   </span>
                 ))}
               </div>
-
-              {/* Social proof */}
-              <div className="flex items-center gap-3">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <span key={i} style={{ color: "#00b67a", fontSize: "18px" }}>★</span>
-                  ))}
-                </div>
-                <span className="font-sans text-white/60 text-sm">4.8 · 120+ {lang === "de" ? "Bewertungen" : "reviews"}</span>
-              </div>
             </div>
 
-            {/* Right: hero calculator — hidden on mobile to keep hero compact */}
+            {/* Right: hero calculator */}
             <div className="hidden lg:block">
               <ValuationCalculator variant="hero" />
             </div>
@@ -982,38 +582,82 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── LIVE TICKER ──────────────────────────────────────────────────────── */}
-      <div className="bg-[var(--ink)] overflow-hidden py-2.5">
+      {/* ── CONFIDENTIALITY STRIP ─────────────────────────────────────────────── */}
+      <div className="bg-[var(--ink)] border-b border-white/10 py-3 px-4">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-center">
+          {["🔒 Anonym", "Keine öffentliche Ausschreibung ohne Ihre Freigabe", "DSGVO-konform"].map((item) => (
+            <span key={item} className="font-mono text-[11px] text-white/50">{item}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── MARQUEE ──────────────────────────────────────────────────────────── */}
+      <div className="bg-[var(--surface2)] overflow-hidden py-2.5 border-b border-[var(--border)]">
         <div className="animate-marquee">
-          {[...(lang === "de"
-            ? ["16.000+ aktive Investoren", "0% Provision", "47 neue Inserate diese Woche", "DSGVO-konform", "€2,3 Mrd. Transaktionsvolumen", "Direkte Kommunikation", "Keine versteckten Kosten", "Sofort nach Zahlung live"]
-            : ["16,000+ active investors", "0% commission", "47 new listings this week", "GDPR compliant", "€2.3B in deal volume", "Direct communication", "No hidden costs", "Live instantly after payment"]
-          ), ...(lang === "de"
-            ? ["16.000+ aktive Investoren", "0% Provision", "47 neue Inserate diese Woche", "DSGVO-konform", "€2,3 Mrd. Transaktionsvolumen", "Direkte Kommunikation", "Keine versteckten Kosten", "Sofort nach Zahlung live"]
-            : ["16,000+ active investors", "0% commission", "47 new listings this week", "GDPR compliant", "€2.3B in deal volume", "Direct communication", "No hidden costs", "Live instantly after payment"]
-          )].map((item, i) => (
-            <span key={i} className="flex items-center gap-5 px-5 font-mono text-[11px] text-white/30 whitespace-nowrap">
+          {["0% Provision", "Anonym", "€87 einmalig", "DSGVO-konform", "0% Provision", "Anonym", "€87 einmalig", "DSGVO-konform"].map((item, i) => (
+            <span key={i} className="flex items-center gap-5 px-5 font-mono text-[11px] text-[var(--muted)] whitespace-nowrap">
               {item}
-              <span className="w-1 h-1 rounded-full bg-white/15" />
+              <span className="w-1 h-1 rounded-full bg-[var(--border)]" />
             </span>
           ))}
         </div>
       </div>
+
+      {/* ── SO POSITIONIEREN WIR SIE ─────────────────────────────────────────── */}
+      <section className="bg-white border-b border-[var(--border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-2 text-center">
+            {lang === "de" ? "Unser Ansatz" : "Our approach"}
+          </p>
+          <h2 className="font-sans text-[22px] font-bold text-[var(--ink)] tracking-tight text-center mb-10">
+            {lang === "de" ? "So positionieren wir Sie" : "How we position you"}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                icon: "🤝",
+                de_title: "Privates Investoren-Netzwerk",
+                en_title: "Private investor network",
+                de_body: "Wir sprechen passende Käufer gezielt an — Private Equity, Family Offices, Search Funds und strategische Investoren.",
+                en_body: "We target suitable buyers directly — Private Equity, Family Offices, Search Funds and strategic investors.",
+              },
+              {
+                icon: "🔒",
+                de_title: "Vertraulich & off-market",
+                en_title: "Confidential & off-market",
+                de_body: "Ihr Unternehmen wird nicht öffentlich ausgeschrieben. Sie bleiben anonym, bis Sie sich für ein Gespräch entscheiden.",
+                en_body: "Your business is not publicly advertised. You remain anonymous until you decide to have a conversation.",
+              },
+              {
+                icon: "📋",
+                de_title: "Kuratierte öffentliche Auswahl",
+                en_title: "Curated public selection",
+                de_body: "Wenn Sie maximale Reichweite wollen, zeigen wir Ihr Mandat zusätzlich in unserer öffentlichen Auswahl.",
+                en_body: "If you want maximum reach, we additionally show your mandate in our public curated selection.",
+              },
+            ].map((card) => (
+              <div key={card.de_title} className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl p-6">
+                <div className="text-3xl mb-4">{card.icon}</div>
+                <h3 className="font-sans text-[16px] font-bold text-[var(--ink)] mb-3">
+                  {lang === "de" ? card.de_title : card.en_title}
+                </h3>
+                <p className="font-sans text-[14px] text-[var(--muted)] leading-relaxed">
+                  {lang === "de" ? card.de_body : card.en_body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── KAUFGESUCHE ──────────────────────────────────────────────────────── */}
+      <KaufgesucheSection />
 
       {/* ── TAB SWITCHER ─────────────────────────────────────────────────────── */}
       <TabSwitcherSection lang={lang} />
 
       {/* ── INLINE CATALOG ───────────────────────────────────────────────────── */}
       <InlineCatalog lang={lang} />
-
-      {/* ── TESTIMONIALS ─────────────────────────────────────────────────────── */}
-      <TestimonialsSection lang={lang} />
-
-      {/* ── SALE TIMELINE ────────────────────────────────────────────────────── */}
-      <SaleTimelineSection lang={lang} />
-
-      {/* ── MARKET CHARTS ────────────────────────────────────────────────────── */}
-      <MarketCharts lang={lang} />
 
       {/* ── HOW IT WORKS ─────────────────────────────────────────────────────── */}
       <section className="bg-[var(--accent)] border-t border-white/5">
@@ -1022,19 +666,90 @@ export default function HomePage() {
             {lang === "de" ? "So funktioniert es" : "How it works"}
           </p>
           <h2 className="font-sans text-[22px] font-bold text-white tracking-tight text-center mb-10">
-            {lang === "de" ? "Vom Inserat zum Abschluss" : "From listing to closing"}
+            {lang === "de" ? "Vom Einreichen zum Abschluss" : "From submission to closing"}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {[
-              { n: "01", de: "Inserat finden",      en: "Find a listing",      de2: "Filter nach Branche, Region, Preis. Alle Kennzahlen sofort sichtbar.",          en2: "Filter by industry, region, price. All key metrics visible immediately." },
-              { n: "02", de: "Direkt kontaktieren", en: "Contact directly",    de2: "Schreiben Sie dem Verkäufer direkt. Kein Makler. Kein Zwischenhändler.",        en2: "Message the seller directly. No broker. No middleman." },
-              { n: "03", de: "Due Diligence",       en: "Due diligence",       de2: "Prüfen Sie Finanzen und Verträge. Wir liefern eine strukturierte Checkliste.",   en2: "Review financials and contracts. We provide a structured checklist." },
-              { n: "04", de: "Übergabe",            en: "Close the deal",      de2: "Vertrag, Zahlung, Schlüsselübergabe. Sicher und transparent.",                   en2: "Contract, payment, handover. Safe and transparent." },
+              {
+                n: "01",
+                de: "Vertraulich einreichen",
+                en: "Submit confidentially",
+                de2: "Ihr Unternehmen in wenigen Minuten einreichen. Einmalig €87.",
+                en2: "Submit your business in a few minutes. One-time €87.",
+              },
+              {
+                n: "02",
+                de: "Wir matchen",
+                en: "We match",
+                de2: "Wir gleichen Ihr Profil mit unserem Investoren-Netzwerk ab und sprechen passende Käufer an.",
+                en2: "We match your profile with our investor network and approach suitable buyers.",
+              },
+              {
+                n: "03",
+                de: "Anonym in Kontakt",
+                en: "Connect anonymously",
+                de2: "Interessenten erreichen Sie direkt — anonym, ohne Makler dazwischen.",
+                en2: "Interested parties reach you directly — anonymously, without a broker in between.",
+              },
+              {
+                n: "04",
+                de: "Abschluss",
+                en: "Close",
+                de2: "Due Diligence, Vertrag, Übergabe. Sie behalten die Kontrolle.",
+                en2: "Due diligence, contract, handover. You stay in control.",
+              },
             ].map((s) => (
               <div key={s.n}>
                 <div className="font-mono text-[32px] font-bold text-white/10 mb-3">{s.n}</div>
                 <h3 className="font-sans text-[15px] font-bold text-white mb-2">{lang === "de" ? s.de : s.en}</h3>
                 <p className="font-sans text-[13px] text-white/50 leading-relaxed">{lang === "de" ? s.de2 : s.en2}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── ANONYMITY PROTECTION ─────────────────────────────────────────────── */}
+      <section className="bg-white border-t border-[var(--border)]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-2 text-center">
+            {lang === "de" ? "Datenschutz" : "Privacy"}
+          </p>
+          <h2 className="font-sans text-[20px] font-bold text-[var(--ink)] tracking-tight text-center mb-8">
+            {lang === "de" ? "So schützen wir Ihre Anonymität" : "How we protect your anonymity"}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                icon: "🔒",
+                de_t: "Kein Firmenname öffentlich",
+                en_t: "No company name public",
+                de_b: "Wir veröffentlichen Ihre Firma erst nach Ihrer ausdrücklichen Freigabe — kein Name, kein Standort.",
+                en_b: "We publish your company only after your explicit approval — no name, no location.",
+              },
+              {
+                icon: "🤝",
+                de_t: "Sie geben Kontakte einzeln frei",
+                en_t: "You approve each contact",
+                de_b: "Sie entscheiden für jeden Interessenten separat, welche Details Sie freigeben. Volle Kontrolle.",
+                en_b: "You decide individually for each prospect what details to share. Full control.",
+              },
+              {
+                icon: "📋",
+                de_t: "NDA vor Detailinfos",
+                en_t: "NDA before details",
+                de_b: "Vor der Übergabe vertraulicher Unterlagen wird eine NDA-Vereinbarung unterzeichnet.",
+                en_b: "Before sharing confidential documents, an NDA is signed.",
+              },
+            ].map((step) => (
+              <div key={step.de_t} className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl p-6 text-center">
+                <div className="text-3xl mb-3">{step.icon}</div>
+                <h3 className="font-sans text-[15px] font-bold text-[var(--ink)] mb-2">
+                  {lang === "de" ? step.de_t : step.en_t}
+                </h3>
+                <p className="font-sans text-[13px] text-[var(--muted)] leading-relaxed">
+                  {lang === "de" ? step.de_b : step.en_b}
+                </p>
               </div>
             ))}
           </div>
@@ -1071,21 +786,21 @@ export default function HomePage() {
       {/* ── BLOG TEASER ──────────────────────────────────────────────────────── */}
       <BlogTeaser lang={lang} />
 
-      {/* ── NEWSLETTER + CTA ─────────────────────────────────────────────────── */}
+      {/* ── NEWSLETTER ───────────────────────────────────────────────────────── */}
       <section className="bg-white border-t border-[var(--border)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-3">
-                {lang === "de" ? "Deal-Alarm" : "Deal alerts"}
+                {lang === "de" ? "Käufer-Radar" : "Buyer radar"}
               </p>
               <h2 className="font-sans text-[22px] font-bold text-[var(--ink)] tracking-tight mb-3">
-                {lang === "de" ? "Neue Inserate direkt in Ihren Posteingang" : "New listings straight to your inbox"}
+                {lang === "de" ? "Passende Kaufgesuche & Mandate, sobald verfügbar" : "Matching buyer mandates, as soon as available"}
               </h2>
               <p className="font-sans text-[14px] text-[var(--muted)] leading-relaxed">
                 {lang === "de"
-                  ? "Wöchentlich die besten neuen Inserate passend zu Ihren Kriterien. Jederzeit abmeldbar."
-                  : "Weekly digest of the best new listings matching your criteria. Unsubscribe anytime."}
+                  ? "Hinterlegen Sie Ihr Suchprofil — wir informieren Sie, sobald passende Angebote vorliegen. Jederzeit abmeldbar."
+                  : "Leave your search profile — we'll notify you as soon as matching offers are available. Unsubscribe anytime."}
               </p>
             </div>
             <div>
@@ -1115,21 +830,21 @@ export default function HomePage() {
                   }
                 }} className="flex flex-col gap-2">
                   <div className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value); setSubError(""); }}
-                    placeholder={lang === "de" ? "ihre@email.de" : "your@email.com"}
-                    required
-                    className="flex-1 px-4 py-3 border border-[var(--border)] rounded-xl text-sm font-sans outline-none focus:border-[var(--accent)]"
-                  />
-                  <button
-                    type="submit"
-                    className="px-5 py-3 bg-[var(--accent)] text-white font-sans font-semibold text-sm rounded-xl hover:bg-[var(--accent-hover)] transition-colors whitespace-nowrap sm:whitespace-nowrap"
-                    style={{ minHeight: 44 }}
-                  >
-                    {lang === "de" ? "Anmelden" : "Subscribe"}
-                  </button>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setSubError(""); }}
+                      placeholder={lang === "de" ? "ihre@email.de" : "your@email.com"}
+                      required
+                      className="flex-1 px-4 py-3 border border-[var(--border)] rounded-xl text-sm font-sans outline-none focus:border-[var(--accent)]"
+                    />
+                    <button
+                      type="submit"
+                      className="px-5 py-3 bg-[var(--accent)] text-white font-sans font-semibold text-sm rounded-xl hover:bg-[var(--accent-hover)] transition-colors whitespace-nowrap"
+                      style={{ minHeight: 44 }}
+                    >
+                      {lang === "de" ? "Anmelden" : "Subscribe"}
+                    </button>
                   </div>
                   {subError && (
                     <p className="font-sans text-[13px] text-[var(--red)]">{subError}</p>
@@ -1150,14 +865,12 @@ export default function HomePage() {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
             <div>
               <h2 className="font-sans text-[28px] font-bold text-white tracking-tight leading-tight mb-2">
-                {lang === "de"
-                  ? "Bereit zum Inserieren?"
-                  : "Ready to list?"}
+                {lang === "de" ? "Bereit, vertraulich zu starten?" : "Ready to start confidentially?"}
               </h2>
               <p className="font-sans text-[15px] text-white/60">
                 {lang === "de"
-                  ? "Ab €39/Monat · Sofort live · 0% Provision · Kein Makler"
-                  : "From €39/mo · Live instantly · 0% commission · No broker"}
+                  ? "Einmalig €87 · Anonym · 0% Provision · Kein Makler"
+                  : "One-time €87 · Anonymous · 0% commission · No broker"}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -1165,7 +878,7 @@ export default function HomePage() {
                 href="/sell"
                 className="flex items-center gap-2 bg-white text-[var(--accent)] font-sans font-bold px-8 py-3.5 rounded-full hover:bg-white/90 transition-colors"
               >
-                {lang === "de" ? "Jetzt inserieren →" : "List now →"}
+                {lang === "de" ? "Unternehmen vertraulich einreichen →" : "Submit confidentially →"}
               </Link>
               <Link
                 href="/pricing"
