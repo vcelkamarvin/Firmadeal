@@ -174,7 +174,8 @@ export default function ValuationCalculator({ variant = "full" }: Props) {
             </div>
           </div>
 
-          {/* Live result */}
+          {/* Live result — aria-live so screen readers announce the update */}
+          <div aria-live="polite" aria-atomic="true">
           {result ? (
             <div style={{ background: "#f0f7f4", borderRadius: "10px", padding: "14px", border: "1px solid #d1e8dc" }}>
               <p style={{ fontSize: "10px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: "#888", marginBottom: "4px" }}>
@@ -184,7 +185,7 @@ export default function ValuationCalculator({ variant = "full" }: Props) {
                 {fmtEur(result.lo)} – {fmtEur(result.hi)}
               </div>
               <p style={{ fontSize: "10px", color: "#888", marginBottom: "10px" }}>
-                Basis: {MULTIPLES[category]?.lo}×–{MULTIPLES[category]?.hi}× EBITDA · Branche: {category}
+                Indikativ · {MULTIPLES[category]?.lo}×–{MULTIPLES[category]?.hi}× EBITDA · {category} · Keine Finanzberatung
               </p>
               {/* Asking price override */}
               <div>
@@ -208,6 +209,7 @@ export default function ValuationCalculator({ variant = "full" }: Props) {
               <p style={{ fontSize: "12px", color: "#aaa" }}>Wählen Sie eine Branche und geben Sie Ihren Gewinn ein</p>
             </div>
           )}
+          </div>
 
           {result ? (
             heroEmailState === "idle" ? (

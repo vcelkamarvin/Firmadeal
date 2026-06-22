@@ -62,8 +62,9 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/8 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+          {/* TODO(owner): update legal entity name once GmbH registration confirmed vs sole operator */}
           <p className="font-mono text-[11px] text-white/25">
-            © {new Date().getFullYear()} Firmadeal GmbH · {lang === "de" ? "Alle Rechte vorbehalten" : "All rights reserved"}
+            © {new Date().getFullYear()} Firmadeal · {lang === "de" ? "Alle Rechte vorbehalten" : "All rights reserved"}
           </p>
           <div className="flex items-center gap-4">
             <a

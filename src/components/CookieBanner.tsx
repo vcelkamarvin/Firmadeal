@@ -36,18 +36,19 @@ export default function CookieBanner() {
           </Link>
           .
         </p>
+        {/* Both buttons must be equally prominent — DSGVO-required reject parity */}
         <div className="flex flex-col sm:flex-row gap-2">
+          <button
+            onClick={decline}
+            className="flex-1 border border-[var(--border)] text-[var(--ink)] font-sans font-semibold text-[13px] px-5 py-2.5 rounded-full hover:bg-[var(--surface2)] transition-colors"
+          >
+            Nur notwendige
+          </button>
           <button
             onClick={accept}
             className="flex-1 bg-[var(--accent)] text-white font-sans font-semibold text-[13px] px-5 py-2.5 rounded-full hover:bg-[var(--accent-hover)] transition-colors"
           >
             Alle akzeptieren
-          </button>
-          <button
-            onClick={decline}
-            className="flex-1 bg-[var(--surface2)] text-[var(--muted)] font-sans font-semibold text-[13px] px-5 py-2.5 rounded-full hover:bg-[var(--border)] transition-colors"
-          >
-            Nur notwendige
           </button>
         </div>
       </div>

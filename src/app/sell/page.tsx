@@ -382,6 +382,14 @@ function Step2() {
       <h2 className="font-sans text-[26px] font-bold text-[var(--ink)] tracking-tight mb-1">Finanzen</h2>
       <p className="font-sans text-[14px] text-[var(--muted)] mb-8">Grobe Angaben genügen — wir berechnen sofort Ihren indikativen Wert.</p>
 
+      {/* Anon microcopy */}
+      <div className="flex items-center gap-2 bg-[var(--accent-light)] border border-[var(--accent)]/20 rounded-xl px-4 py-3 mb-6">
+        <span className="text-[16px]">🔒</span>
+        <p className="font-sans text-[12px] text-[var(--accent)] font-medium">
+          Diese Angaben sind nie öffentlich sichtbar — nur für Ihre Bewertung und das Käufer-Matching.
+        </p>
+      </div>
+
       {/* Revenue */}
       <div className="mb-7">
         <div className="flex items-center mb-3">
@@ -768,13 +776,31 @@ function Step5() {
       </p>
 
       {/* Risk reversal */}
-      <div className="bg-[var(--accent-light)] border border-[var(--accent)]/30 rounded-xl px-5 py-4 mb-6">
+      <div className="bg-[var(--accent-light)] border border-[var(--accent)]/30 rounded-xl px-5 py-4 mb-4">
         <p className="font-sans text-[14px] font-semibold text-[var(--accent)] mb-1">
           14 Tage Geld-zurück, wenn kein Käuferkontakt zustande kommt.
         </p>
         <p className="font-sans text-[13px] text-[var(--muted)]">
-          Nach Zahlung: Ihr Profil geht sofort in unser Investoren-Netzwerk und Sie erhalten Zugang zu Ihrem Dashboard.
+          Einmalig €87 · Kein Abo · 0% Provision · Anonym bis zum Abschluss
         </p>
+      </div>
+
+      {/* Was passiert als Nächstes */}
+      <div className="bg-white border border-[var(--border)] rounded-xl px-5 py-4 mb-6">
+        <p className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-wide mb-3">Was passiert als Nächstes</p>
+        <ol className="space-y-2">
+          {[
+            "Sofortige Bestätigung per E-Mail nach Zahlung",
+            "Ihr Profil geht diskret in unser Investoren-Netzwerk",
+            "Passende Käufer erhalten Ihr anonymisiertes Profil",
+            "Interessenten kontaktieren Sie direkt über Ihr Dashboard",
+          ].map((step, i) => (
+            <li key={i} className="flex items-start gap-3">
+              <span className="font-mono text-[11px] font-bold text-white bg-[var(--accent)] rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 mt-0.5">{i + 1}</span>
+              <span className="font-sans text-[13px] text-[var(--ink)]">{step}</span>
+            </li>
+          ))}
+        </ol>
       </div>
 
       {savedPromo && (

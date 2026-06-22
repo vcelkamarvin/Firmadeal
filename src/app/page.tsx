@@ -108,11 +108,15 @@ function InlineCatalog({ lang }: { lang: string }) {
             <div style={{ display: "flex", gap: 4 }}>
               <button
                 onClick={() => setViewMode("grid")}
+                aria-label="Kachelansicht"
+                aria-pressed={viewMode === "grid"}
                 title="Kachelansicht"
                 style={{ width: 34, height: 34, borderRadius: 6, border: "1px solid #e5e5e5", background: viewMode === "grid" ? "#2d5a3d" : "transparent", color: viewMode === "grid" ? "white" : "#888", cursor: "pointer", fontSize: 16 }}
               >⊞</button>
               <button
                 onClick={() => setViewMode("list")}
+                aria-label="Listenansicht"
+                aria-pressed={viewMode === "list"}
                 title="Listenansicht"
                 style={{ width: 34, height: 34, borderRadius: 6, border: "1px solid #e5e5e5", background: viewMode === "list" ? "#2d5a3d" : "transparent", color: viewMode === "list" ? "white" : "#888", cursor: "pointer", fontSize: 16 }}
               >☰</button>
@@ -498,7 +502,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="bg-[var(--bg)]">
+    <div className="bg-[var(--bg)] home-page-wrapper">
 
       {/* ── HERO ──────────────────────────────────────────────────────────────── */}
       <section
@@ -881,6 +885,37 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── MOBILE STICKY CTA ─────────────────────────────────────────────────── */}
+      {/* Shown only on mobile (≤768px) via CSS class; hidden on desktop */}
+      <div
+        className="sticky-mobile-bar"
+        style={{
+          position: "fixed",
+          bottom: 0, left: 0, right: 0,
+          background: "white",
+          borderTop: "1px solid #e5e5e5",
+          padding: "12px 16px",
+          paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+          zIndex: 140,
+          alignItems: "center",
+          gap: 10,
+          boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
+        }}
+      >
+        <Link
+          href="/sell"
+          style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "#1a3329", color: "white",
+            borderRadius: 10, padding: "14px 16px",
+            fontSize: 15, fontWeight: 700, textDecoration: "none",
+            fontFamily: "inherit", minHeight: 52,
+          }}
+        >
+          {lang === "de" ? "Unternehmen vertraulich einreichen →" : "Submit confidentially →"}
+        </Link>
+      </div>
 
     </div>
   );
