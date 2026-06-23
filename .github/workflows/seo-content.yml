@@ -1,0 +1,71 @@
+name: SEO Content — 2 Artikel täglich (09:00 Berlin)
+
+# GitHub Actions runs in UTC and cannot follow DST. We trigger at BOTH 07:00
+# and 08:00 UTC, and the generator exits immediately unless the current
+# Europe/Berlin local hour is 09 — so exactly one run proceeds, at 09:00 Berlin,
+# all year round (no seasonal drift).
+on:
+  schedule:
+    - cron: "0 7,8 * * *"
+  workflow_dispatch:           # allow manual runs from the Actions tab
+    inputs:
+      count:
+        description: "How many articles to generate this run"
+        default: "2"
+      force:
+        description: "Ignore the 09:00 Berlin time-guard (true/false)"
+        default: "false"
+
+concurrency:
+  group: seo-content
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write          # allows the job to commit + push articles
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: npm install @anthropic-ai/sdk googleapis gray-matter
+
+      - name: Generate + gate articles
+        id: gen
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ARTICLE_COUNT: ${{ github.event.inputs.count || '2' }}
+          FORCE_RUN: ${{ github.event.inputs.force || 'false' }}
+          MODEL: claude-sonnet-4-6
+        run: node scripts/generate-articles.mjs
+
+      - name: Commit + push published articles
+        if: steps.gen.outputs.published == 'true'
+        run: |
+          git config user.name  "firmadeal-content-bot"
+          git config user.email "content-bot@users.noreply.github.com"
+          git add -A
+          git commit -m "content: ${{ steps.gen.outputs.slugs }} [auto]"
+          git push
+
+      - name: Wait for Vercel deploy
+        if: steps.gen.outputs.published == 'true'
+        run: sleep 120     # give Vercel time to build the new pages before pinging Google
+
+      - name: Submit sitemap + new URLs to Google Search Console
+        if: steps.gen.outputs.published == 'true'
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GSC_SITE_URL: "sc-domain:firmadeal.de"
+          SITE_ORIGIN: "https://www.firmadeal.de"
+          NEW_URLS: ${{ steps.gen.outputs.urls }}
+        run: node scripts/gsc-submit.mjs
