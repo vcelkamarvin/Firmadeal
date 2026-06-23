@@ -6,7 +6,7 @@ const BASE = "https://www.firmadeal.de";
 function db() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 
@@ -14,7 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let listings: Array<{ id: string; updated_at: string }> | null = null;
   let posts: Array<{ slug: string; updated_at: string }> | null = null;
 
-  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     const supabase = db();
     const [listingsRes, postsRes] = await Promise.all([
       supabase.from("listings").select("id, updated_at").eq("status", "active"),

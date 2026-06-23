@@ -104,12 +104,18 @@ export default function ListingDetailClient() {
   const listingCategory = listing?.category;
 
   useEffect(() => {
-    createClient()
+    const client = createClient();
+    client
       .from("listings")
       .select("*")
       .eq("id", id)
       .single()
-      .then(({ data }) => { setListing(data ?? null); });
+      .then(({ data }) => {
+        setListing(data ?? null);
+        if (data) {
+          client.rpc("increment_listing_views", { p_listing_id: id });
+        }
+      });
   }, [id]);
 
   useEffect(() => {

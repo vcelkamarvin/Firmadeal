@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ext = ALLOWED_TYPES[file.type];
-  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const fileName = `${crypto.randomUUID()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const { error } = await adminDb()

@@ -756,6 +756,10 @@ function Step5() {
         body: JSON.stringify({ plan: planId, listingId: id }),
       });
       const json = await res.json();
+      if (res.status === 409 && json.error === "already_paid") {
+        window.location.href = "/dashboard";
+        return;
+      }
       if (json.error) throw new Error(json.error);
       try { localStorage.removeItem("firmadeal_promo"); } catch {}
       trackEvent("payment_redirect_stripe");

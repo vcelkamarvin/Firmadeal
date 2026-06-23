@@ -1,18 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
-
 export async function POST(request: NextRequest) {
-  // Get authenticated user from session cookies
   const serverSupabase = await createServerSupabaseClient();
   const { data: { user } } = await serverSupabase.auth.getUser();
 
@@ -37,9 +28,9 @@ export async function POST(request: NextRequest) {
     if (key in body) safeFields[key] = body[key];
   }
 
-  // Insert using service role key — bypasses RLS
-  const supabase = adminClient();
-  const { data: listing, error } = await supabase
+  // Use the authenticated user's session — RLS policy "Users can manage own listings"
+  // allows INSERT where auth.uid() = user_id, so no service role key needed
+  const { data: listing, error } = await serverSupabase
     .from("listings")
     .insert({
       ...safeFields,
@@ -50,6 +41,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
+    console.error("[POST /api/listings] Supabase insert error:", error.message, error.code);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

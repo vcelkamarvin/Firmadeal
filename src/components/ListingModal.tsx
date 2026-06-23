@@ -6,7 +6,6 @@ import { X, MapPin, Eye, MessageSquare, Send, Phone, CheckCircle, DollarSign } f
 import { Listing } from "@/lib/types";
 import { useLanguage } from "@/context/LanguageContext";
 import ListingFinancials, { buildFinancialRows } from "./ListingFinancials";
-import { MOCK_LISTINGS } from "@/lib/mockData";
 
 interface ListingModalProps {
   listing: Listing | null;
@@ -120,9 +119,7 @@ export default function ListingModal({ listing, onClose }: ListingModalProps) {
 
   const industryMultiple = INDUSTRY_MULTIPLES[listing.category] ?? { lo: 2.0, avg: 3.5, hi: 6.0 };
 
-  const catListings = MOCK_LISTINGS.filter(
-    (l) => l.category === listing.category && l.asking_price && !l.price_confidential
-  );
+  const catListings: { asking_price: number }[] = [];
   const priceBuckets = PRICE_BUCKETS.map((b) => ({
     ...b,
     count: catListings.filter((l) => l.asking_price! >= b.min && l.asking_price! < b.max).length,

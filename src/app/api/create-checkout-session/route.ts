@@ -14,12 +14,17 @@ export async function POST(req: Request) {
 
   const { data: listing } = await supabase
     .from("listings")
-    .select("id")
+    .select("id, status, plan")
     .eq("id", listingId)
     .eq("user_id", user.id)
     .single();
 
   if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
+
+  // Guard against duplicate payment for the same listing
+  if (listing.plan || listing.status === "active") {
+    return NextResponse.json({ error: "already_paid", url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard` }, { status: 409 });
+  }
 
   const sessionParams = {
     mode: "payment" as const,

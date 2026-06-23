@@ -56,11 +56,13 @@ function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const trialStarted = searchParams.get("trial_started") === "true";
-  const [user, setUser] = useState<{ id: string; email: string; user_metadata: Record<string, string> } | null>(null);
+  const paymentSuccess = searchParams.get("payment_success") === "true";
+  const [user, setUser] = useState<{ id: string; email: string; created_at?: string; user_metadata: Record<string, string> } | null>(null);
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -86,21 +88,40 @@ function DashboardContent() {
     loadData();
   }, [router, supabase]);
 
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm(lang === "de" ? "Inserat wirklich löschen?" : "Really delete this listing?"))
       return;
     setDeletingId(id);
-    await supabase.from("listings").delete().eq("id", id);
-    setListings((prev) => prev.filter((l) => l.id !== id));
+    const { error } = await supabase.from("listings").delete().eq("id", id);
+    if (error) {
+      showToast(lang === "de" ? "Fehler beim Löschen." : "Error deleting listing.");
+    } else {
+      setListings((prev) => prev.filter((l) => l.id !== id));
+      showToast(lang === "de" ? "Inserat gelöscht." : "Listing deleted.");
+    }
     setDeletingId(null);
   };
 
   const handleTogglePause = async (listing: Listing) => {
     const newStatus = listing.status === "active" ? "paused" : "active";
-    await supabase.from("listings").update({ status: newStatus }).eq("id", listing.id);
-    setListings((prev) =>
-      prev.map((l) => (l.id === listing.id ? { ...l, status: newStatus } : l))
-    );
+    const { error } = await supabase.from("listings").update({ status: newStatus }).eq("id", listing.id);
+    if (error) {
+      showToast(lang === "de" ? "Fehler beim Aktualisieren." : "Error updating listing.");
+    } else {
+      setListings((prev) =>
+        prev.map((l) => (l.id === listing.id ? { ...l, status: newStatus } : l))
+      );
+      showToast(
+        newStatus === "paused"
+          ? lang === "de" ? "Inserat pausiert." : "Listing paused."
+          : lang === "de" ? "Inserat wieder aktiv." : "Listing activated."
+      );
+    }
   };
 
   const handleCancelTrial = async (listingId: string) => {
@@ -121,7 +142,9 @@ function DashboardContent() {
 
   const userName =
     user?.user_metadata?.name ?? user?.email?.split("@")[0] ?? "—";
-  const memberSince = user ? new Date().toLocaleDateString(lang === "de" ? "de-DE" : "en-GB", { month: "long", year: "numeric" }) : "—";
+  const memberSince = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString(lang === "de" ? "de-DE" : "en-GB", { month: "long", year: "numeric" })
+    : user ? new Date().toLocaleDateString(lang === "de" ? "de-DE" : "en-GB", { month: "long", year: "numeric" }) : "—";
 
   if (loading) {
     return (
@@ -135,6 +158,12 @@ function DashboardContent() {
 
   return (
     <div className="bg-[var(--bg)] min-h-screen">
+      {/* Toast notification */}
+      {toast && (
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 999, background: "var(--ink)", color: "white", padding: "10px 20px", borderRadius: 8, fontSize: 13, fontFamily: "sans-serif", boxShadow: "0 4px 20px rgba(0,0,0,0.15)", whiteSpace: "nowrap" }}>
+          {toast}
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
@@ -194,6 +223,21 @@ function DashboardContent() {
             </div>
           ))}
         </div>
+
+        {/* Payment success banner */}
+        {paymentSuccess && (
+          <div className="bg-[var(--accent-light)] border border-[var(--accent)]/25 rounded-xl px-5 py-4 flex items-center gap-3 mb-6">
+            <span className="text-xl flex-shrink-0">🎉</span>
+            <div>
+              <p className="font-sans text-[14px] font-semibold text-[var(--ink)]">
+                {lang === "de" ? "Zahlung erfolgreich! Ihr Inserat wird gleich live geschaltet." : "Payment successful! Your listing will go live shortly."}
+              </p>
+              <p className="font-sans text-[12px] text-[var(--muted)] mt-0.5">
+                {lang === "de" ? "Sie erhalten eine Bestätigung per E-Mail." : "You'll receive a confirmation by email."}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Trial started success banner */}
         {trialStarted && (

@@ -20,13 +20,13 @@ export default function ImpressumPage() {
 
           <section>
             <h2 className="font-bold text-[11px] uppercase tracking-widest text-[var(--muted)] mb-3">
-              Verantwortlich
+              Angaben gemäß § 5 TMG
             </h2>
             <p>
+              Firmadeal<br />
               Albert Laurin<br />
-              Prazskeho povstani 28<br />
-              466 04 Jablonec nad Nisou<br />
-              Tschechische Republik
+              02763 Zittau<br />
+              Deutschland
             </p>
           </section>
 
