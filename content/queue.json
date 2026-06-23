@@ -1,0 +1,10 @@
+[
+  { "title": "Pflegedienst verkaufen ohne Makler — Bewertung & Ablauf", "branche": "Pflegedienst", "region": "Deutschland", "intent": "verkaufen", "score": 88, "published": false },
+  { "title": "Arztpraxis mit Kassensitz verkaufen — was ist sie wert?", "branche": "Arztpraxis", "region": "Deutschland", "intent": "bewerten", "score": 90, "published": false },
+  { "title": "Bäckerei mit Café verkaufen in Bayern — Steuer & Nachfolge", "branche": "Bäckerei", "region": "Bayern", "intent": "nachfolge", "score": 84, "published": false },
+  { "title": "Steuerkanzlei verkaufen — Mandantenstamm richtig bewerten", "branche": "Steuerkanzlei", "region": "Deutschland", "intent": "bewerten", "score": 86, "published": false },
+  { "title": "KFZ-Werkstatt mit Immobilie verkaufen — Asset oder Share Deal?", "branche": "KFZ-Werkstatt", "region": "Deutschland", "intent": "ablauf", "score": 83, "published": false },
+  { "title": "Physiotherapie-Praxis verkaufen — Nachfolge ohne Makler", "branche": "Physiotherapie", "region": "Deutschland", "intent": "verkaufen", "score": 81, "published": false },
+  { "title": "Online-Shop verkaufen — Bewertung nach Umsatz und Marge", "branche": "Online-Shop", "region": "Deutschland", "intent": "bewerten", "score": 80, "published": false },
+  { "title": "Friseursalon verkaufen in NRW — was zahlen Käufer?", "branche": "Friseursalon", "region": "NRW", "intent": "bewerten", "score": 78, "published": false }
+]
