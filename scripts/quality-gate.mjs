@@ -23,8 +23,18 @@ Gib NUR JSON zurück:
 {"intent_match":0-10,"information_gain":0-10,"uniqueness":0-10,"eeat_accuracy":0-10,
 "factual_safety":0-10,"german_quality":0-10,"structure":0-10,
 "invented_numbers":true|false,"notes":"kurz"}
-Sei streng: Rehash der Top-Ergebnisse ohne Mehrwert -> information_gain niedrig.
-Unbelegte oder erfundene Zahlen -> invented_numbers true und factual_safety niedrig.
+Sei streng beim Mehrwert: Rehash der Top-Ergebnisse ohne Mehrwert -> information_gain niedrig.
+
+WICHTIG zu Zahlen — unterscheide genau:
+- ERLAUBT (NICHT als erfundene Zahlen werten): klar als Beispiel, Annahme oder Szenario
+  gekennzeichnete Rechenbeispiele, z. B. "Angenommen, der Umsatz beträgt 500.000 €, dann …"
+  oder ein durchgerechnetes Bewertungsbeispiel mit Multiplikator. Solche illustrativen
+  Beispielzahlen sind ausdrücklich gewünscht und KEIN Grund für invented_numbers=true.
+- NICHT ERLAUBT: konkrete STATISTIKEN oder Marktdaten, die als Tatsache dargestellt werden,
+  ohne Quelle (z. B. "73 % aller Praxen werden ohne Makler verkauft", "der Durchschnittspreis
+  liegt bei 1,2 Mio. €"). Nur DAFÜR setze invented_numbers=true und factual_safety niedrig.
+
+Im Zweifel, wenn die Zahl klar als Beispiel/Annahme erkennbar ist: invented_numbers=false.
 
 ARTIKEL:
 ${body.slice(0, 12000)}`;
