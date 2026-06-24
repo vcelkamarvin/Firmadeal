@@ -1,176 +1,140 @@
-// Firmadeal — automated niche-SEO article generator.
-// Runs in GitHub Actions. Picks N niches from the queue, drafts each with Claude,
-// passes them through a quality gate (Claude critic + heuristics), writes MDX +
-// JSON-LD for those that pass, queues the rest for human review, and emits the
-// list of published URLs for the GSC step. No publishing happens without passing the gate.
+// Firmadeal — automated deep-dive niche-SEO article generator.
+// Runs in GitHub Actions. Picks N niches from content/queue.json, drafts a deep-dive
+// article with Claude, runs the anti-slop quality gate, and INSERTS passing articles
+// into the Supabase `blog_posts` table (which is what /blog and /blog/[slug] render).
+// Articles that fail the gate are saved to content/needs-review/ instead of published.
 
 import fs from "node:fs";
 import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@supabase/supabase-js";
 import { runQualityGate } from "./quality-gate.mjs";
-import { brandMemory, eeatFacts, articleTemplate, BANNED_PHRASES } from "./content-config.mjs";
+import { brandMemory, eeatFacts, articleTemplate, externalSources, BANNED_PHRASES } from "./content-config.mjs";
 
 const ROOT = process.cwd();
 const QUEUE = path.join(ROOT, "content/queue.json");
 const PUBLISHED = path.join(ROOT, "content/published.json");
 const REVIEW_DIR = path.join(ROOT, "content/needs-review");
-const ARTICLE_DIR = path.join(ROOT, "src/content/ratgeber");
 const SITE_ORIGIN = "https://www.firmadeal.de";
-// Real team members only — every article is signed by one of these (rotated).
-// Invented authors hurt E-E-A-T (Google flags fake bylines), so add real people here.
-const AUTHORS = [
-  { name: "Albert Laurin", role: "Gründer, Firmadeal", url: "https://www.linkedin.com/company/firmadeal" },
-  // { name: "...", role: "...", url: "..." },  // add real teammates
-];
-const pickAuthor = () => AUTHORS[Math.floor(Math.random() * AUTHORS.length)];
 
 const COUNT = parseInt(process.env.ARTICLE_COUNT || "2", 10);
 const MODEL = process.env.MODEL || "claude-sonnet-4-6";
-const GATE_THRESHOLD = 7; // min score (0–10) on every critical dimension
+const GATE_THRESHOLD = 7;
+const PUBLISH_STATE = (process.env.PUBLISH_STATE || "live") === "live"; // true = published immediately
 
-// ── 09:00 Europe/Berlin time-guard (handles DST automatically) ──────────────
-function berlinHour() {
-  const s = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hour12: false }).format(new Date());
-  return parseInt(s, 10);
-}
+// Real team members only — invented bylines hurt E-E-A-T.
+const AUTHORS = ["Albert Laurin"];
+const pickAuthor = () => AUTHORS[Math.floor(Math.random() * AUTHORS.length)];
+
+// Map niche intent → blog_posts.category (allowed: verkauf, kauf, bewertung, nachfolge, ratgeber)
+const CATEGORY = { verkaufen: "verkauf", kaufen: "kauf", bewerten: "bewertung", nachfolge: "nachfolge", ablauf: "ratgeber" };
+
+// ── 09:00 Europe/Berlin time-guard (DST-safe) ──────────────────────────────
+const berlinHour = () => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hour12: false }).format(new Date()), 10);
 if (process.env.FORCE_RUN !== "true" && berlinHour() !== 9) {
-  console.log(`Not 09:00 in Berlin (currently ${berlinHour()}:00). Exiting without action.`);
-  setOutput("published", "false");
-  process.exit(0);
+  console.log(`Not 09:00 in Berlin (currently ${berlinHour()}:00). Exiting.`);
+  setOutput("published", "false"); process.exit(0);
 }
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
-function readJSON(p, fallback) { try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return fallback; } }
+function readJSON(p, fb) { try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return fb; } }
 function setOutput(k, v) { if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `${k}=${v}\n`); }
-function slugify(s) {
-  return s.toLowerCase().replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss")
-    .replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
-}
+function slugify(s) { return s.toLowerCase().replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""); }
+const readingTime = (txt) => Math.max(3, Math.round(txt.split(/\s+/).length / 200));
 
-// ── Build the generation prompt from the "skills" config ────────────────────
 function buildPrompt(niche) {
-  return `Du bist ein deutschsprachiger M&A-Fachredakteur für Firmadeal. Schreibe EINEN Ratgeber-Artikel.
+  return `Du bist ein deutschsprachiger M&A-Fachredakteur für Firmadeal. Schreibe EINEN tiefgehenden Ratgeber-Artikel (Deep Dive).
 
 NISCHE (genaue Suchintention): "${niche.title}"
 Branche: ${niche.branche} | Region: ${niche.region || "DACH"} | Intent: ${niche.intent}
 
-MARKENKONTEXT (Ton & Fakten — strikt einhalten):
+MARKENKONTEXT (Ton & Fakten — strikt):
 ${brandMemory}
 
-VERIFIZIERTE FAKTEN (NUR diese Zahlen verwenden, jeweils mit Quelle; nichts erfinden):
+VERIFIZIERTE FAKTEN (nur diese Zahlen, jeweils mit Quelle; nichts erfinden):
 ${eeatFacts(niche.branche)}
 
-STRUKTUR-VORLAGE:
+AUTORITATIVE EXTERNE QUELLEN (als echte Markdown-Backlinks einbauen, wo passend):
+${externalSources}
+
+STRUKTUR:
 ${articleTemplate}
 
 HARTE REGELN:
-- Mindestens 900 Wörter, davon ≥60% spezifisch für genau diese Nische (keine Allgemeinplätze).
-- Echte, hilfreiche Information, die Top-Ergebnisse NICHT bieten (Information Gain): eine konkrete Zahl, eine deutsche Besonderheit, ein gerechnetes Beispiel.
-- Keine erfundenen Statistiken. Keine dieser verbotenen Phrasen: ${BANNED_PHRASES.join(", ")}.
-- Natürliches, professionelles Deutsch. Korrekte Umlaute und Fachbegriffe.
-- Schreibe wie ein erfahrener Mensch aus der Praxis: variiere die Satzlänge, nutze gelegentlich kurze Sätze, vermeide generische KI-Floskeln, gleichförmige Absätze und Aufzählungs-Overkill. Echte redaktionelle Stimme, keine glatte Maschinensprache. (Keine künstlichen Tippfehler oder doppelten Leerzeichen — saubere, aber lebendige Sprache.)
-- 4–6 FAQ-Einträge (für FAQPage-Schema).
-- Interne Links als Markdown: /sell , /listings , und die Branche-Landingpage /${slugify(niche.branche)}-verkaufen.
+- MINDESTENS 1500 Wörter. Echter Deep Dive, kein oberflächlicher Überblick.
+- ≥60% spezifisch für genau diese Nische. Ein konkret gerechnetes Bewertungsbeispiel.
+- Information Gain: etwas, das Top-Ergebnisse NICHT bieten (deutsche Besonderheit, Zahl, Beispiel).
+- 2–4 **externe** Backlinks auf autoritative Quellen (IHK, KfW, Destatis, IDW, gesetze-im-internet.de) als Markdown-Links.
+- Interne Links als Markdown: /sell , /listings , /#bewertung , und die Branche-Seite.
+- 4–6 FAQ (## Häufige Fragen) am Ende, im content enthalten.
+- Keine erfundenen Statistiken. Verbotene Phrasen: ${BANNED_PHRASES.join(", ")}.
+- Natürliches, professionelles Deutsch, variierende Satzlänge, keine KI-Floskeln, keine künstlichen Tippfehler.
 
-Antworte AUSSCHLIESSLICH mit gültigem JSON in genau diesem Format:
+Antworte AUSSCHLIESSLICH mit gültigem JSON:
 {
- "title": "...", "metaDescription": "... (<=155 Zeichen)",
+ "title": "... (mit Keyword, <=70 Zeichen)",
+ "excerpt": "1–2 Sätze, <=160 Zeichen",
  "slug": "kebab-case-ohne-umlaute",
- "excerpt": "1 Satz",
- "bodyMdx": "Markdown/MDX Fließtext mit ## Überschriften und den internen Links",
+ "content": "VOLLSTÄNDIGER Markdown-Artikel mit ## Überschriften, internen + externen Links, gerechnetem Beispiel und ## Häufige Fragen am Ende",
  "faq": [{"q":"...","a":"..."}],
- "sources": ["Quelle 1", "Quelle 2"]
+ "sources": ["Quelle 1 (URL)", "Quelle 2 (URL)"]
 }`;
 }
 
 async function generateOne(niche) {
-  const msg = await client.messages.create({
-    model: MODEL, max_tokens: 4000, temperature: 0.7,
-    messages: [{ role: "user", content: buildPrompt(niche) }],
-  });
+  const msg = await client.messages.create({ model: MODEL, max_tokens: 8000, temperature: 0.7, messages: [{ role: "user", content: buildPrompt(niche) }] });
   const text = msg.content.map(b => b.text || "").join("");
-  const json = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
-  json.slug = json.slug || slugify(niche.title);
-  return json;
-}
-
-function frontmatter(a, niche, author) {
-  const url = `${SITE_ORIGIN}/ratgeber/${a.slug}`;
-  const jsonld = {
-    "@context": "https://schema.org", "@type": "Article",
-    headline: a.title, description: a.metaDescription,
-    author: { "@type": "Person", name: author.name, jobTitle: author.role, url: author.url },
-    publisher: { "@type": "Organization", name: "Firmadeal", url: SITE_ORIGIN },
-    datePublished: new Date().toISOString(), inLanguage: "de-DE", mainEntityOfPage: url,
-  };
-  const faqLd = {
-    "@context": "https://schema.org", "@type": "FAQPage",
-    mainEntity: a.faq.map(f => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
-  };
-  return `---
-title: ${JSON.stringify(a.title)}
-description: ${JSON.stringify(a.metaDescription)}
-slug: ${a.slug}
-branche: ${JSON.stringify(niche.branche)}
-region: ${JSON.stringify(niche.region || "")}
-author: ${JSON.stringify(author.name)}
-date: ${new Date().toISOString()}
-sources: ${JSON.stringify(a.sources || [])}
-jsonld: ${JSON.stringify([jsonld, faqLd])}
----
-
-${a.bodyMdx}
-
-## Häufige Fragen
-${a.faq.map(f => `### ${f.q}\n${f.a}`).join("\n\n")}
-
----
-*${author.name} — ${author.role}. Fragen zum Verkauf Ihres Unternehmens? [Vertraulich einreichen](/sell).*
-`;
+  const a = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
+  a.slug = a.slug || slugify(niche.title);
+  a.bodyMdx = a.content; // alias for the quality gate
+  return a;
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────
 const queue = readJSON(QUEUE, []);
 const published = readJSON(PUBLISHED, []);
-const doneSlugs = new Set(published.map(p => p.slug));
-const candidates = queue
-  .filter(n => !n.published && !doneSlugs.has(slugify(n.title)))
-  .sort((a, b) => (b.score || 0) - (a.score || 0))
-  .slice(0, COUNT);
+const done = new Set(published.map(p => p.slug));
+const candidates = queue.filter(n => !n.published && !done.has(slugify(n.title))).sort((a,b)=>(b.score||0)-(a.score||0)).slice(0, COUNT);
 
-if (candidates.length === 0) { console.log("Queue empty — nothing to publish. Refill content/queue.json."); setOutput("published", "false"); process.exit(0); }
-
-fs.mkdirSync(ARTICLE_DIR, { recursive: true });
+if (!candidates.length) { console.log("Queue empty — refill content/queue.json."); setOutput("published","false"); process.exit(0); }
 fs.mkdirSync(REVIEW_DIR, { recursive: true });
 
-const publishedNow = [], urls = [], slugs = [];
+const urls = [], slugs = [];
 for (const niche of candidates) {
   try {
-    const article = await generateOne(niche);
-    const gate = await runQualityGate({ client, model: MODEL, article, niche, threshold: GATE_THRESHOLD, banned: BANNED_PHRASES });
+    const a = await generateOne(niche);
+    const gate = await runQualityGate({ client, model: MODEL, article: a, niche, threshold: GATE_THRESHOLD, banned: BANNED_PHRASES });
     if (!gate.pass) {
-      fs.writeFileSync(path.join(REVIEW_DIR, `${article.slug}.json`), JSON.stringify({ article, niche, gate }, null, 2));
-      console.log(`HOLD (review): "${niche.title}" — ${gate.reason}`);
-      continue;
+      fs.writeFileSync(path.join(REVIEW_DIR, `${a.slug}.json`), JSON.stringify({ article: a, niche, gate }, null, 2));
+      console.log(`HOLD (review): "${niche.title}" — ${gate.reason}`); continue;
     }
     const author = pickAuthor();
-    fs.writeFileSync(path.join(ARTICLE_DIR, `${article.slug}.mdx`), frontmatter(article, niche, author));
+    const row = {
+      slug: a.slug,
+      title: a.title,
+      excerpt: a.excerpt,
+      content: a.content,
+      category: CATEGORY[niche.intent] || "ratgeber",
+      author,
+      reading_time_minutes: readingTime(a.content),
+      published: PUBLISH_STATE,
+      published_at: new Date().toISOString(),
+    };
+    const { error } = await supabase.from("blog_posts").upsert(row, { onConflict: "slug" });
+    if (error) { console.error(`Supabase insert failed for "${a.slug}":`, error.message); continue; }
+
     niche.published = true;
-    published.push({ slug: article.slug, title: article.title, branche: niche.branche, author: author.name, date: new Date().toISOString(), score: gate.min });
-    publishedNow.push(article.slug);
-    urls.push(`${SITE_ORIGIN}/ratgeber/${article.slug}`);
-    slugs.push(article.slug);
-    console.log(`PUBLISHED: "${article.title}" (min score ${gate.min})`);
-  } catch (e) {
-    console.error(`Failed on "${niche.title}":`, e.message);
-  }
+    published.push({ slug: a.slug, title: a.title, branche: niche.branche, author, date: row.published_at, score: gate.min });
+    urls.push(`${SITE_ORIGIN}/blog/${a.slug}`); slugs.push(a.slug);
+    console.log(`PUBLISHED → blog_posts: "${a.title}" (score ${gate.min}, published=${PUBLISH_STATE})`);
+  } catch (e) { console.error(`Failed on "${niche.title}":`, e.message); }
 }
 
 fs.writeFileSync(QUEUE, JSON.stringify(queue, null, 2));
 fs.writeFileSync(PUBLISHED, JSON.stringify(published, null, 2));
-
-setOutput("published", publishedNow.length ? "true" : "false");
+setOutput("published", slugs.length ? "true" : "false");
 setOutput("slugs", slugs.join(", "));
 setOutput("urls", urls.join(" "));
-console.log(`Done. Published ${publishedNow.length}/${candidates.length}.`);
+console.log(`Done. Published ${slugs.length}/${candidates.length} to Supabase.`);

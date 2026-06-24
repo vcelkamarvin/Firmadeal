@@ -30,14 +30,28 @@ export function eeatFacts(branche) {
   return `${FACTS.general}\n${FACTS[branche] || "(Keine branchenspezifischen Multiples hinterlegt — KEINE konkreten Multiples erfinden, allgemein bleiben.)"}`;
 }
 
+// Authoritative German sources to cite as real external backlinks (boosts E-E-A-T).
+export const externalSources = `
+- IHK (Industrie- und Handelskammer) Nachfolge: https://www.ihk.de/
+- KfW Nachfolgemonitoring: https://www.kfw.de/
+- Statistisches Bundesamt (Destatis): https://www.destatis.de/
+- IDW (Bewertungsstandard IDW S1): https://www.idw.de/
+- Gesetze im Internet (z. B. HGB, UmwG, EStG): https://www.gesetze-im-internet.de/
+- BStBK (Kanzleibewertung): https://www.bstbk.de/
+Verlinke nur, was inhaltlich zur Nische passt. Nutze beschreibenden deutschen Ankertext, keine nackten URLs.
+`;
+
 export const articleTemplate = `
-1. H1/Titel = exakte Suchintention.
-2. Direkte Antwort in den ersten 2–3 Sätzen (für AI Overviews).
-3. ## Wie wird [Branche] in dieser Konstellation bewertet? (mit gerechnetem Beispiel)
-4. ## Ablauf / Steuer / Besonderheiten der Nische
-5. ## Anonym & ohne Makler verkaufen (Firmadeal-Bezug, dezent)
-6. ## Häufige Fragen (4–6 FAQ)
-7. Dezenter CTA: kostenlose Bewertung + vertraulich einreichen (/sell).
+1. Direkte Antwort in den ersten 2–3 Sätzen (für AI Overviews / Featured Snippet).
+2. ## Wie wird [Branche] in dieser Konstellation bewertet? — Methode + GERECHNETES Beispiel (Zahlen).
+3. ## Was den Wert in dieser Nische besonders beeinflusst (branchenspezifische Faktoren).
+4. ## Ablauf des Verkaufs Schritt für Schritt.
+5. ## Steuer & rechtliche Besonderheiten (Asset vs. Share Deal, mit Quelle).
+6. ## Häufige Fehler / worauf Käufer achten.
+7. ## Anonym & ohne Makler verkaufen — dezenter Firmadeal-Bezug + interner Link /sell.
+8. ## Häufige Fragen — 4–6 FAQ.
+9. Abschluss-CTA: kostenlose Bewertung (/#bewertung) + vertraulich einreichen (/sell).
+Tabellen (Markdown) für Bewertungs-Beispiele nutzen, wo sinnvoll.
 `;
 
 export const BANNED_PHRASES = [
