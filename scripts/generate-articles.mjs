@@ -32,8 +32,8 @@ const CATEGORY = { verkaufen: "verkauf", kaufen: "kauf", bewerten: "bewertung", 
 // ── 09:00 Europe/Berlin time-guard (DST-safe) ──────────────────────────────
 const berlinHour = () => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hour12: false }).format(new Date()), 10);
 if (process.env.FORCE_RUN !== "true" && berlinHour() !== 9) {
-  console.log(`Not 09:00 in Berlin (currently ${berlinHour()}:00). Exiting.`);
-  setOutput("published", "false"); process.exit(0);
+console.log(`Not 09:00 in Berlin (currently ${berlinHour()}:00). Exiting.`);
+setOutput("published", "false"); process.exit(0);
 }
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -44,8 +44,28 @@ function setOutput(k, v) { if (process.env.GITHUB_OUTPUT) fs.appendFileSync(proc
 function slugify(s) { return s.toLowerCase().replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").replace(/ß/g,"ss").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""); }
 const readingTime = (txt) => Math.max(3, Math.round(txt.split(/\s+/).length / 200));
 
+// ── Structured-output tool. The Anthropic API guarantees tool inputs are valid
+//    JSON (constrained decoding), so a long Markdown `content` field with raw
+//    newlines/quotes can never break parsing the way free-form text + JSON.parse did.
+const ARTICLE_TOOL = {
+name: "publish_article",
+description: "Gib den fertigen Deep-Dive-Artikel als strukturierte Daten zurück.",
+input_schema: {
+type: "object",
+properties: {
+title: { type: "string", description: "Titel mit Keyword, <=70 Zeichen" },
+excerpt: { type: "string", description: "1–2 Sätze, <=160 Zeichen" },
+slug: { type: "string", description: "kebab-case ohne Umlaute" },
+content: { type: "string", description: "VOLLSTÄNDIGER Markdown-Artikel mit ## Überschriften, internen + externen Links, gerechnetem Beispiel und ## Häufige Fragen am Ende" },
+faq: { type: "array", items: { type: "object", properties: { q: { type: "string" }, a: { type: "string" } }, required: ["q", "a"] } },
+sources: { type: "array", items: { type: "string" }, description: "Quelle (URL)" }
+},
+required: ["title", "excerpt", "slug", "content", "faq", "sources"]
+}
+};
+
 function buildPrompt(niche) {
-  return `Du bist ein deutschsprachiger M&A-Fachredakteur für Firmadeal. Schreibe EINEN tiefgehenden Ratgeber-Artikel (Deep Dive).
+return `Du bist ein deutschsprachiger M&A-Fachredakteur für Firmadeal. Schreibe EINEN tiefgehenden Ratgeber-Artikel (Deep Dive).
 
 NISCHE (genaue Suchintention): "${niche.title}"
 Branche: ${niche.branche} | Region: ${niche.region || "DACH"} | Intent: ${niche.intent}
@@ -72,24 +92,24 @@ HARTE REGELN:
 - Keine erfundenen Statistiken. Verbotene Phrasen: ${BANNED_PHRASES.join(", ")}.
 - Natürliches, professionelles Deutsch, variierende Satzlänge, keine KI-Floskeln, keine künstlichen Tippfehler.
 
-Antworte AUSSCHLIESSLICH mit gültigem JSON:
-{
- "title": "... (mit Keyword, <=70 Zeichen)",
- "excerpt": "1–2 Sätze, <=160 Zeichen",
- "slug": "kebab-case-ohne-umlaute",
- "content": "VOLLSTÄNDIGER Markdown-Artikel mit ## Überschriften, internen + externen Links, gerechnetem Beispiel und ## Häufige Fragen am Ende",
- "faq": [{"q":"...","a":"..."}],
- "sources": ["Quelle 1 (URL)", "Quelle 2 (URL)"]
-}`;
+Gib das Ergebnis ausschließlich über das Tool "publish_article" zurück. Das Feld "content" enthält den vollständigen Markdown-Artikel inkl. ## Häufige Fragen.`;
 }
 
 async function generateOne(niche) {
-  const msg = await client.messages.create({ model: MODEL, max_tokens: 8000, temperature: 0.7, messages: [{ role: "user", content: buildPrompt(niche) }] });
-  const text = msg.content.map(b => b.text || "").join("");
-  const a = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1));
-  a.slug = a.slug || slugify(niche.title);
-  a.bodyMdx = a.content; // alias for the quality gate
-  return a;
+const msg = await client.messages.create({
+model: MODEL,
+max_tokens: 8000,
+temperature: 0.7,
+tools: [ARTICLE_TOOL],
+tool_choice: { type: "tool", name: "publish_article" },
+messages: [{ role: "user", content: buildPrompt(niche) }],
+});
+const block = msg.content.find(b => b.type === "tool_use");
+if (!block || !block.input) throw new Error("Model returned no publish_article tool_use block");
+const a = { ...block.input };
+a.slug = a.slug || slugify(niche.title);
+a.bodyMdx = a.content; // alias for the quality gate
+return a;
 }
 
 // ── Main ────────────────────────────────────────────────────────────────────
@@ -103,33 +123,33 @@ fs.mkdirSync(REVIEW_DIR, { recursive: true });
 
 const urls = [], slugs = [];
 for (const niche of candidates) {
-  try {
-    const a = await generateOne(niche);
-    const gate = await runQualityGate({ client, model: MODEL, article: a, niche, threshold: GATE_THRESHOLD, banned: BANNED_PHRASES });
-    if (!gate.pass) {
-      fs.writeFileSync(path.join(REVIEW_DIR, `${a.slug}.json`), JSON.stringify({ article: a, niche, gate }, null, 2));
-      console.log(`HOLD (review): "${niche.title}" — ${gate.reason}`); continue;
-    }
-    const author = pickAuthor();
-    const row = {
-      slug: a.slug,
-      title: a.title,
-      excerpt: a.excerpt,
-      content: a.content,
-      category: CATEGORY[niche.intent] || "ratgeber",
-      author,
-      reading_time_minutes: readingTime(a.content),
-      published: PUBLISH_STATE,
-      published_at: new Date().toISOString(),
-    };
-    const { error } = await supabase.from("blog_posts").upsert(row, { onConflict: "slug" });
-    if (error) { console.error(`Supabase insert failed for "${a.slug}":`, error.message); continue; }
+try {
+const a = await generateOne(niche);
+const gate = await runQualityGate({ client, model: MODEL, article: a, niche, threshold: GATE_THRESHOLD, banned: BANNED_PHRASES });
+if (!gate.pass) {
+fs.writeFileSync(path.join(REVIEW_DIR, `${a.slug}.json`), JSON.stringify({ article: a, niche, gate }, null, 2));
+console.log(`HOLD (review): "${niche.title}" — ${gate.reason}`); continue;
+}
+const author = pickAuthor();
+const row = {
+slug: a.slug,
+title: a.title,
+excerpt: a.excerpt,
+content: a.content,
+category: CATEGORY[niche.intent] || "ratgeber",
+author,
+reading_time_minutes: readingTime(a.content),
+published: PUBLISH_STATE,
+published_at: new Date().toISOString(),
+};
+const { error } = await supabase.from("blog_posts").upsert(row, { onConflict: "slug" });
+if (error) { console.error(`Supabase insert failed for "${a.slug}":`, error.message); continue; }
 
-    niche.published = true;
-    published.push({ slug: a.slug, title: a.title, branche: niche.branche, author, date: row.published_at, score: gate.min });
-    urls.push(`${SITE_ORIGIN}/blog/${a.slug}`); slugs.push(a.slug);
-    console.log(`PUBLISHED → blog_posts: "${a.title}" (score ${gate.min}, published=${PUBLISH_STATE})`);
-  } catch (e) { console.error(`Failed on "${niche.title}":`, e.message); }
+niche.published = true;
+published.push({ slug: a.slug, title: a.title, branche: niche.branche, author, date: row.published_at, score: gate.min });
+urls.push(`${SITE_ORIGIN}/blog/${a.slug}`); slugs.push(a.slug);
+console.log(`PUBLISHED → blog_posts: "${a.title}" (score ${gate.min}, published=${PUBLISH_STATE})`);
+} catch (e) { console.error(`Failed on "${niche.title}":`, e.message); }
 }
 
 fs.writeFileSync(QUEUE, JSON.stringify(queue, null, 2));
