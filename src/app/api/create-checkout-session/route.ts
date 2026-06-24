@@ -21,8 +21,10 @@ export async function POST(req: Request) {
 
   if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
 
-  // Guard against duplicate payment for the same listing
-  if (listing.plan || listing.status === "active") {
+  // Guard against duplicate payment: only block once the listing is actually
+  // paid & live (status "active"). NOTE: `plan` defaults to "base" at creation,
+  // so it must NOT be used as a paid-indicator — doing so blocked all checkouts.
+  if (listing.status === "active") {
     return NextResponse.json({ error: "already_paid", url: `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard` }, { status: 409 });
   }
 
