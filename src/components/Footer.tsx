@@ -31,7 +31,7 @@ export default function Footer() {
                 { href: "/listings", de: "Auswahl ansehen", en: "View selection" },
                 { href: "/sell", de: "Unternehmen einreichen", en: "Submit business" },
                 { href: "/pricing", de: "Preise", en: "Pricing" },
-                { href: "/blog", de: "Ratgeber", en: "Guides" },
+                { href: "/blog", de: "Blog", en: "Blog" },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="font-sans text-[13px] text-white/50 hover:text-white transition-colors">
