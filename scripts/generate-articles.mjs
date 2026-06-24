@@ -112,11 +112,49 @@ a.bodyMdx = a.content; // alias for the quality gate
 return a;
 }
 
+// ── Dedupe helpers — never publish two similar articles or repeat a category in one run ──
+const STOP = new Set(["und","oder","mit","ohne","fuer","für","der","die","das","ist","sie","was","wie","ihre","ihren","beim","ein","eine","im","in","zu","von","den","dem"]);
+function titleTokens(s){ return new Set((s||"").toLowerCase().replace(/[^a-zäöüß0-9\s]/g," ").split(/\s+/).filter(w => w.length > 3 && !STOP.has(w))); }
+function jaccard(a,b){ const A=titleTokens(a), B=titleTokens(b); if(!A.size||!B.size) return 0; let inter=0; for(const x of A) if(B.has(x)) inter++; return inter/(A.size+B.size-inter); }
+
 // ── Main ────────────────────────────────────────────────────────────────────
 const queue = readJSON(QUEUE, []);
 const published = readJSON(PUBLISHED, []);
 const done = new Set(published.map(p => p.slug));
-const candidates = queue.filter(n => !n.published && !done.has(slugify(n.title))).sort((a,b)=>(b.score||0)-(a.score||0)).slice(0, COUNT);
+
+// What's already live, used to block near-duplicates.
+const publishedBranchen = new Set(published.map(p => (p.branche || "").toLowerCase()).filter(Boolean));
+const publishedTitles = published.map(p => p.title || "");
+const SIMILARITY_MAX = 0.5; // title-token Jaccard above this = too similar, skip
+
+// Too similar if the same industry (Branche) already has an article, or the title overlaps heavily.
+function tooSimilar(niche) {
+  if (publishedBranchen.has((niche.branche || "").toLowerCase())) return true;
+  return publishedTitles.some(t => jaccard(niche.title, t) >= SIMILARITY_MAX);
+}
+
+const pool = queue
+  .filter(n => !n.published && !done.has(slugify(n.title)))
+  .filter(n => !tooSimilar(n))
+  .sort((a,b) => (b.score||0) - (a.score||0));
+
+// Category-diverse pick: at most one article per category in a single run.
+const candidates = [];
+const usedCats = new Set();
+for (const n of pool) {
+  const cat = CATEGORY[n.intent] || "ratgeber";
+  if (usedCats.has(cat)) continue;
+  candidates.push(n); usedCats.add(cat);
+  if (candidates.length >= COUNT) break;
+}
+// Fallback: if there aren't enough distinct categories available, top up by score.
+if (candidates.length < COUNT) {
+  for (const n of pool) {
+    if (candidates.includes(n)) continue;
+    candidates.push(n);
+    if (candidates.length >= COUNT) break;
+  }
+}
 
 if (!candidates.length) { console.log("Queue empty — refill content/queue.json."); setOutput("published","false"); process.exit(0); }
 fs.mkdirSync(REVIEW_DIR, { recursive: true });
