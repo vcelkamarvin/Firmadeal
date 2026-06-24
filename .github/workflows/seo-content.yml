@@ -37,14 +37,17 @@ jobs:
           node-version: "20"
 
       - name: Install deps
-        run: npm install @anthropic-ai/sdk googleapis gray-matter
+        run: npm install @anthropic-ai/sdk @supabase/supabase-js googleapis
 
       - name: Generate + gate articles
         id: gen
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ARTICLE_COUNT: ${{ github.event.inputs.count || '2' }}
           FORCE_RUN: ${{ github.event.inputs.force || 'false' }}
+          PUBLISH_STATE: live
           MODEL: claude-sonnet-4-6
         run: node scripts/generate-articles.mjs
 
