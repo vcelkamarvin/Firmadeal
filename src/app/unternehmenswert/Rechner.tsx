@@ -155,7 +155,16 @@ export default function Rechner() {
           <Link href="/sell" className="uw-cta">Käufer finden — vertraulich einreichen →</Link>
 
           {!sent ? (
-            <form className="uw-emailrow" onSubmit={(e) => { e.preventDefault(); if (email.includes("@")) setSent(true); }}>
+            <form className="uw-emailrow" onSubmit={(e) => {
+              e.preventDefault();
+              if (!email.includes("@")) return;
+              setSent(true);
+              fetch("/api/valuation-lead", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, branche, region, umsatz, ebitda, growth, valueLow: targetLo, valueHigh: targetHi }),
+              }).catch(() => {});
+            }}>
               <input className="uw-email" type="email" required placeholder="E-Mail für Ihre Bewertung" value={email} onChange={(e) => setEmail(e.target.value)} />
               <button className="uw-emailbtn" type="submit">Senden</button>
             </form>
