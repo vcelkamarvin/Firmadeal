@@ -28,9 +28,10 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2">
               {[
-                { href: "/listings", de: "Auswahl ansehen",         en: "View selection"  },
-                { href: "/sell",     de: "Unternehmen einreichen", en: "Submit business" },
-                { href: "/pricing",  de: "Preise",               en: "Pricing"         },
+                { href: "/listings", de: "Auswahl ansehen", en: "View selection" },
+                { href: "/sell", de: "Unternehmen einreichen", en: "Submit business" },
+                { href: "/pricing", de: "Preise", en: "Pricing" },
+                { href: "/blog", de: "Ratgeber", en: "Guides" },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="font-sans text-[13px] text-white/50 hover:text-white transition-colors">
@@ -48,8 +49,8 @@ export default function Footer() {
             <ul className="space-y-2">
               {[
                 { href: "/datenschutz", de: "Datenschutz", en: "Privacy policy" },
-                { href: "/agb",         de: "AGB",         en: "Terms"          },
-                { href: "/impressum",   de: "Impressum",   en: "Imprint"        },
+                { href: "/agb", de: "AGB", en: "Terms" },
+                { href: "/impressum", de: "Impressum", en: "Imprint" },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="font-sans text-[13px] text-white/50 hover:text-white transition-colors">

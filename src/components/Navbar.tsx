@@ -77,9 +77,10 @@ export default function Navbar() {
             {/* Desktop nav links */}
             <div className="desktop-only" style={{ display: "flex", gap: 24, alignItems: "center" }}>
               {[
-                { href: "/listings",  label: "Auswahl"    },
-                { href: "/pricing",   label: "Preise"     },
-                { href: "/dashboard", label: "Dashboard"  },
+                { href: "/listings", label: "Auswahl" },
+                { href: "/blog", label: "Ratgeber" },
+                { href: "/pricing", label: "Preise" },
+                { href: "/dashboard", label: "Dashboard" },
               ].map(({ href, label }) => {
                 const active = pathname === href || (href !== "/" && pathname.startsWith(href));
                 return (
@@ -155,9 +156,10 @@ export default function Navbar() {
         >
           {/* Nav items */}
           {[
-            { href: "/listings", label: "Kuratierte Auswahl ansehen",           icon: "🔍", desc: "Öffentliche Mandate" },
-            { href: "/sell",     label: "Unternehmen vertraulich einreichen", icon: "📋", desc: "Einmalig €87 · 0% Provision" },
-            { href: "/pricing",  label: "Preise & Pläne",                    icon: "💳", desc: "Einmalig €87" },
+            { href: "/listings", label: "Kuratierte Auswahl ansehen", icon: "🔍", desc: "Öffentliche Mandate" },
+            { href: "/blog", label: "Ratgeber & Insights", icon: "📰", desc: "Tipps zu Verkauf, Bewertung & Nachfolge" },
+            { href: "/sell", label: "Unternehmen vertraulich einreichen", icon: "📋", desc: "Einmalig €87 · 0% Provision" },
+            { href: "/pricing", label: "Preise & Pläne", icon: "💳", desc: "Einmalig €87" },
           ].map(item => (
             <Link
               key={item.href}
