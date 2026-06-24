@@ -18,11 +18,11 @@ interface BlogPost {
 }
 
 const CATEGORY_LABELS: Record<string, { de: string; en: string; color: string }> = {
-  verkauf:    { de: "Unternehmen verkaufen", en: "Sell a business", color: "#2d5a3d" },
-  kauf:       { de: "Unternehmen kaufen", en: "Buy a business", color: "#1d4ed8" },
-  bewertung:  { de: "Bewertung", en: "Valuation", color: "#7c3aed" },
-  nachfolge:  { de: "Nachfolge", en: "Succession", color: "#d97706" },
-  ratgeber:   { de: "Ratgeber", en: "Guides", color: "#0891b2" },
+  verkauf: { de: "Unternehmen verkaufen", en: "Sell a business", color: "#2d5a3d" },
+  kauf: { de: "Unternehmen kaufen", en: "Buy a business", color: "#1d4ed8" },
+  bewertung: { de: "Bewertung", en: "Valuation", color: "#7c3aed" },
+  nachfolge: { de: "Nachfolge", en: "Succession", color: "#d97706" },
+  ratgeber: { de: "Ratgeber", en: "Guides", color: "#0891b2" },
 };
 
 export default function BlogPage() {
@@ -53,15 +53,15 @@ export default function BlogPage() {
       <div className="bg-[var(--accent)] py-12">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="font-mono text-[11px] text-white/50 uppercase tracking-widest mb-2">
-            {lang === "de" ? "Wissen & Ratgeber" : "Knowledge & Guides"}
+            {lang === "de" ? "Wissen für Unternehmer" : "Knowledge for owners"}
           </div>
           <h1 className="font-sans text-[clamp(26px,4vw,42px)] font-bold text-white tracking-tight">
-            {lang === "de" ? "Firmadeal Ratgeber" : "Firmadeal Guides"}
+            {lang === "de" ? "Firmadeal Blog" : "Firmadeal Blog"}
           </h1>
           <p className="font-sans text-[15px] text-white/70 mt-2 max-w-xl">
             {lang === "de"
               ? "Expertenwissen zu Unternehmenskauf, -verkauf, Bewertung und Nachfolge in Deutschland."
-              : "Expert knowledge on buying, selling, valuation and succession in the Germany."}
+              : "Expert knowledge on buying, selling, valuation and succession in Germany."}
           </p>
         </div>
       </div>
