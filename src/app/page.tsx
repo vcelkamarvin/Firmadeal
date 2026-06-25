@@ -749,7 +749,10 @@ export default function HomePage() {
               },
             ].map((step) => (
               <div key={step.de_t} className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl p-6 text-center">
-                <div className="text-3xl mb-3">{step.icon}</div>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-[var(--accent)] mx-auto mb-3">
+                  <path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6l7-3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                  <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
                 <h3 className="font-sans text-[15px] font-bold text-[var(--ink)] mb-2">
                   {lang === "de" ? step.de_t : step.en_t}
                 </h3>
