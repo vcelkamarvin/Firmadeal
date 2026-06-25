@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   if (!b || !r) return { title: "Seite nicht gefunden | Firmadeal" };
 
   const url = `${SITE}/unternehmenswert/${b.slug}/${r.slug}`;
-  const title = `${b.label} verkaufen in ${r.name}: Wert berechnen | Firmadeal`;
+  const title = `${b.label} verkaufen in ${r.name}: Wert berechnen`;
   const description = `Was ist ein ${b.label} in ${r.name} wert? Kostenlose Sofort-Bewertung nach EBITDA-Multiplikator (${num(b.m[0])}–${num(b.m[1])}×), regional gewichtet. Anonym verkaufen — 0 % Provision, ohne Makler.`;
 
   return {
