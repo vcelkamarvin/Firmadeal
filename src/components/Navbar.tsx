@@ -78,6 +78,8 @@ export default function Navbar() {
             <div className="desktop-only" style={{ display: "flex", gap: 24, alignItems: "center" }}>
               {[
                 { href: "/listings", label: "Auswahl" },
+                { href: "/unternehmenswert", label: "Bewertung" },
+                { href: "/kaeufer", label: "Für Käufer" },
                 { href: "/blog", label: "Blog" },
                 { href: "/pricing", label: "Preise" },
                 { href: "/dashboard", label: "Dashboard" },
@@ -157,6 +159,8 @@ export default function Navbar() {
           {/* Nav items */}
           {[
             { href: "/listings", label: "Kuratierte Auswahl ansehen", icon: "🔍", desc: "Öffentliche Mandate" },
+            { href: "/unternehmenswert", label: "Unternehmenswert berechnen", icon: "📊", desc: "Kostenlose Sofort-Bewertung" },
+            { href: "/kaeufer", label: "Für Käufer", icon: "🤝", desc: "Passende Unternehmen zuerst erhalten" },
             { href: "/blog", label: "Blog", icon: "📰", desc: "Tipps zu Verkauf, Bewertung & Nachfolge" },
             { href: "/sell", label: "Unternehmen vertraulich einreichen", icon: "📋", desc: "Einmalig €87 · 0% Provision" },
             { href: "/pricing", label: "Preise & Pläne", icon: "💳", desc: "Einmalig €87" },

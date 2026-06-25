@@ -29,6 +29,8 @@ export default function Footer() {
             <ul className="space-y-2">
               {[
                 { href: "/listings", de: "Auswahl ansehen", en: "View selection" },
+                { href: "/unternehmenswert", de: "Unternehmenswert berechnen", en: "Value your company" },
+                { href: "/kaeufer", de: "Für Käufer", en: "For buyers" },
                 { href: "/sell", de: "Unternehmen einreichen", en: "Submit business" },
                 { href: "/pricing", de: "Preise", en: "Pricing" },
                 { href: "/blog", de: "Blog", en: "Blog" },
