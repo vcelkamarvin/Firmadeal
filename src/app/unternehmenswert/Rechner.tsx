@@ -22,9 +22,9 @@ const CITIES: { name: string; x: number; y: number }[] = [
 ];
 const GERMANY = "M126,26 C112,38 116,52 102,56 C86,61 74,56 72,72 C70,90 90,96 82,114 C75,130 56,128 60,150 C63,170 86,170 88,190 C90,210 70,216 82,236 C93,254 118,246 128,266 C137,282 154,288 160,272 C166,256 150,246 164,232 C180,216 200,224 198,202 C196,182 178,182 186,162 C193,144 214,144 208,122 C203,104 182,108 186,90 C190,74 208,72 200,56 C193,42 172,50 162,40 C150,30 140,20 126,26 Z";
 
-export default function Rechner() {
-  const [branche, setBranche] = useState("Pflegedienst");
-  const [region, setRegion] = useState("Bayern");
+export default function Rechner({ initialBranche, initialRegion, hideHero = false }: { initialBranche?: string; initialRegion?: string; hideHero?: boolean } = {}) {
+  const [branche, setBranche] = useState(initialBranche && BRANCHEN[initialBranche] ? initialBranche : "Pflegedienst");
+  const [region, setRegion] = useState(initialRegion && REGIONEN[initialRegion] ? initialRegion : "Bayern");
   const [umsatz, setUmsatz] = useState(800000);
   const [ebitda, setEbitda] = useState(160000);
   const [growth, setGrowth] = useState(8);
@@ -77,6 +77,7 @@ export default function Rechner() {
 
   return (
     <div className="uw">
+      {!hideHero && (
       <header className="uw-hero">
         <div className="uw-wrap">
           <div className="uw-eyebrow">UNTERNEHMENSBEWERTUNG · KOSTENLOS · DE · AT · CH</div>
@@ -93,6 +94,7 @@ export default function Rechner() {
           </div>
         </div>
       </header>
+      )}
 
       <section className="uw-wrap uw-grid">
         <div className="uw-card">
