@@ -27,6 +27,24 @@ const CATEGORY_LABELS: Record<string, { de: string; en: string; color: string }>
   ratgeber:  { de: "Ratgeber", en: "Guides", color: "#0891b2" },
 };
 
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9äöüß]/g, "");
+
+// Remove a leading markdown heading if it just repeats the article title
+function stripLeadingTitle(md: string, title: string): string {
+  const lines = md.split("\n");
+  let i = 0;
+  while (i < lines.length && lines[i].trim() === "") i++;
+  if (i < lines.length && /^#{1,3}\s+/.test(lines[i])) {
+    const headingText = lines[i].replace(/^#{1,3}\s+/, "").trim();
+    const a = norm(headingText), b = norm(title);
+    if (a && b && (a === b || a.includes(b) || b.includes(a))) {
+      lines.splice(i, 1);
+      return lines.join("\n");
+    }
+  }
+  return md;
+}
+
 export default function BlogArticleClient() {
   const { slug } = useParams<{ slug: string }>();
   const { lang } = useLanguage();
@@ -47,14 +65,16 @@ export default function BlogArticleClient() {
       .then(async ({ data, error }) => {
         if (error || !data) { router.replace("/blog"); return; }
         setPost(data);
-        // parse markdown client-side
         try {
           const { marked } = await import("marked");
-          setHtml(marked(data.content) as string);
+          const md = stripLeadingTitle(data.content ?? "", data.title ?? "");
+          let h = marked(md) as string;
+          // Only one H1 on the page (the title) — demote any content H1 to H2
+          h = h.replace(/<h1(\s|>)/g, "<h2$1").replace(/<\/h1>/g, "</h2>");
+          setHtml(h);
         } catch {
-          setHtml(`<p>${data.content.replace(/\n/g, "<br/>")}</p>`);
+          setHtml(`<p>${(data.content ?? "").replace(/\n/g, "<br/>")}</p>`);
         }
-        // fetch related
         supabase
           .from("blog_posts")
           .select("id, slug, title, excerpt, category, author, reading_time_minutes, published_at")
@@ -78,7 +98,7 @@ export default function BlogArticleClient() {
       <div className="border-b border-[var(--border)] bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-11 flex items-center gap-2">
           <Link href="/blog" className="flex items-center gap-1.5 font-sans text-[12px] text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
-            <ArrowLeft size={12} /> {lang === "de" ? "Ratgeber" : "Guides"}
+            <ArrowLeft size={12} /> Blog
           </Link>
           <span className="text-[var(--border)]">/</span>
           <span className="font-sans text-[12px] text-[var(--ink)] truncate">{post.title}</span>
@@ -107,31 +127,19 @@ export default function BlogArticleClient() {
               </span>
             </div>
 
-            <h1 className="font-sans text-[clamp(22px,3.5vw,36px)] font-bold text-[var(--ink)] leading-tight tracking-tight mb-4">
+            <h1 className="font-sans text-[clamp(26px,4vw,40px)] font-bold text-[var(--ink)] leading-tight tracking-tight mb-4">
               {post.title}
             </h1>
 
-            <p className="font-sans text-[16px] text-[var(--muted)] leading-relaxed mb-8 border-l-4 pl-4" style={{ borderColor: catInfo?.color ?? "#2d5a3d" }}>
+            <p className="font-sans text-[17px] text-[var(--muted)] leading-relaxed mb-9 border-l-4 pl-4" style={{ borderColor: catInfo?.color ?? "#2d5a3d" }}>
               {post.excerpt}
             </p>
 
-            {/* Article body */}
-            <div
-              className="prose prose-lg max-w-none font-sans text-[var(--ink)]
-                prose-headings:font-sans prose-headings:font-bold prose-headings:text-[var(--ink)] prose-headings:tracking-tight
-                prose-h1:text-[28px] prose-h2:text-[20px] prose-h3:text-[17px]
-                prose-p:text-[15px] prose-p:leading-relaxed prose-p:text-[var(--ink)]
-                prose-li:text-[15px] prose-li:text-[var(--ink)]
-                prose-strong:font-bold prose-strong:text-[var(--ink)]
-                prose-a:text-[var(--accent)] prose-a:no-underline hover:prose-a:underline
-                prose-blockquote:border-l-4 prose-blockquote:border-[var(--accent)] prose-blockquote:pl-4 prose-blockquote:text-[var(--muted)]
-                prose-table:font-sans prose-th:font-semibold prose-th:text-[var(--ink)]
-                prose-code:font-mono prose-code:text-sm prose-code:bg-[var(--surface2)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded"
-              dangerouslySetInnerHTML={{ __html: html }}
-            />
+            {/* Article body — explicit typography, plugin-independent */}
+            <div className="fd-article" dangerouslySetInnerHTML={{ __html: html }} />
 
-            <div className="mt-8 pt-8 border-t border-[var(--border)]">
-              <p className="font-sans text-[12px] text-[var(--muted)]">
+            <div className="mt-10 pt-8 border-t border-[var(--border)]">
+              <p className="font-sans text-[13px] text-[var(--muted)]">
                 {lang === "de" ? "Verfasst von" : "Written by"} <strong className="text-[var(--ink)]">{post.author}</strong>
               </p>
             </div>
@@ -170,7 +178,7 @@ export default function BlogArticleClient() {
                     : "Free quick valuation in 60 seconds."}
                 </p>
                 <Link
-                  href="/#bewertung"
+                  href="/unternehmenswert"
                   className="block w-full text-center py-2 bg-[var(--accent-light)] text-[var(--accent)] font-sans font-semibold text-[13px] rounded-lg hover:bg-[var(--accent)] hover:text-white transition-colors"
                 >
                   {lang === "de" ? "Bewertung starten" : "Start valuation"}
@@ -214,6 +222,30 @@ export default function BlogArticleClient() {
           </aside>
         </div>
       </div>
+
+      <style jsx global>{`
+        .fd-article{color:var(--ink);font-size:16.5px;line-height:1.8}
+        .fd-article > *:first-child{margin-top:0}
+        .fd-article h1,.fd-article h2,.fd-article h3,.fd-article h4{font-family:var(--font-sans,inherit);color:var(--ink);font-weight:700;letter-spacing:-.01em}
+        .fd-article h2{font-size:25px;line-height:1.25;margin:2.6rem 0 .9rem;padding-top:.4rem}
+        .fd-article h3{font-size:19px;line-height:1.3;margin:2rem 0 .6rem}
+        .fd-article h4{font-size:16.5px;margin:1.6rem 0 .5rem}
+        .fd-article p{margin:0 0 1.2rem}
+        .fd-article ul,.fd-article ol{margin:0 0 1.35rem;padding-left:1.4rem}
+        .fd-article li{margin:.45rem 0;line-height:1.75}
+        .fd-article li::marker{color:var(--accent)}
+        .fd-article a{color:var(--accent);text-decoration:underline;text-underline-offset:2px;font-weight:500}
+        .fd-article a:hover{opacity:.8}
+        .fd-article strong{font-weight:700;color:var(--ink)}
+        .fd-article blockquote{border-left:4px solid var(--accent);margin:1.6rem 0;padding:.3rem 0 .3rem 1.1rem;color:var(--muted);font-style:italic}
+        .fd-article hr{border:0;border-top:1px solid var(--border);margin:2.4rem 0}
+        .fd-article table{width:100%;border-collapse:collapse;margin:1.6rem 0;font-size:15px}
+        .fd-article th,.fd-article td{border:1px solid var(--border);padding:.6rem .85rem;text-align:left;vertical-align:top}
+        .fd-article th{background:var(--surface2);font-weight:600}
+        .fd-article code{font-family:var(--font-mono,monospace);background:var(--surface2);padding:.12rem .38rem;border-radius:4px;font-size:.9em}
+        .fd-article h2+p,.fd-article h3+p,.fd-article h2+ul,.fd-article h3+ul{margin-top:0}
+        .fd-article img{max-width:100%;height:auto;border-radius:10px;margin:1.6rem 0}
+      `}</style>
     </div>
   );
 }
