@@ -8,7 +8,7 @@ export const revalidate = 300;
 const SITE = "https://www.firmadeal.de";
 
 export const metadata: Metadata = {
-  title: "Aktuelle Kaufgesuche — wer sucht ein Unternehmen? | Firmadeal",
+  title: "Aktuelle Kaufgesuche — wer sucht ein Unternehmen?",
   description:
     "Private Equity, Family Offices und Search Funds suchen über Firmadeal aktiv nach Unternehmen in Deutschland. Sehen Sie aktuelle Kaufgesuche nach Branche, Region und Budget — und reichen Sie Ihr Unternehmen anonym ein.",
   alternates: { canonical: `${SITE}/kaufgesuche` },
