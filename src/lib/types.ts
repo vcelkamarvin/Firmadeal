@@ -41,6 +41,7 @@ export interface Listing {
   stripe_subscription_id?: string | null;
   stripe_customer_id?: string | null;
   featured: boolean;
+  is_example?: boolean | null;
   views_count: number;
   inquiries_count: number;
   images: string[];
