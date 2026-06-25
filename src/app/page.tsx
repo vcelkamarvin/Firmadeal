@@ -581,15 +581,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── MARQUEE ──────────────────────────────────────────────────────────── */}
-      <div className="bg-[var(--surface2)] overflow-hidden py-2.5 border-b border-[var(--border)]">
-        <div className="animate-marquee">
-          {["0% Provision", "Anonym", "€87 einmalig", "DSGVO-konform", "0% Provision", "Anonym", "€87 einmalig", "DSGVO-konform"].map((item, i) => (
-            <span key={i} className="flex items-center gap-5 px-5 font-mono text-[11px] text-[var(--muted)] whitespace-nowrap">
-              {item}
-              <span className="w-1 h-1 rounded-full bg-[var(--border)]" />
+      {/* ── TRUST BAR ── */}
+      <div className="bg-white border-b border-[var(--border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-7 sm:gap-x-9 gap-y-3.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
+              {lang === "de" ? "Sicher & vertraulich" : "Secure & confidential"}
             </span>
-          ))}
+            {[
+              { label: "DSGVO-konform", icon: <path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6l7-3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /> },
+              { label: "SSL-verschlüsselt", icon: <><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.6" /><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" strokeWidth="1.6" /></> },
+              { label: lang === "de" ? "Sichere Zahlung · Stripe" : "Secure payment · Stripe", icon: <><rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6" /><path d="M3 10h18" stroke="currentColor" strokeWidth="1.6" /></> },
+              { label: "DE · AT · CH", icon: <><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" /><path d="M3 12h18M12 3c2.6 2.5 2.6 15.5 0 18M12 3c-2.6 2.5-2.6 15.5 0 18" stroke="currentColor" strokeWidth="1.6" /></> },
+              { label: "0 % Provision", icon: <path d="M5 12l4.5 4.5L19 7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /> },
+            ].map((b) => (
+              <span key={b.label} className="flex items-center gap-2 font-sans text-[13px] font-medium text-[var(--ink)] whitespace-nowrap">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" className="text-[var(--accent)]">{b.icon}</svg>
+                {b.label}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
