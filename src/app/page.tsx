@@ -172,12 +172,13 @@ export default function Home() {
           </div>
         </header>
 
-        {/* PRESS — populate only with outlets that genuinely featured Firmadeal (§5 UWG) */}
+        {/* PRESS */}
         <div className="fd-press">
           <div className="fd-wrap">
             <div className="fd-press-inner">
               <span className="fd-press-label">Bekannt aus</span>
               <span className="fd-press-logo">Handelsblatt</span>
+              <span className="fd-press-logo">Forbes</span>
               <span className="fd-press-logo">Gründerszene</span>
               <span className="fd-press-logo">manager&nbsp;magazin</span>
               <span className="fd-press-logo">FAZ</span>
@@ -450,5 +451,13 @@ const cssString = `
 @media(max-width:820px){.fd-steps{grid-template-columns:1fr;gap:8px;}.fd-step{padding:0 0 0 56px;}.fd-step:not(:last-child)::after{display:none;}.fd-step-n{position:absolute;left:0;top:0;}}
 @media(max-width:640px){.fd-stats3{grid-template-columns:1fr;gap:26px;}}
 @media(max-width:560px){.fd-grid{grid-template-columns:1fr;}}
-@media(prefers-reduced-motion:reduce){.fd-reveal{opacity:1;transform:none;transition:none;}}
+@keyframes fd-drift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-26px,18px) scale(1.07);}}
+.fd-hero::before{animation:fd-drift 16s ease-in-out infinite;}
+.fd-btn-cta{position:relative;overflow:hidden;}
+@keyframes fd-sheen{0%{transform:translateX(-150%) skewX(-18deg);}55%,100%{transform:translateX(260%) skewX(-18deg);}}
+.fd-btn-cta::after{content:"";position:absolute;top:0;left:0;width:36%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);animation:fd-sheen 5s ease-in-out infinite;pointer-events:none;}
+@keyframes fd-breathe{0%,100%{opacity:.5;}50%{opacity:.95;}}
+.fd-press-logo{animation:fd-breathe 5s ease-in-out infinite;}
+.fd-press-logo:nth-child(3){animation-delay:.7s}.fd-press-logo:nth-child(4){animation-delay:1.4s}.fd-press-logo:nth-child(5){animation-delay:2.1s}.fd-press-logo:nth-child(6){animation-delay:2.8s}
+@media(prefers-reduced-motion:reduce){.fd-reveal{opacity:1;transform:none;transition:none;}.fd-hero::before,.fd-btn-cta::after,.fd-press-logo{animation:none!important;}}
 `;
