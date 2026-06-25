@@ -1,0 +1,76 @@
+/* ============================================================================
+   Firmadeal — UI refresh layer (loaded AFTER globals.css; additive only).
+   Goal: warmer, more premium, more consistent look across every page,
+   with bolder CTAs and tighter rhythm. Safe overrides + opt-in primitives.
+   ============================================================================ */
+
+:root {
+  /* Warm the cold gray base into the premium cream used on the value/buyer pages,
+     so the whole site reads as one cohesive system. */
+  --bg: #f3efe7;
+  --surface: #ffffff;
+  --surface2: #efe9dd;
+  --border: #e4ddcf;          /* warm hairline instead of cold #e5e5e5 */
+  --muted: #6b7d72;           /* warmer, higher-contrast muted text */
+  --accent: #1a3329;
+  --accent-hover: #11241a;
+  --accent-light: #eaf4ee;
+
+  /* Elevation tokens */
+  --shadow-xs: 0 1px 2px rgba(20,40,30,.05);
+  --shadow-sm: 0 1px 2px rgba(20,40,30,.04), 0 4px 12px rgba(20,40,30,.05);
+  --shadow-md: 0 6px 18px rgba(20,40,30,.07), 0 14px 40px rgba(20,40,30,.06);
+}
+
+body { background: var(--bg); color: var(--ink); }
+
+/* Crisper display headings */
+h1 { letter-spacing: -.035em; }
+h2 { letter-spacing: -.025em; }
+
+/* Refined focus + selection */
+::selection { background: #cfe7d8; color: #11241a; }
+:focus-visible { outline: 2px solid #2d5a3d; outline-offset: 2px; border-radius: 8px; }
+
+/* Slightly softer, warmer scrollbar */
+::-webkit-scrollbar-thumb { background: #d8d0c0; }
+
+/* ── Reusable premium primitives (opt-in via className) ───────────────────── */
+.fd-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.fd-card-hover { transition: box-shadow .18s ease, transform .18s ease; }
+.fd-card-hover:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+.fd-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 50px; padding: 0 24px; border-radius: 12px;
+  font-weight: 700; font-size: 15px; line-height: 1; white-space: nowrap;
+  background: var(--accent); color: #fff; text-decoration: none; border: none; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(26,51,41,.22);
+  transition: transform .12s ease, box-shadow .12s ease, background .15s ease;
+}
+.fd-btn:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 10px 26px rgba(26,51,41,.30); }
+.fd-btn:active { transform: translateY(0); }
+.fd-btn-ghost { background: #fff; color: #15281e; border: 1.5px solid var(--accent); box-shadow: var(--shadow-xs); }
+.fd-btn-ghost:hover { background: var(--accent); color: #fff; }
+
+/* ── Navbar CTA lift (used by Navbar "Unternehmen einreichen") ────────────── */
+.fd-nav-cta { box-shadow: 0 4px 14px rgba(26,51,41,.22); transition: transform .12s ease, box-shadow .12s ease, background .15s ease !important; }
+.fd-nav-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(26,51,41,.30); background: #11241a !important; }
+
+/* ── Consistency nudges for common existing patterns ──────────────────────── */
+/* Many components render white cards with bg-white + a 1px border + rounded-xl.
+   Give those a hair of depth so the whole site feels less flat — scoped tightly
+   to avoid hitting layout wrappers. */
+main .bg-white.rounded-xl,
+main .bg-white.rounded-2xl,
+main .bg-white.rounded-lg {
+  box-shadow: var(--shadow-sm);
+}
+
+/* Inputs/selects: warmer, calmer */
+input, select, textarea { border-color: var(--border); }
