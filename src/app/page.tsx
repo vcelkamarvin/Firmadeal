@@ -7,7 +7,6 @@ import Link from "next/link";
    Firmadeal — Homepage (redesign)
    Self-contained client component. Navbar/Footer/SEO metadata come from
    layout.tsx and are intentionally NOT rendered here.
-   Swap /hero-owner.jpg with your own brand photo (place it in /public).
    ────────────────────────────────────────────────────────────────────────── */
 
 const SECTORS: { label: string; m: number }[] = [
@@ -125,23 +124,13 @@ export default function Home() {
             </div>
 
             <div className="fd-hero-visual fd-reveal">
-              <div className="fd-poster">
-                {/* Replace /hero-owner.jpg with a real brand photo placed in /public */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/hero-owner.jpg" alt="Unternehmer:in im eigenen Betrieb" />
-                <span className="fd-poster-chip"><ShieldIcon /> Geprüfte Käufer im Netzwerk</span>
-                <div className="fd-poster-quote">
-                  <p>„Drei ernsthafte Anfragen in zwei Wochen — und mein Firmenname blieb anonym.“</p>
-                  <div className="fd-who">Inhaberin, Maschinenbau · Bayern</div>
-                </div>
-              </div>
-
-              {/* Working valuation calculator */}
+              {/* Working valuation calculator — hero centerpiece */}
               <div className="fd-calc" id="bewertung">
                 <div className="fd-calc-h">
                   <span className="fd-calc-t">Kostenlose Bewertung</span>
                   <span className="fd-calc-free">60 Sek. · ohne Anmeldung</span>
                 </div>
+                <h3 className="fd-calc-title">Was ist Ihr Unternehmen wert?</h3>
                 <div className="fd-field">
                   <label htmlFor="fd-branche">Branche</label>
                   <select
@@ -178,6 +167,7 @@ export default function Home() {
                 </Link>
                 <div className="fd-disc">Indikative Schätzung · keine Finanzberatung · Marktdaten 2025</div>
               </div>
+              <div className="fd-hero-proof"><ShieldIcon /> Geprüfte Käufer im Netzwerk · diskret &amp; anonym bis zum Abschluss</div>
             </div>
           </div>
         </header>
@@ -372,16 +362,11 @@ const cssString = `
 .fd-pills{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px;}
 .fd-pill{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--fd-border);border-radius:100px;padding:8px 14px;font-size:13px;font-weight:500;color:var(--fd-n700);}
 .fd-pill svg{width:15px;height:15px;color:var(--fd-cta);}
-.fd-hero-visual{position:relative;}
-.fd-poster{position:relative;border-radius:var(--fd-r-xl);overflow:hidden;aspect-ratio:4/5;background:linear-gradient(150deg,#23402f,#1a3329 60%,#0d1f17);box-shadow:0 30px 60px -28px rgba(13,31,23,.5);}
-.fd-poster img{width:100%;height:100%;object-fit:cover;display:block;}
-.fd-poster::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,31,23,.05) 0%,rgba(13,31,23,.2) 45%,rgba(13,31,23,.8) 100%);}
-.fd-poster-chip{position:absolute;top:16px;left:16px;z-index:3;display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.92);border-radius:100px;padding:7px 13px;font-size:12px;font-weight:600;color:var(--fd-accent);}
-.fd-poster-chip svg{width:14px;height:14px;color:var(--fd-cta);}
-.fd-poster-quote{position:absolute;left:22px;right:22px;bottom:22px;z-index:3;color:#fff;}
-.fd-poster-quote p{font-size:15px;font-weight:500;line-height:1.45;margin:0;}
-.fd-who{margin-top:8px;font-size:12px;color:rgba(255,255,255,.72);}
-.fd-calc{position:relative;margin-top:-66px;margin-left:auto;width:90%;background:#fff;border:1px solid var(--fd-border);border-radius:var(--fd-r-lg);box-shadow:0 24px 50px -22px rgba(13,31,23,.4);padding:20px 20px 22px;z-index:5;}
+.fd-hero-visual{position:relative;display:flex;flex-direction:column;}
+.fd-calc{position:relative;width:100%;max-width:450px;margin:0 auto;background:#fff;border:1px solid var(--fd-border);border-radius:var(--fd-r-lg);box-shadow:0 24px 50px -22px rgba(13,31,23,.4);padding:24px;z-index:5;}
+.fd-calc-title{font-size:20px;margin:2px 0 16px;color:var(--fd-accent);}
+.fd-hero-proof{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px auto 0;font-size:13px;color:var(--fd-n600);max-width:450px;text-align:center;}
+.fd-hero-proof svg{width:15px;height:15px;color:var(--fd-cta);flex-shrink:0;}
 .fd-calc-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
 .fd-calc-t{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--fd-cta);}
 .fd-calc-free{font-size:11px;font-weight:600;color:var(--fd-muted);}
@@ -460,7 +445,7 @@ const cssString = `
 .fd-final-p{color:rgba(255,255,255,.74);margin:13px 0 28px;font-size:16px;}
 .fd-reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s cubic-bezier(.16,1,.3,1);}
 .fd-reveal.fd-in{opacity:1;transform:none;}
-@media(max-width:940px){.fd-hero-grid{grid-template-columns:1fr;gap:38px;padding:36px 0 52px;}.fd-calc{margin-top:18px;width:100%;}}
+@media(max-width:940px){.fd-hero-grid{grid-template-columns:1fr;gap:38px;padding:36px 0 52px;}.fd-calc{margin-top:8px;}}
 @media(max-width:880px){.fd-grid{grid-template-columns:repeat(2,1fr);}.fd-t-grid{grid-template-columns:1fr;}}
 @media(max-width:820px){.fd-steps{grid-template-columns:1fr;gap:8px;}.fd-step{padding:0 0 0 56px;}.fd-step:not(:last-child)::after{display:none;}.fd-step-n{position:absolute;left:0;top:0;}}
 @media(max-width:640px){.fd-stats3{grid-template-columns:1fr;gap:26px;}}
