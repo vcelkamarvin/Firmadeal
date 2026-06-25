@@ -541,23 +541,23 @@ export default function HomePage() {
                   : "We bring your business confidentially to vetted investors. Most mandates run off-market — we show a curated selection publicly. No broker, 0% commission."}
               </p>
 
-              {/* Trust badges — 3 clean ones */}
-              <div className="flex flex-wrap gap-2 mb-8">
+              {/* Trust badges — clean, consistent, no emoji */}
+              <div className="flex flex-wrap gap-2.5 mb-8">
                 {[
-                  { stat: "0%",  label: lang === "de" ? "Provision"                    : "Commission"              },
-                  { stat: "🔒",  label: lang === "de" ? "Anonym bis zum Abschluss"     : "Anonymous to close"       },
-                  { stat: "✓",   label: lang === "de" ? "Privates Investoren-Netzwerk" : "Private investor network" },
-                ].map((b) => (
-                  <div key={b.stat} style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: "100px", padding: "8px 16px" }}>
-                    <span className="font-sans font-bold text-white text-[13px]">{b.stat}</span>
-                    <span className="font-sans text-white/65 text-[12px]">{b.label}</span>
+                  lang === "de" ? "0 % Provision" : "0% commission",
+                  lang === "de" ? "Anonym bis zum Abschluss" : "Anonymous until closing",
+                  lang === "de" ? "Privates Investoren-Netzwerk" : "Private investor network",
+                ].map((label) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: "100px", padding: "8px 16px" }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6dbf87", flexShrink: 0 }} />
+                    <span className="font-sans text-white/80 text-[13px] font-medium">{label}</span>
                   </div>
                 ))}
               </div>
 
               {/* CTAs */}
               <div className="hero-cta-row flex flex-wrap gap-4 items-center mb-8">
-                <Link href="/sell" className="hero-cta-primary font-sans font-bold text-white rounded-lg hover:opacity-90 transition-opacity" style={{ background: "#2d5a3d", padding: "14px 28px", fontSize: "16px", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                <Link href="/sell" className="hero-cta-primary font-sans font-bold rounded-xl hover:opacity-90 transition-opacity" style={{ background: "#f3ece0", color: "#15281e", padding: "15px 30px", fontSize: "16px", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px", boxShadow: "0 12px 30px rgba(0,0,0,0.30)" }}>
                   {lang === "de" ? "Unternehmen vertraulich einreichen →" : "Submit confidentially →"}
                 </Link>
                 <Link href="/listings" className="hero-cta-secondary font-sans font-semibold text-white/80 hover:text-white transition-colors" style={{ fontSize: "16px" }}>
@@ -565,17 +565,12 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              {/* Trust line */}
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mb-8">
-                {(lang === "de"
-                  ? ["✓ Einmalig €87", "✓ 0% Provision", "✓ Anonym bis zum Abschluss"]
-                  : ["✓ One-time €87", "✓ 0% commission", "✓ Anonymous until closing"]
-                ).map((item) => (
-                  <span key={item} className="font-sans text-[13px]" style={{ color: "rgba(255,255,255,0.65)" }}>
-                    {item}
-                  </span>
-                ))}
-              </div>
+              {/* Subtle reassurance — single clean line */}
+              <p className="font-sans text-[13px] mb-8" style={{ color: "rgba(255,255,255,0.6)" }}>
+                {lang === "de"
+                  ? "Einmalig €87 zum Inserieren · keine Erfolgsprovision · jederzeit kündbar"
+                  : "One-time €87 to list · no success fee · cancel anytime"}
+              </p>
             </div>
 
             {/* Right: hero calculator */}
