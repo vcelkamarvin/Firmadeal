@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Tag, Calendar } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useLanguage } from "@/context/LanguageContext";
+import { BRANCHEN as PSEO_BRANCHEN, REGIONEN as PSEO_REGIONEN } from "../../unternehmenswert/pseoData";
 
 interface BlogPost {
   id: string;
@@ -92,6 +93,26 @@ export default function BlogArticleClient() {
 
   const catInfo = CATEGORY_LABELS[post.category];
 
+  // ── Auto contextual internal links (applies to every post, no per-post work) ──
+  // Detect the Branche + Region this post is about and deep-link to the matching
+  // programmatic valuation page; otherwise fall back to the hub.
+  const hay = norm(`${post.title} ${post.slug} ${post.excerpt ?? ""}`);
+  const mBranche = PSEO_BRANCHEN.find((b) => hay.includes(norm(b.label)) || hay.includes(b.slug.replace(/-/g, "")));
+  const mRegion = PSEO_REGIONEN.find((r) => hay.includes(norm(r.name)) || hay.includes(r.slug.replace(/-/g, "")));
+  const valHref = mBranche && mRegion ? `/unternehmenswert/${mBranche.slug}/${mRegion.slug}` : "/unternehmenswert";
+  const valLabel = mBranche && mRegion
+    ? (lang === "de"
+        ? `Was ist ein ${mBranche.label} in ${mRegion.name} wert? – Sofort-Bewertung`
+        : `What is a ${mBranche.label} in ${mRegion.name} worth? – Instant valuation`)
+    : (lang === "de" ? "Unternehmenswert berechnen – kostenlose Sofort-Bewertung" : "Calculate your company value – free instant valuation");
+
+  const relatedLinks: { href: string; label: string }[] = [
+    { href: valHref, label: valLabel },
+    ...(mBranche && mRegion ? [{ href: "/unternehmenswert", label: lang === "de" ? "Unternehmenswert-Rechner (alle Branchen & Regionen)" : "Valuation calculator (all sectors & regions)" }] : []),
+    { href: "/kaufgesuche", label: lang === "de" ? "Aktuelle Kaufgesuche – wer sucht gerade ein Unternehmen?" : "Current buyer requests – who is looking right now?" },
+    { href: "/listings", label: lang === "de" ? "Unternehmen zum Verkauf ansehen" : "Browse businesses for sale" },
+  ];
+
   return (
     <div className="bg-[var(--bg)] min-h-screen">
       {/* Breadcrumb */}
@@ -138,7 +159,43 @@ export default function BlogArticleClient() {
             {/* Article body — explicit typography, plugin-independent */}
             <div className="fd-article" dangerouslySetInnerHTML={{ __html: html }} />
 
-            <div className="mt-10 pt-8 border-t border-[var(--border)]">
+            {/* ── AUTO: contextual internal links ── */}
+            <div className="mt-10 rounded-xl border border-[var(--border)] bg-white p-5">
+              <div className="font-sans text-[11px] font-bold uppercase tracking-widest text-[var(--muted)] mb-3">
+                {lang === "de" ? "Mehr zum Thema" : "Related"}
+              </div>
+              <ul className="space-y-2.5">
+                {relatedLinks.map((l) => (
+                  <li key={l.href + l.label}>
+                    <Link href={l.href} className="font-sans text-[14px] text-[var(--accent)] font-semibold hover:underline">
+                      → {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* ── AUTO: end-of-article CTA ── */}
+            <div className="mt-6 rounded-2xl p-6 sm:p-7 text-white" style={{ background: "#1a3329" }}>
+              <div className="font-sans text-[19px] font-bold leading-snug mb-1.5">
+                {lang === "de" ? "Bereit, den Wert in einen Verkauf zu verwandeln?" : "Ready to turn that value into a sale?"}
+              </div>
+              <p className="font-sans text-[14px] leading-relaxed mb-4" style={{ color: "#9ec7b1" }}>
+                {lang === "de"
+                  ? "Kostenlose Bewertung in 60 Sekunden — danach anonym einreichen. 0 % Provision, einmalig €87."
+                  : "Free valuation in 60 seconds — then submit anonymously. 0% commission, one-time €87."}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link href={valHref} className="font-sans font-bold text-[14px] px-5 py-3 rounded-xl" style={{ background: "#f3ece0", color: "#15281e" }}>
+                  {lang === "de" ? "Unternehmenswert berechnen" : "Calculate company value"}
+                </Link>
+                <Link href="/sell" className="font-sans font-bold text-[14px] px-5 py-3 rounded-xl border" style={{ borderColor: "#3f6e54", color: "#fff" }}>
+                  {lang === "de" ? "Unternehmen vertraulich einreichen →" : "Submit your business confidentially →"}
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-8 pt-8 border-t border-[var(--border)]">
               <p className="font-sans text-[13px] text-[var(--muted)]">
                 {lang === "de" ? "Verfasst von" : "Written by"} <strong className="text-[var(--ink)]">{post.author}</strong>
               </p>
@@ -178,7 +235,7 @@ export default function BlogArticleClient() {
                     : "Free quick valuation in 60 seconds."}
                 </p>
                 <Link
-                  href="/unternehmenswert"
+                  href={valHref}
                   className="block w-full text-center py-2 bg-[var(--accent-light)] text-[var(--accent)] font-sans font-semibold text-[13px] rounded-lg hover:bg-[var(--accent)] hover:text-white transition-colors"
                 >
                   {lang === "de" ? "Bewertung starten" : "Start valuation"}
