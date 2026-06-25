@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
+import { BRANCHEN, REGIONEN } from "./unternehmenswert/pseoData";
 
 const BASE = "https://www.firmadeal.de";
 
@@ -29,6 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/listings`, lastModified: new Date(), changeFrequency: "hourly",  priority: 0.9 },
     { url: `${BASE}/unternehmenswert`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.9 },
     { url: `${BASE}/kaeufer`,  lastModified: new Date(), changeFrequency: "weekly",  priority: 0.8 },
+    { url: `${BASE}/kaufgesuche`, lastModified: new Date(), changeFrequency: "daily", priority: 0.8 },
     { url: `${BASE}/sell`,     lastModified: new Date(), changeFrequency: "weekly",  priority: 0.8 },
     { url: `${BASE}/pricing`,  lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/blog`,     lastModified: new Date(), changeFrequency: "weekly",  priority: 0.7 },
@@ -51,5 +53,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority:        0.6,
   }));
 
-  return [...staticRoutes, ...listingRoutes, ...blogRoutes];
+  const pseoRoutes: MetadataRoute.Sitemap = [];
+  for (const b of BRANCHEN) {
+    for (const r of REGIONEN) {
+      pseoRoutes.push({
+        url:             `${BASE}/unternehmenswert/${b.slug}/${r.slug}`,
+        lastModified:    new Date(),
+        changeFrequency: "monthly",
+        priority:        0.7,
+      });
+    }
+  }
+
+  return [...staticRoutes, ...pseoRoutes, ...listingRoutes, ...blogRoutes];
 }
