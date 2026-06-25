@@ -36,10 +36,12 @@ export default function Navbar() {
       <nav style={{
         position: "fixed",
         top: 0, left: 0, right: 0,
-        height: 60,
-        background: "white",
-        borderBottom: scrolled ? "1px solid #e5e5e5" : "1px solid transparent",
-        boxShadow: scrolled ? "0 2px 12px rgba(0,0,0,0.06)" : "none",
+        height: 62,
+        background: "rgba(255,255,255,0.86)",
+        backdropFilter: "saturate(180%) blur(12px)",
+        WebkitBackdropFilter: "saturate(180%) blur(12px)",
+        borderBottom: scrolled ? "1px solid #e4ddcf" : "1px solid transparent",
+        boxShadow: scrolled ? "0 4px 18px rgba(20,40,30,0.06)" : "none",
         zIndex: 200,
         display: "flex",
         alignItems: "center",
@@ -92,11 +94,11 @@ export default function Navbar() {
                     href={href}
                     style={{
                       fontSize: 14,
-                      color: active ? "#1a3329" : "#666",
+                      color: active ? "#11241a" : "#5a6b61",
                       textDecoration: "none",
-                      fontWeight: active ? 600 : 400,
+                      fontWeight: active ? 700 : 500,
                       borderBottom: active ? "2px solid #1a3329" : "2px solid transparent",
-                      paddingBottom: 2,
+                      paddingBottom: 3,
                       transition: "color 0.15s, border-color 0.15s",
                     }}
                   >
@@ -107,13 +109,14 @@ export default function Navbar() {
             </div>
 
             {/* Inserieren CTA */}
-            <Link href="/sell" style={{
+            <Link href="/sell" className="fd-nav-cta" style={{
               background: "#1a3329", color: "white",
-              padding: "0 16px", height: 38, borderRadius: 8,
-              fontSize: 14, fontWeight: 600, textDecoration: "none",
-              display: "flex", alignItems: "center", whiteSpace: "nowrap", flexShrink: 0,
+              padding: "0 18px", height: 40, borderRadius: 10,
+              fontSize: 14, fontWeight: 700, textDecoration: "none",
+              display: "flex", alignItems: "center", gap: 7, whiteSpace: "nowrap", flexShrink: 0,
             }}>
               Unternehmen einreichen
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M5.5 2l5 5-5 5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </Link>
 
             {/* Hamburger — mobile only */}
@@ -267,7 +270,7 @@ export default function Navbar() {
       )}
 
       {/* Spacer so content sits below fixed navbar */}
-      <div style={{ height: 60 }} />
+      <div style={{ height: 62 }} />
     </>
   );
 }
