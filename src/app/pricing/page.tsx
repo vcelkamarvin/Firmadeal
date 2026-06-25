@@ -1,51 +1,42 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { Check, ChevronDown } from "lucide-react";
 
-const BUYERS = [
-  { icon: "🏢", label: "Private Equity & Family Offices" },
-  { icon: "👤", label: "Unternehmer & MBI-Kandidaten"    },
-  { icon: "🔍", label: "Search Funds & ETA"              },
-  { icon: "🤝", label: "Strategische Käufer"             },
+/* Firmadeal — Pricing (redesign). Navbar/Footer/SEO from layout.tsx.
+   Newsletter API call and /sell CTA preserved exactly. */
+
+const BUYERS: { label: string; sub: string }[] = [
+  { label: "Private Equity & Family Offices", sub: "Kapitalstarke Investoren" },
+  { label: "Unternehmer & MBI-Kandidaten", sub: "Operative Nachfolger" },
+  { label: "Search Funds & ETA", sub: "Suchende Übernehmer" },
+  { label: "Strategische Käufer", sub: "Add-on & Buy-and-build" },
 ];
 
-const FEATURES = [
+const FEATURES: string[] = [
   "Aufnahme in unser privates Investoren-Netzwerk",
   "Gezielte Ansprache passender Käufer (PE, Family Offices, Search Funds, Strategen)",
   "Optional: kuratierte öffentliche Listung für mehr Reichweite",
   "Anonymes Profil — Ihre Daten bleiben geschützt",
   "Automatische Unternehmensbewertung",
-  "0% Provision auf den Verkaufspreis",
+  "0 % Provision auf den Verkaufspreis",
 ];
 
-const FAQ = [
-  {
-    q: "Wie funktioniert das Käufer-Matching genau?",
-    a: "Unser Team analysiert Branche, Standort und Unternehmensgröße und spricht passende Käufer aus unserem privaten Netzwerk direkt an.",
-  },
-  {
-    q: "Bleibt mein Inserat vollständig anonym?",
-    a: "Ja. Ihr Name, Ihre Kontaktdaten und alle Unternehmensinformationen bleiben bis zu Ihrer ausdrücklichen Freigabe vollständig geschützt.",
-  },
-  {
-    q: "Gibt es ein Abo oder versteckte Kosten?",
-    a: "Nein. Sie zahlen einmalig €87 — kein Abo, keine Verlängerung, keine Provision auf den Verkaufspreis.",
-  },
-  {
-    q: "Warum sehe ich nur wenige öffentliche Inserate?",
-    a: "Die meisten Mandate sind vertraulich und werden nicht öffentlich gezeigt — das schützt Verkäufer und Mitarbeiter. Öffentlich erscheint nur eine kuratierte Auswahl.",
-  },
+const FAQ: { q: string; a: string }[] = [
+  { q: "Wie funktioniert das Käufer-Matching genau?", a: "Unser Team analysiert Branche, Standort und Unternehmensgröße und spricht passende Käufer aus unserem privaten Netzwerk direkt an." },
+  { q: "Bleibt mein Inserat vollständig anonym?", a: "Ja. Ihr Name, Ihre Kontaktdaten und alle Unternehmensinformationen bleiben bis zu Ihrer ausdrücklichen Freigabe vollständig geschützt." },
+  { q: "Gibt es ein Abo oder versteckte Kosten?", a: "Nein. Sie zahlen einmalig 87 € — kein Abo, keine Verlängerung, keine Provision auf den Verkaufspreis." },
+  { q: "Warum sehe ich nur wenige öffentliche Inserate?", a: "Die meisten Mandate sind vertraulich und werden nicht öffentlich gezeigt — das schützt Verkäufer und Mitarbeiter. Öffentlich erscheint nur eine kuratierte Auswahl." },
 ];
+
+function CheckIcon() {
+  return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>);
+}
 
 export default function PricingPage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [email, setEmail] = useState("");
-  const [newsletterState, setNewsletter] = useState<"idle"|"loading"|"success"|"duplicate"|"error">("idle");
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => { const t = setTimeout(() => setVisible(true), 60); return () => clearTimeout(t); }, []);
+  const [newsletterState, setNewsletter] = useState<"idle" | "loading" | "success" | "duplicate" | "error">("idle");
 
   const handleNewsletter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,195 +48,182 @@ export default function PricingPage() {
         body: JSON.stringify({ email }),
       });
       if (res.status === 409) { setNewsletter("duplicate"); return; }
-      if (!res.ok)            { setNewsletter("error");     return; }
+      if (!res.ok) { setNewsletter("error"); return; }
       setNewsletter("success");
       setEmail("");
     } catch { setNewsletter("error"); }
   };
 
-  const show = (delay: number) => ({
-    opacity: visible ? 1 : 0,
-    transform: visible ? "translateY(0)" : "translateY(14px)",
-    transition: `opacity 0.6s ease ${delay}ms, transform 0.6s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
-  });
-
   return (
-    <div className="bg-[var(--bg)] min-h-screen">
+    <>
+      <style>{cssString}</style>
+      <div className="fp">
 
-      {/* Header */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-5 text-center">
-        <h1 className="font-sans text-[clamp(20px,3.5vw,36px)] font-bold text-[var(--ink)] tracking-tight mb-2 leading-[1.1]">
-          Vertrauliche Einreichung — einmalig €87
-        </h1>
-        <p className="font-sans text-[13px] text-[var(--muted)] mb-4">
-          0% Provision · Kein Abo · Anonym
-        </p>
-        <div className="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 bg-white border border-[var(--border)] rounded-full px-5 py-2 shadow-sm text-[13px] font-sans font-semibold text-[var(--ink)]">
-          <span>0% Provision</span>
-          <span className="text-[var(--border)] hidden sm:block">·</span>
-          <span>Kein Abo</span>
-          <span className="text-[var(--border)] hidden sm:block">·</span>
-          <span>Anonym bis zum Abschluss</span>
-        </div>
-      </section>
-
-      {/* Pricing + Sidebar */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-14">
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-5 items-start max-w-5xl mx-auto">
-
-          {/* Pricing Card */}
-          <div
-            className="animate-border-glow relative bg-white rounded-2xl flex flex-col p-8"
-            style={{ border: "2.5px solid #1A5C3A", ...show(0) }}
-          >
-            <h3 className="font-sans text-[11px] font-bold text-[var(--muted)] uppercase tracking-widest mb-4">
-              Vertrauliche Einreichung
-            </h3>
-
-            <div className="flex items-baseline gap-1 mb-1">
-              <span className="font-sans text-[64px] font-bold text-[var(--ink)] tracking-tight leading-none tabular-nums">
-                €87
-              </span>
-              <span className="font-sans text-[15px] text-[var(--muted)]">einmalig</span>
+        {/* HEADER */}
+        <section className="fp-hero">
+          <div className="fp-wrap" style={{ textAlign: "center" }}>
+            <span className="fp-eyebrow">Preise · Transparent</span>
+            <h1 className="fp-h1">Vertrauliche Einreichung — <em>einmalig 87 €</em></h1>
+            <p className="fp-sub">Eine Einmalzahlung. 0 % Provision auf den Verkaufspreis, kein Abo, anonym bis zum Abschluss.</p>
+            <div className="fp-pills">
+              <span className="fp-pill"><CheckIcon /> 0 % Provision</span>
+              <span className="fp-pill"><CheckIcon /> Kein Abo</span>
+              <span className="fp-pill"><CheckIcon /> Anonym bis zum Abschluss</span>
             </div>
-            <p className="font-sans text-[12px] text-[var(--muted)] mb-6">
-              Einmalzahlung · Kein Abo · Keine versteckten Kosten
-            </p>
+          </div>
+        </section>
 
-            <div className="flex flex-wrap gap-1.5 mb-6">
-              {["Gezielte Ansprache passender Käufer", "Privates Netzwerk", "0% Provision"].map((p) => (
-                <span
-                  key={p}
-                  className="font-sans text-[11px] font-bold px-3 py-1.5 rounded-full text-white"
-                  style={{ background: "#1A5C3A" }}
-                >
-                  {p}
-                </span>
+        {/* PRICING + SIDEBAR */}
+        <section className="fp-wrap fp-grid">
+          <div className="fp-card">
+            <span className="fp-card-label">Vertrauliche Einreichung</span>
+            <div className="fp-price"><span className="fp-amount">87 €</span><span className="fp-once">einmalig</span></div>
+            <p className="fp-price-note">Einmalzahlung · Kein Abo · Keine versteckten Kosten</p>
+            <div className="fp-tags">
+              {["Gezielte Käufer-Ansprache", "Privates Netzwerk", "0 % Provision"].map((p) => (
+                <span key={p} className="fp-tag">{p}</span>
               ))}
             </div>
-
-            <ul className="space-y-2.5 mb-7 flex-1">
+            <ul className="fp-features">
               {FEATURES.map((f) => (
-                <li key={f} className="flex items-start gap-2.5">
-                  <Check size={13} className="text-[var(--green)] mt-0.5 flex-shrink-0" />
-                  <span className="font-sans text-[13px] text-[var(--ink)]">{f}</span>
-                </li>
+                <li key={f}><span className="fp-check"><CheckIcon /></span>{f}</li>
               ))}
             </ul>
-
-            <Link
-              href="/sell"
-              className="animate-cta-pulse block text-center w-full py-4 rounded-xl font-sans font-bold text-[15px] text-white hover:opacity-90 transition-opacity duration-200"
-              style={{ background: "#1A5C3A" }}
-            >
-              Unternehmen vertraulich einreichen →
-            </Link>
+            <Link href="/sell" className="fp-cta">Unternehmen vertraulich einreichen →</Link>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-4" style={show(100)}>
-            {/* Buyer types */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-5">
-              <h3 className="font-sans text-[12px] font-bold text-[var(--ink)] mb-1">
-                Wer kauft auf Firmadeal?
-              </h3>
-              <p className="font-sans text-[10px] text-[var(--muted)] mb-3">
-                Wir gleichen Ihr Profil gezielt ab
-              </p>
-              <div className="space-y-2.5">
+          <aside className="fp-side">
+            <div className="fp-side-box">
+              <h3 className="fp-side-h">Wer kauft auf Firmadeal?</h3>
+              <p className="fp-side-p">Wir gleichen Ihr Profil gezielt ab.</p>
+              <div className="fp-buyers">
                 {BUYERS.map((b) => (
-                  <div key={b.label} className="flex items-center gap-2.5">
-                    <span className="text-[18px] flex-shrink-0">{b.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-sans text-[11px] font-semibold text-[var(--ink)] leading-snug truncate">{b.label}</p>
+                  <div key={b.label} className="fp-buyer">
+                    <span className="fp-buyer-dot" />
+                    <div>
+                      <div className="fp-buyer-l">{b.label}</div>
+                      <div className="fp-buyer-s">{b.sub}</div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+            <div className="fp-side-box fp-side-trust">
+              <p>Diskret, ohne Makler und ohne Provision — wir bringen Ihr Unternehmen gezielt vor passende Käufer.</p>
+            </div>
+          </aside>
+        </section>
 
-            {/* Trust block */}
-            <div className="bg-white border border-[var(--border)] rounded-2xl p-5">
-              <p className="font-sans text-[11px] text-[var(--muted)] leading-relaxed">
-                Wir gleichen Ihr Profil gezielt mit passenden Käufern ab — diskret, ohne Makler und ohne Provision.
-              </p>
+        {/* FAQ */}
+        <section className="fp-surface">
+          <div className="fp-wrap fp-faq-wrap">
+            <h2 className="fp-h2">Häufige Fragen</h2>
+            <div className="fp-faq">
+              {FAQ.map((f, i) => (
+                <div className={`fp-faq-item${openFaq === i ? " open" : ""}`} key={i}>
+                  <button className="fp-faq-q" onClick={() => setOpenFaq(openFaq === i ? null : i)}>
+                    {f.q}<span className="fp-ic">+</span>
+                  </button>
+                  <div className="fp-faq-a">{f.a}</div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* FAQ */}
-      <section className="bg-white border-t border-[var(--border)]">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="font-sans text-[20px] font-bold text-[var(--ink)] tracking-tight text-center mb-6">
-            Häufige Fragen
-          </h2>
-          <div className="space-y-2">
-            {FAQ.map((faq, i) => (
-              <div key={i} className="bg-[var(--surface2)] border border-[var(--border)] rounded-xl overflow-hidden">
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between px-5 py-3.5 text-left"
-                >
-                  <span className="font-sans text-[13px] font-semibold text-[var(--ink)]">{faq.q}</span>
-                  <ChevronDown
-                    size={15}
-                    className={`text-[var(--muted)] flex-shrink-0 ml-3 transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`}
-                  />
+        {/* NEWSLETTER */}
+        <section className="fp-news">
+          <div className="fp-wrap" style={{ maxWidth: 600, textAlign: "center" }}>
+            <h2 className="fp-news-h">Neue Kaufgesuche direkt in Ihr Postfach</h2>
+            <p className="fp-news-p">Wöchentlich passende Käufer für Unternehmen wie Ihres — kostenlos und jederzeit abmeldbar.</p>
+            {newsletterState === "success" ? (
+              <p className="fp-news-ok">✓ Sie sind angemeldet!</p>
+            ) : (
+              <form onSubmit={handleNewsletter} className="fp-news-form">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Ihre E-Mail-Adresse"
+                  required
+                />
+                <button type="submit" disabled={newsletterState === "loading"} className="fp-cta">
+                  {newsletterState === "loading" ? "Wird gespeichert…" : "Anmelden"}
                 </button>
-                {openFaq === i && (
-                  <div className="px-5 pb-4">
-                    <p className="font-sans text-[12px] text-[var(--muted)] leading-relaxed">{faq.a}</p>
-                  </div>
-                )}
-              </div>
-            ))}
+              </form>
+            )}
+            {newsletterState === "duplicate" && <p className="fp-news-warn">Sie sind bereits angemeldet.</p>}
+            {newsletterState === "error" && <p className="fp-news-err">Fehler. Bitte erneut versuchen.</p>}
+            <p className="fp-news-foot">firmadeal.de · Sofort live · 0 % Provision · Kein Makler</p>
           </div>
-        </div>
-      </section>
-
-      {/* Newsletter */}
-      <section className="bg-[var(--ink)] border-t border-[var(--border)]">
-        <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center">
-          <h2 className="font-sans text-[18px] font-bold text-white tracking-tight mb-1">
-            Neue Kaufgesuche direkt in Ihr Postfach
-          </h2>
-          <p className="font-sans text-[13px] text-white/55 mb-5 leading-relaxed">
-            Wöchentlich passende Käufer für Unternehmen wie Ihres — kostenlos und jederzeit abmeldbar
-          </p>
-          {newsletterState === "success" ? (
-            <p className="font-sans text-[14px] font-semibold text-green-400">✓ Sie sind angemeldet!</p>
-          ) : (
-            <form onSubmit={handleNewsletter} className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Ihre E-Mail-Adresse"
-                required
-                className="flex-1 px-4 py-2.5 rounded-xl font-sans text-[13px] text-[var(--ink)] bg-white outline-none"
-              />
-              <button
-                type="submit"
-                disabled={newsletterState === "loading"}
-                className="px-5 py-2.5 font-sans font-bold text-[13px] text-white rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 whitespace-nowrap"
-                style={{ background: "#1A5C3A" }}
-              >
-                {newsletterState === "loading" ? "Wird gespeichert…" : "Anmelden"}
-              </button>
-            </form>
-          )}
-          {newsletterState === "duplicate" && (
-            <p className="font-sans text-[12px] text-amber-400 mt-2.5">Sie sind bereits angemeldet.</p>
-          )}
-          {newsletterState === "error" && (
-            <p className="font-sans text-[12px] text-red-400 mt-2.5">Fehler. Bitte erneut versuchen.</p>
-          )}
-          <p className="font-sans text-[11px] text-white/35 mt-5">
-            firmadeal.de · Sofort live · 0% Provision · Kein Makler
-          </p>
-        </div>
-      </section>
-    </div>
+        </section>
+      </div>
+    </>
   );
 }
+
+const cssString = `
+.fp{--a:#1a3329;--cta:#16a34a;--cta-h:#128a3e;--g50:#f2faf5;--g100:#e8f5ed;--g400:#6dbf87;--g700:#2d5a3d;--bg:#fafaf8;--ink:#141414;--muted:#777;--n600:#555;--border:#e7e7e3;background:var(--bg);color:var(--ink);}
+.fp *{box-sizing:border-box;}
+.fp h1,.fp h2,.fp h3{font-weight:700;letter-spacing:-0.035em;line-height:1.05;color:var(--a);margin:0;}
+.fp-wrap{max-width:1080px;margin:0 auto;padding:0 28px;}
+.fp-eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--cta);}
+.fp-hero{padding:54px 0 30px;position:relative;overflow:hidden;}
+.fp-hero::before{content:"";position:absolute;top:-160px;left:50%;transform:translateX(-50%);width:620px;height:420px;border-radius:50%;background:radial-gradient(circle,var(--g50),transparent 70%);animation:fp-drift 16s ease-in-out infinite;}
+@keyframes fp-drift{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(1.08);}}
+.fp-h1{font-size:clamp(28px,4vw,46px);margin:14px 0 14px;position:relative;}
+.fp-h1 em{font-style:normal;color:var(--cta);}
+.fp-sub{font-size:clamp(15px,1.6vw,18px);color:var(--n600);max-width:540px;margin:0 auto 22px;line-height:1.55;}
+.fp-pills{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;}
+.fp-pill{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border);border-radius:100px;padding:8px 15px;font-size:13px;font-weight:600;color:var(--a);}
+.fp-pill svg{width:14px;height:14px;color:var(--cta);}
+.fp-grid{display:grid;grid-template-columns:1fr 340px;gap:22px;align-items:start;padding-top:30px;padding-bottom:60px;}
+@media(max-width:880px){.fp-grid{grid-template-columns:1fr;}}
+.fp-card{background:#fff;border:2px solid var(--a);border-radius:22px;padding:34px;box-shadow:0 24px 60px -28px rgba(13,31,23,.4);}
+.fp-card-label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+.fp-price{display:flex;align-items:baseline;gap:8px;margin:14px 0 4px;}
+.fp-amount{font-size:60px;font-weight:700;color:var(--ink);letter-spacing:-0.04em;line-height:1;font-variant-numeric:tabular-nums;}
+.fp-once{font-size:15px;color:var(--muted);}
+.fp-price-note{font-size:12px;color:var(--muted);margin-bottom:20px;}
+.fp-tags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:22px;}
+.fp-tag{font-size:11px;font-weight:700;color:#fff;background:var(--a);padding:6px 12px;border-radius:100px;}
+.fp-features{list-style:none;padding:0;margin:0 0 26px;display:flex;flex-direction:column;gap:11px;}
+.fp-features li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--ink);line-height:1.45;}
+.fp-check{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:var(--g100);color:var(--g700);display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.fp-check svg{width:12px;height:12px;}
+.fp-cta{display:block;text-align:center;width:100%;background:var(--cta);color:#fff;font-weight:700;font-size:15px;padding:16px;border-radius:14px;border:none;cursor:pointer;text-decoration:none;position:relative;overflow:hidden;transition:background .18s,transform .15s;}
+.fp-cta:hover{background:var(--cta-h);transform:translateY(-1px);}
+.fp-cta::after{content:"";position:absolute;top:0;left:0;width:36%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);animation:fp-sheen 5s ease-in-out infinite;pointer-events:none;}
+@keyframes fp-sheen{0%{transform:translateX(-160%) skewX(-18deg);}55%,100%{transform:translateX(280%) skewX(-18deg);}}
+.fp-side{display:flex;flex-direction:column;gap:16px;}
+.fp-side-box{background:#fff;border:1px solid var(--border);border-radius:18px;padding:22px;}
+.fp-side-h{font-size:15px;margin-bottom:4px;}
+.fp-side-p{font-size:12px;color:var(--muted);margin-bottom:16px;}
+.fp-buyers{display:flex;flex-direction:column;gap:14px;}
+.fp-buyer{display:flex;align-items:flex-start;gap:11px;}
+.fp-buyer-dot{flex-shrink:0;width:9px;height:9px;border-radius:50%;background:var(--cta);margin-top:5px;}
+.fp-buyer-l{font-size:13px;font-weight:600;color:var(--ink);line-height:1.3;}
+.fp-buyer-s{font-size:11px;color:var(--muted);}
+.fp-side-trust p{font-size:13px;color:var(--n600);line-height:1.6;margin:0;}
+.fp-surface{background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.fp-faq-wrap{max-width:760px;padding-top:56px;padding-bottom:56px;}
+.fp-h2{font-size:clamp(22px,3vw,32px);text-align:center;margin-bottom:28px;}
+.fp-faq-item{border-bottom:1px solid var(--border);}
+.fp-faq-q{width:100%;background:none;border:none;text-align:left;padding:20px 0;font-size:16px;font-weight:600;color:var(--a);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;font-family:inherit;}
+.fp-faq-q .fp-ic{font-size:22px;color:var(--cta);transition:.2s;flex-shrink:0;}
+.fp-faq-a{font-size:14px;color:var(--n600);line-height:1.6;padding:0 0 20px;display:none;}
+.fp-faq-item.open .fp-faq-a{display:block;}
+.fp-faq-item.open .fp-ic{transform:rotate(45deg);}
+.fp-news{background:linear-gradient(165deg,#1a3329,#0d1f17);padding:54px 0;}
+.fp-news-h{color:#fff;font-size:22px;margin-bottom:8px;}
+.fp-news-p{color:rgba(255,255,255,.6);font-size:14px;margin-bottom:22px;line-height:1.5;}
+.fp-news-form{display:flex;gap:11px;}
+@media(max-width:520px){.fp-news-form{flex-direction:column;}}
+.fp-news-form input{flex:1;padding:13px 16px;border-radius:12px;border:none;font-size:14px;color:var(--ink);background:#fff;outline:none;min-width:0;}
+.fp-news-form .fp-cta{width:auto;padding:13px 24px;white-space:nowrap;border-radius:12px;}
+.fp-news-ok{color:#4ade80;font-weight:700;font-size:15px;}
+.fp-news-warn{color:#fbbf24;font-size:12px;margin-top:10px;}
+.fp-news-err{color:#f87171;font-size:12px;margin-top:10px;}
+.fp-news-foot{color:rgba(255,255,255,.35);font-size:11px;margin-top:20px;}
+@media(prefers-reduced-motion:reduce){.fp-hero::before,.fp-cta::after{animation:none!important;}}
+`;
