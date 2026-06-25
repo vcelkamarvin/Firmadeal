@@ -69,7 +69,7 @@ export default function Home() {
       .select("*")
       .eq("status", "active")
       .order("created_at", { ascending: false })
-      .limit(6)
+      .limit(12)
       .then(({ data }) => {
         if (data) setListings(data);
       });
@@ -218,7 +218,7 @@ export default function Home() {
             </div>
             <div className="fd-grid fd-reveal">
               {listings.length > 0
-                ? listings.slice(0, 6).map((l, i) => (
+                ? listings.slice(0, 12).map((l, i) => (
                     <ListingGridCard key={l.id} listing={l} priority={i < 3} />
                   ))
                 : LISTINGS.map((l, i) => (
