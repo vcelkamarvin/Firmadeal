@@ -55,19 +55,19 @@ export default async function Page({ params }: { params: Promise<Params> }) {
   const faqs: { q: string; a: string }[] = [
     {
       q: `Was ist ein ${b.label} in ${r.name} wert?`,
-      a: `Der Wert eines ${b.label} ergibt sich überwiegend aus dem nachhaltigen Gewinn (EBITDA), multipliziert mit einem branchenüblichen Faktor. Für einen ${b.label} liegt dieser Multiplikator typischerweise bei ${num(b.m[0])}–${num(b.m[1])}× EBITDA. Für ${r.name} kommt ein regionaler Faktor hinzu (${regText}). Rechenbeispiel: bei ${eur(exEbitda)} EBITDA entspricht das rund ${eur(exLo)}–${eur(exHi)}.`,
+      a: `Faustregel: ${num(b.m[0])}–${num(b.m[1])}× EBITDA, regional gewichtet für ${r.name} (${regText}). Beispiel: bei ${eur(exEbitda)} EBITDA rund ${eur(exLo)}–${eur(exHi)}.`,
     },
     {
       q: `Wie verkaufe ich meinen ${b.label} in ${r.name} ohne Makler?`,
-      a: `Über Firmadeal reichen Sie Ihren ${b.label} anonym ein und werden direkt mit geprüften Käufern aus dem DACH-Netzwerk (Private Equity, Family Offices, Search Funds, strategische Käufer) zusammengebracht — ohne klassischen Makler, ohne Erfolgsprovision. Es fällt nur eine einmalige Gebühr von €87 für die Inserierung an.`,
+      a: `Anonym einreichen, direkt mit geprüften Käufern aus dem DACH-Netzwerk gematcht — kein Makler, keine Erfolgsprovision, einmalig €87.`,
     },
     {
       q: `Welcher Multiplikator gilt für einen ${b.label}?`,
-      a: `Üblich sind ${num(b.m[0])}–${num(b.m[1])}× EBITDA. Den oberen Bereich erreichen Betriebe mit stabilem Wachstum, geringer Inhaberabhängigkeit, wiederkehrenden Umsätzen und sauberer Dokumentation. Der Standort ${r.name} wirkt zusätzlich mit dem Faktor ${num(r.f)} (${regText}).`,
+      a: `${num(b.m[0])}–${num(b.m[1])}× EBITDA. Den oberen Wert erreichen Betriebe mit Wachstum, geringer Inhaberabhängigkeit und wiederkehrenden Umsätzen. Standort ${r.name}: Faktor ${num(r.f)}.`,
     },
     {
       q: `Wie lange dauert ein Unternehmensverkauf?`,
-      a: `Von der Einreichung bis zum Abschluss vergehen je nach Branche und Preisvorstellung meist 2 bis 6 Monate. Eine realistische, gut belegte Bewertung verkürzt den Prozess spürbar — genau dafür ist diese Sofort-Bewertung der erste Schritt.`,
+      a: `Meist 2 bis 6 Monate. Eine realistische Bewertung verkürzt den Prozess — der erste Schritt ist diese Sofort-Bewertung.`,
     },
   ];
 
@@ -117,9 +117,8 @@ export default async function Page({ params }: { params: Promise<Params> }) {
           <h1 style={{ fontSize: "clamp(30px,5vw,50px)", fontWeight: 700, letterSpacing: "-1px", lineHeight: 1.05, maxWidth: 820, margin: 0 }}>
             {b.label} verkaufen in {r.name}: Was ist Ihr Betrieb wert?
           </h1>
-          <p style={{ fontSize: 18, color: "#cfe3d7", marginTop: 16, maxWidth: 680, lineHeight: 1.6 }}>
-            Geben Sie Umsatz und Gewinn ein und sehen Sie in Sekunden eine indikative Bewertung Ihres {b.label} in {r.name} —
-            nach branchenüblichem EBITDA-Multiplikator ({num(b.m[0])}–{num(b.m[1])}×), regional gewichtet. Anonym, kostenlos, ohne Makler.
+          <p style={{ fontSize: 18, color: "#cfe3d7", marginTop: 16, maxWidth: 600, lineHeight: 1.6 }}>
+            Gewinn eingeben, Wert sehen — in Sekunden. {num(b.m[0])}–{num(b.m[1])}× EBITDA, regional gewichtet. Anonym & kostenlos.
           </p>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 20 }}>
             {["0 % Provision", "Anonym bis zum Abschluss", "DACH-Käufernetzwerk", "Einmalig €87"].map((p) => (
