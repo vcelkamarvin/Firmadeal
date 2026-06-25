@@ -9,30 +9,6 @@ export default function Footer() {
 
   return (
     <footer className="bg-[var(--ink)] text-white">
-      {/* ── CTA strip ── */}
-      <div className="border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-9 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-          <div>
-            <div className="font-sans text-[19px] font-bold tracking-tight">
-              {de ? "Bereit, Ihre Nachfolge zu regeln?" : "Ready to plan your succession?"}
-            </div>
-            <div className="font-sans text-[13.5px] text-white/55 mt-1.5">
-              {de
-                ? "Kostenlose Bewertung in 60 Sekunden — danach anonym und ohne Makler einreichen."
-                : "Free valuation in 60 seconds — then submit anonymously, without a broker."}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3 flex-shrink-0">
-            <Link href="/unternehmenswert" className="inline-flex items-center justify-center h-11 px-5 rounded-xl bg-white text-[var(--ink)] font-sans font-bold text-[14px] hover:bg-white/90 transition-colors">
-              {de ? "Unternehmenswert berechnen" : "Value your company"}
-            </Link>
-            <Link href="/sell" className="inline-flex items-center justify-center gap-1.5 h-11 px-5 rounded-xl border border-white/25 text-white font-sans font-bold text-[14px] hover:bg-white/10 transition-colors">
-              {de ? "Unternehmen einreichen" : "Submit business"} →
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* ── Columns ── */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
