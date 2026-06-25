@@ -75,8 +75,15 @@ export default function ListingGridCard({ listing, priority = false }: ListingGr
           {listing.category}
         </div>
 
+        {/* Example badge — clearly marks seed/demo listings */}
+        {listing.is_example && (
+          <div className="absolute top-2.5 left-2.5 font-sans text-[10px] font-bold text-white px-2.5 py-0.5 rounded-full" style={{ background: "rgba(20,40,30,0.82)", backdropFilter: "blur(6px)" }}>
+            Beispiel
+          </div>
+        )}
+
         {/* New badge */}
-        {isNew && (
+        {isNew && !listing.is_example && (
           <div className="absolute top-2.5 left-2.5 font-sans text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">
             Neu
           </div>
