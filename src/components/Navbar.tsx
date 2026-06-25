@@ -79,6 +79,7 @@ export default function Navbar() {
               {[
                 { href: "/listings", label: "Auswahl" },
                 { href: "/unternehmenswert", label: "Bewertung" },
+                { href: "/kaufgesuche", label: "Kaufgesuche" },
                 { href: "/kaeufer", label: "Für Käufer" },
                 { href: "/blog", label: "Blog" },
                 { href: "/pricing", label: "Preise" },
@@ -160,6 +161,7 @@ export default function Navbar() {
           {[
             { href: "/listings", label: "Kuratierte Auswahl ansehen", icon: "🔍", desc: "Öffentliche Mandate" },
             { href: "/unternehmenswert", label: "Unternehmenswert berechnen", icon: "📊", desc: "Kostenlose Sofort-Bewertung" },
+            { href: "/kaufgesuche", label: "Aktuelle Kaufgesuche", icon: "📣", desc: "Wer sucht gerade ein Unternehmen?" },
             { href: "/kaeufer", label: "Für Käufer", icon: "🤝", desc: "Passende Unternehmen zuerst erhalten" },
             { href: "/blog", label: "Blog", icon: "📰", desc: "Tipps zu Verkauf, Bewertung & Nachfolge" },
             { href: "/sell", label: "Unternehmen vertraulich einreichen", icon: "📋", desc: "Einmalig €87 · 0% Provision" },

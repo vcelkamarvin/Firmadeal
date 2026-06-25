@@ -30,6 +30,7 @@ export default function Footer() {
               {[
                 { href: "/listings", de: "Auswahl ansehen", en: "View selection" },
                 { href: "/unternehmenswert", de: "Unternehmenswert berechnen", en: "Value your company" },
+                { href: "/kaufgesuche", de: "Aktuelle Kaufgesuche", en: "Buyer requests" },
                 { href: "/kaeufer", de: "Für Käufer", en: "For buyers" },
                 { href: "/sell", de: "Unternehmen einreichen", en: "Submit business" },
                 { href: "/pricing", de: "Preise", en: "Pricing" },
