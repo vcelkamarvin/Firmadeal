@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { BRANCHEN as PSEO_BRANCHEN, REGIONEN as PSEO_REGIONEN } from "./pseoData";
 
 const BRANCHEN: Record<string, [number, number]> = {
   "Pflegedienst": [4.0, 6.0], "Arztpraxis (Kassensitz)": [3.5, 5.5], "Steuerkanzlei": [4.5, 7.0],
@@ -41,6 +42,7 @@ export default function Rechner({ initialBranche, initialRegion, hideHero = fals
   const targetLo = Math.max(0, ebitda * m1 * rf);
   const targetHi = Math.max(0, ebitda * m2 * rf * gf);
   const short = branche.split(" ")[0].replace("/", "");
+  const brancheSlug = PSEO_BRANCHEN.find((b) => b.calc === branche)?.slug;
 
   useEffect(() => {
     cancelAnimationFrame(rafRef.current);
@@ -197,10 +199,20 @@ export default function Rechner({ initialBranche, initialRegion, hideHero = fals
       </section>
 
       <section className="uw-wrap uw-seo">
-        <h3 className="uw-seoh">{short} verkaufen — nach Region</h3>
+        <h3 className="uw-seoh">{short} verkaufen — nach Bundesland</h3>
         <div className="uw-chips">
-          {Object.keys(REGIONEN).map((reg) => (
-            <span className="uw-chip" key={reg}>{short} verkaufen {reg}</span>
+          {PSEO_REGIONEN.map((r) =>
+            brancheSlug ? (
+              <Link className="uw-chip" key={r.slug} href={`/unternehmenswert/${brancheSlug}/${r.slug}`}>{short} verkaufen {r.name}</Link>
+            ) : (
+              <span className="uw-chip" key={r.slug}>{short} verkaufen {r.name}</span>
+            )
+          )}
+        </div>
+        <h3 className="uw-seoh" style={{ marginTop: 22 }}>Unternehmenswert nach Branche</h3>
+        <div className="uw-chips">
+          {PSEO_BRANCHEN.map((b) => (
+            <Link className="uw-chip" key={b.slug} href={`/unternehmenswert/${b.slug}/bayern`}>{b.label} bewerten</Link>
           ))}
         </div>
       </section>
@@ -258,7 +270,8 @@ export default function Rechner({ initialBranche, initialRegion, hideHero = fals
         .uw-seo{margin-top:36px;padding-bottom:64px}
         .uw-seoh{font-size:15px;margin-bottom:12px}
         .uw-chips{display:flex;flex-wrap:wrap;gap:8px}
-        .uw-chip{background:#fff;border:1px solid #e3e0d6;border-radius:18px;padding:7px 13px;font-size:13px;color:#2d5a3d;font-weight:600}
+        .uw-chip{background:#fff;border:1px solid #e3e0d6;border-radius:18px;padding:7px 13px;font-size:13px;color:#2d5a3d;font-weight:600;text-decoration:none;display:inline-block}
+        .uw-chip:hover{border-color:#2d5a3d;background:#f5faf7}
         @keyframes uwblink{0%,100%{opacity:.3}50%{opacity:1}}
         @keyframes uwping{0%{transform:scale(.4);opacity:.9}70%{opacity:0}100%{transform:scale(2.4);opacity:0}}
         @keyframes uwscan{0%{top:-60px}100%{top:100%}}
