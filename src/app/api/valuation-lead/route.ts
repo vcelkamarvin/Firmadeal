@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.firmadeal.de";
+const SITE = "https://www.firmadeal.de";
 const eur = (n: number) => "€" + Math.round(n || 0).toLocaleString("de-DE");
 
 export async function POST(req: Request) {
@@ -62,8 +62,7 @@ export async function POST(req: Request) {
       Möchten Sie wissen, was ein <b>echter Käufer</b> für Ihr Unternehmen zahlen würde? Reichen Sie Ihr
       Unternehmen vertraulich ein — anonym, ohne Makler, <b>0% Provision</b>, einmalig €87.
     </p>
-    <a href="${SITE}/sell" style="display:inline-block;background:#1a3329;color:#fff;text-decoration:none;
-      padding:13px 22px;border-radius:10px;font-weight:700;font-size:15px">Käufer finden →</a>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0"><tr><td style="background:#1a3329;border-radius:10px"><a href="${SITE}/sell" style="display:inline-block;color:#ffffff;text-decoration:none;padding:14px 24px;font-weight:700;font-size:15px">Käufer finden &rarr;</a></td></tr></table>
     <p style="font-size:12px;color:#6b7d72;margin-top:22px;line-height:1.5">
       Firmadeal · vertraulicher Unternehmensverkauf in DE · AT · CH · ${SITE}
     </p>
