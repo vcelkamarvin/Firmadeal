@@ -604,47 +604,52 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── SO POSITIONIEREN WIR SIE ─────────────────────────────────────────── */}
+      {/* ── FÜR WEN (3 clear paths) ──────────────────────────────────────────── */}
       <section className="bg-white border-b border-[var(--border)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-2 text-center">
-            {lang === "de" ? "Unser Ansatz" : "Our approach"}
+            {lang === "de" ? "Für wen" : "Who it's for"}
           </p>
-          <h2 className="font-sans text-[22px] font-bold text-[var(--ink)] tracking-tight text-center mb-10">
-            {lang === "de" ? "So positionieren wir Sie" : "How we position you"}
+          <h2 className="font-sans text-[24px] font-bold text-[var(--ink)] tracking-tight text-center mb-10">
+            {lang === "de" ? "Verkäufer, Käufer & Berater — an einem Ort" : "Sellers, buyers & advisors — in one place"}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
-                icon: "🤝",
-                de_title: "Privates Investoren-Netzwerk",
-                en_title: "Private investor network",
-                de_body: "Wir sprechen passende Käufer gezielt an — Private Equity, Family Offices, Search Funds und strategische Investoren.",
-                en_body: "We target suitable buyers directly — Private Equity, Family Offices, Search Funds and strategic investors.",
+                tag: lang === "de" ? "Verkäufer" : "Sellers",
+                title: lang === "de" ? "Unternehmen verkaufen" : "Sell your business",
+                body: lang === "de"
+                  ? "Anonym einreichen, kostenlos bewerten, mit geprüften Käufern matchen. 0 % Provision, einmalig €87."
+                  : "Submit anonymously, value for free, match with vetted buyers. 0% commission, one-time €87.",
+                href: "/sell",
+                cta: lang === "de" ? "Unternehmen einreichen" : "Submit business",
               },
               {
-                icon: "🔒",
-                de_title: "Vertraulich & off-market",
-                en_title: "Confidential & off-market",
-                de_body: "Ihr Unternehmen wird nicht öffentlich ausgeschrieben. Sie bleiben anonym, bis Sie sich für ein Gespräch entscheiden.",
-                en_body: "Your business is not publicly advertised. You remain anonymous until you decide to have a conversation.",
+                tag: lang === "de" ? "Käufer" : "Buyers",
+                title: lang === "de" ? "Unternehmen kaufen" : "Buy a business",
+                body: lang === "de"
+                  ? "Geprüfte Mandate durchsuchen oder Ihr Suchprofil hinterlegen — passende Angebote zuerst."
+                  : "Browse vetted mandates or set up your search profile — matching deals first.",
+                href: "/kaeufer",
+                cta: lang === "de" ? "Als Käufer starten" : "Start as buyer",
               },
               {
-                icon: "📋",
-                de_title: "Kuratierte öffentliche Auswahl",
-                en_title: "Curated public selection",
-                de_body: "Wenn Sie maximale Reichweite wollen, zeigen wir Ihr Mandat zusätzlich in unserer öffentlichen Auswahl.",
-                en_body: "If you want maximum reach, we additionally show your mandate in our public curated selection.",
+                tag: lang === "de" ? "Berater" : "Advisors",
+                title: lang === "de" ? "Mandate einbringen" : "Bring your mandates",
+                body: lang === "de"
+                  ? "Steuerberater & M&A-Berater erreichen qualifizierte Käufer in ganz DACH — diskret, ohne Reibung."
+                  : "Tax & M&A advisors reach qualified buyers across DACH — discreetly, without friction.",
+                href: "/sell",
+                cta: lang === "de" ? "Mandat einreichen" : "Submit mandate",
               },
-            ].map((card) => (
-              <div key={card.de_title} className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl p-6">
-                <div className="text-3xl mb-4">{card.icon}</div>
-                <h3 className="font-sans text-[16px] font-bold text-[var(--ink)] mb-3">
-                  {lang === "de" ? card.de_title : card.en_title}
-                </h3>
-                <p className="font-sans text-[14px] text-[var(--muted)] leading-relaxed">
-                  {lang === "de" ? card.de_body : card.en_body}
-                </p>
+            ].map((c) => (
+              <div key={c.tag} className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl p-6 flex flex-col">
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent)] mb-3">{c.tag}</span>
+                <h3 className="font-sans text-[17px] font-bold text-[var(--ink)] mb-2">{c.title}</h3>
+                <p className="font-sans text-[14px] text-[var(--muted)] leading-relaxed mb-5 flex-1">{c.body}</p>
+                <Link href={c.href} className="font-sans text-[14px] font-bold text-[var(--accent)] inline-flex items-center gap-1.5 hover:gap-2.5 transition-all">
+                  {c.cta} →
+                </Link>
               </div>
             ))}
           </div>
