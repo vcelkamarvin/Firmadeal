@@ -107,6 +107,11 @@ function ListingsContent() {
           <p className="font-mono text-[12px] text-[var(--muted)]">
             {lang === "de" ? "Deutschland, Österreich, Schweiz — die meisten Mandate sind vertraulich" : "Germany, Austria, Switzerland — most mandates are confidential"}
           </p>
+          <p className="font-sans text-[12.5px] text-[var(--muted)] mt-2 leading-relaxed max-w-2xl">
+            {lang === "de"
+              ? "Hinweis: Mit Beispiel markierte Inserate sind illustrative Muster-Mandate. Echte Unternehmen werden überwiegend vertraulich (off-market) gehandelt und nur nach Freigabe öffentlich gezeigt."
+              : "Note: Listings marked Beispiel are illustrative example mandates. Real businesses are mostly handled confidentially (off-market) and shown publicly only after release."}
+          </p>
         </div>
 
         {/* Quick category chips — sticky horizontal scroll */}
