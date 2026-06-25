@@ -2,11 +2,16 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase";
+import ListingGridCard from "@/components/ListingGridCard";
+import type { Listing } from "@/lib/types";
 
 /* ──────────────────────────────────────────────────────────────────────────
    Firmadeal — Homepage (redesign)
    Self-contained client component. Navbar/Footer/SEO metadata come from
    layout.tsx and are intentionally NOT rendered here.
+   Listings section uses live Supabase data (real photos) via ListingGridCard,
+   falling back to example cards only while data loads / if empty.
    ────────────────────────────────────────────────────────────────────────── */
 
 const SECTORS: { label: string; m: number }[] = [
@@ -55,6 +60,20 @@ export default function Home() {
   const [sector, setSector] = useState<number>(0);
   const [ebitda, setEbitda] = useState<number>(120000);
   const [openFaq, setOpenFaq] = useState<number>(0);
+  const [listings, setListings] = useState<Listing[]>([]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("listings")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(6)
+      .then(({ data }) => {
+        if (data) setListings(data);
+      });
+  }, []);
 
   const m = SECTORS[sector].m;
   const result = m
@@ -186,7 +205,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* LISTINGS */}
+        {/* LISTINGS — live Supabase data (real photos) with example fallback */}
         <section className="fd-block" id="listings">
           <div className="fd-wrap">
             <div className="fd-sec-head fd-row fd-reveal">
@@ -198,26 +217,30 @@ export default function Home() {
               <Link href="/listings" className="fd-link-more">Alle Angebote ansehen →</Link>
             </div>
             <div className="fd-grid fd-reveal">
-              {LISTINGS.map((l, i) => (
-                <Link href="/listings" key={i} className="fd-card">
-                  <div className={`fd-card-top fd-grad-${i % 4}`}>
-                    <span className="fd-card-cat">{l.cat}</span>
-                    <span className="fd-card-eg">Beispiel</span>
-                    <span className="fd-card-loc">{l.loc}</span>
-                  </div>
-                  <div className="fd-card-body">
-                    <div className="fd-card-title">{l.title}</div>
-                    <div className="fd-card-stats">
-                      <div className="fd-stat"><div className="fd-stat-l">Umsatz</div><div className="fd-stat-v">{l.umsatz}</div></div>
-                      <div className="fd-stat"><div className="fd-stat-l">Marge</div><div className="fd-stat-v">{l.marge}</div></div>
-                    </div>
-                    <div className="fd-card-foot">
-                      <span className="fd-card-price">{l.price}</span>
-                      <span className="fd-card-go">Details →</span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+              {listings.length > 0
+                ? listings.slice(0, 6).map((l, i) => (
+                    <ListingGridCard key={l.id} listing={l} priority={i < 3} />
+                  ))
+                : LISTINGS.map((l, i) => (
+                    <Link href="/listings" key={i} className="fd-card">
+                      <div className={`fd-card-top fd-grad-${i % 4}`}>
+                        <span className="fd-card-cat">{l.cat}</span>
+                        <span className="fd-card-eg">Beispiel</span>
+                        <span className="fd-card-loc">{l.loc}</span>
+                      </div>
+                      <div className="fd-card-body">
+                        <div className="fd-card-title">{l.title}</div>
+                        <div className="fd-card-stats">
+                          <div className="fd-stat"><div className="fd-stat-l">Umsatz</div><div className="fd-stat-v">{l.umsatz}</div></div>
+                          <div className="fd-stat"><div className="fd-stat-l">Marge</div><div className="fd-stat-v">{l.marge}</div></div>
+                        </div>
+                        <div className="fd-card-foot">
+                          <span className="fd-card-price">{l.price}</span>
+                          <span className="fd-card-go">Details →</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
             </div>
           </div>
         </section>
