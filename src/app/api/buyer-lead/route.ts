@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.firmadeal.de";
+const SITE = "https://www.firmadeal.de";
 
 export async function POST(req: Request) {
   try {
@@ -60,8 +60,7 @@ export async function POST(req: Request) {
       Sobald ein passendes Unternehmen verfügbar ist, melden wir uns — diskret und zuerst bei Ihnen.
       In der Zwischenzeit können Sie die aktuell kuratierten Mandate ansehen.
     </p>
-    <a href="${SITE}/listings" style="display:inline-block;background:#1a3329;color:#fff;text-decoration:none;
-      padding:13px 22px;border-radius:10px;font-weight:700;font-size:15px">Aktuelle Mandate ansehen →</a>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:4px 0"><tr><td style="background:#1a3329;border-radius:10px"><a href="${SITE}/listings" style="display:inline-block;color:#ffffff;text-decoration:none;padding:14px 24px;font-weight:700;font-size:15px">Aktuelle Mandate ansehen &rarr;</a></td></tr></table>
     <p style="font-size:12px;color:#6b7d72;margin-top:22px;line-height:1.5">
       Firmadeal · vertraulicher Unternehmensverkauf in DE · AT · CH · ${SITE}
     </p>
