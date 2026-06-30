@@ -46,7 +46,9 @@ const TESTIMONIALS: { quote: string; initials: string; name: string; role: strin
 ];
 
 const FAQ: { q: string; a: string }[] = [
-  { q: "Gibt es eine Provision?", a: "Nein. Firmadeal arbeitet ohne Erfolgsprovision. Sie zahlen einmalig 87 € für das Inserat — kein Makler, keine versteckten Kosten." },
+  { q: "Wie findet Firmadeal den passenden Nachfolger?", a: "Wir gleichen Ihr Profil aktiv mit geprüften Käufern aus unserem DACH-Netzwerk ab — Investoren, Nachfolger und strategische Käufer — und stellen Ihr Unternehmen passenden Interessenten gezielt vor. Das ist mehr als nur ein Inserat. Eine Garantie für einen Abschluss ist es nicht: Das hängt von Branche, Preisvorstellung und Marktlage ab." },
+  { q: "Begleiten Sie auch die Finanzierung?", a: "Wir verbinden Käufer mit etablierten Finanzierungswegen — KfW, Bürgschaftsbanken sowie Haus- und Förderbanken. Wir sind selbst kein Kreditvermittler und vergeben keine Kredite; wir zeigen die Wege und stellen Kontakte her." },
+  { q: "Gibt es eine Provision?", a: "Nein. Firmadeal arbeitet ohne Erfolgsprovision. Sie zahlen einmalig 87 € für das Inserat — kein Makler, keine versteckten Kosten. Beim Makler werden sonst 5–10 % des Verkaufspreises fällig." },
   { q: "Bleibt mein Inserat anonym?", a: "Ja. Wir veröffentlichen weder Firmenname noch Standort, bis Sie es ausdrücklich freigeben. Sie entscheiden für jeden Interessenten einzeln." },
   { q: "Wie lange dauert ein Verkauf?", a: "Das hängt von Branche, Größe und Preisvorstellung ab. Erste qualifizierte Anfragen erreichen viele Inserenten in den ersten Wochen." },
   { q: "Welche Unterlagen brauche ich?", a: "Fürs Inserat genügen Eckdaten wie Branche, Region, Umsatz und EBITDA. Detaillierte Unterlagen teilen Sie erst nach einer NDA." },
@@ -123,21 +125,15 @@ export default function Home() {
                 <Link href="/listings" className="fd-btn fd-btn-ghost">Angebote ansehen</Link>
               </div>
               <div className="fd-hero-trust">
-                <div className="fd-gbadge" title="Platzhalter — nur mit echten Google-Zahlen verwenden">
-                  <span className="fd-g">
-                    <b>G</b><b>o</b><b>o</b><b>g</b><b>l</b><b>e</b>
-                  </span>
-                  <span>
-                    <span className="fd-stars">★★★★★</span>
-                    <span className="fd-gr">4,9 / 5<small>Google-Bewertungen</small></span>
-                  </span>
+                <div className="fd-gbadge">
+                  <span style={{ fontSize: 24, fontWeight: 700, color: "var(--fd-accent)", letterSpacing: "-0.03em" }}>40+</span>
+                  <span className="fd-gr">aktive Mandate<small>geprüfte Käufer im DACH-Raum</small></span>
                 </div>
-                <span className="fd-trust-text">Über 40 aktive Mandate im DACH-Raum</span>
+                <span className="fd-trust-text">0 % Provision · anonym bis zum Abschluss</span>
               </div>
               <div className="fd-pills">
                 <span className="fd-pill"><CheckIcon /> 0 % Erfolgsprovision</span>
                 <span className="fd-pill"><LockIcon /> Anonym bis zum Abschluss</span>
-                <span className="fd-pill"><ShieldIcon /> DSGVO · DE · AT · CH</span>
               </div>
             </div>
 
@@ -190,15 +186,19 @@ export default function Home() {
           </div>
         </header>
 
-        {/* FINANCING STRIP (replaces press strip) — financing routes for buyers */}
+        {/* FINANCING STRIP — financing routes for buyers (real institutions, informational) */}
         <div className="fd-press">
           <div className="fd-wrap">
             <div className="fd-press-inner">
               <span className="fd-press-label">Finanzierung für Käufer über</span>
               <span className="fd-press-logo">KfW</span>
-              <span className="fd-press-logo">Bürgschaftsbanken</span>
               <span className="fd-press-logo">Sparkassen</span>
               <span className="fd-press-logo">Volksbanken</span>
+              <span className="fd-press-logo">Bürgschaftsbanken</span>
+              <span className="fd-press-logo">Commerzbank</span>
+              <span className="fd-press-logo">Deutsche&nbsp;Bank</span>
+              <span className="fd-press-logo">ING</span>
+              <span className="fd-press-logo">DZ&nbsp;Bank</span>
               <span className="fd-press-logo">Förderbanken</span>
             </div>
           </div>
@@ -375,9 +375,7 @@ const cssString = `
 .fd-cta-row{display:flex;gap:13px;flex-wrap:wrap;margin-bottom:24px;}
 .fd-center-row{justify-content:center;}
 .fd-hero-trust{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
-.fd-gbadge{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--fd-border);border-radius:100px;padding:7px 14px 7px 11px;box-shadow:0 2px 10px -4px rgba(0,0,0,.12);}
-.fd-g{font-weight:700;font-size:17px;font-family:Arial,sans-serif;}
-.fd-g b:nth-child(1){color:#4285F4}.fd-g b:nth-child(2){color:#EA4335}.fd-g b:nth-child(3){color:#FBBC05}.fd-g b:nth-child(4){color:#4285F4}.fd-g b:nth-child(5){color:#34A853}.fd-g b:nth-child(6){color:#EA4335}
+.fd-gbadge{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--fd-border);border-radius:100px;padding:7px 16px 7px 14px;box-shadow:0 2px 10px -4px rgba(0,0,0,.12);}
 .fd-stars{color:var(--fd-gold);font-size:13px;letter-spacing:1px;}
 .fd-gr{font-size:13px;font-weight:600;color:var(--fd-ink);line-height:1.15;display:block;}
 .fd-gr small{display:block;font-weight:400;color:var(--fd-muted);font-size:11px;}
@@ -407,7 +405,7 @@ const cssString = `
 .fd-calc-go{margin-top:13px;width:100%;}
 .fd-disc{margin-top:9px;font-size:11px;color:var(--fd-muted);text-align:center;}
 .fd-press{background:#fff;border-top:1px solid var(--fd-border);border-bottom:1px solid var(--fd-border);padding:24px 0;}
-.fd-press-inner{display:flex;align-items:center;gap:34px;flex-wrap:wrap;justify-content:center;}
+.fd-press-inner{display:flex;align-items:center;gap:30px;flex-wrap:wrap;justify-content:center;}
 .fd-press-label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--fd-muted);}
 .fd-press-logo{font-size:18px;font-weight:700;color:#bdbdb8;letter-spacing:-0.02em;font-family:Georgia,'Times New Roman',serif;}
 .fd-block{padding:74px 0;}
@@ -480,6 +478,6 @@ const cssString = `
 .fd-btn-cta::after{content:"";position:absolute;top:0;left:0;width:36%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);animation:fd-sheen 5s ease-in-out infinite;pointer-events:none;}
 @keyframes fd-breathe{0%,100%{opacity:.5;}50%{opacity:.95;}}
 .fd-press-logo{animation:fd-breathe 5s ease-in-out infinite;}
-.fd-press-logo:nth-child(3){animation-delay:.7s}.fd-press-logo:nth-child(4){animation-delay:1.4s}.fd-press-logo:nth-child(5){animation-delay:2.1s}.fd-press-logo:nth-child(6){animation-delay:2.8s}
+.fd-press-logo:nth-child(3){animation-delay:.5s}.fd-press-logo:nth-child(4){animation-delay:1s}.fd-press-logo:nth-child(5){animation-delay:1.5s}.fd-press-logo:nth-child(6){animation-delay:2s}.fd-press-logo:nth-child(7){animation-delay:2.5s}.fd-press-logo:nth-child(8){animation-delay:3s}.fd-press-logo:nth-child(9){animation-delay:3.5s}
 @media(prefers-reduced-motion:reduce){.fd-reveal{opacity:1;transform:none;transition:none;}.fd-hero::before,.fd-btn-cta::after,.fd-press-logo{animation:none!important;}}
 `;
