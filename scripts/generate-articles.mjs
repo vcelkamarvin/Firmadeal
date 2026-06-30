@@ -17,7 +17,7 @@ const PUBLISHED = path.join(ROOT, "content/published.json");
 const REVIEW_DIR = path.join(ROOT, "content/needs-review");
 const SITE_ORIGIN = "https://www.firmadeal.de";
 
-const COUNT = parseInt(process.env.ARTICLE_COUNT || "2", 10);
+const COUNT = parseInt(process.env.ARTICLE_COUNT || "1", 10);
 const MODEL = process.env.MODEL || "claude-sonnet-4-6";
 const GATE_THRESHOLD = 7;
 const PUBLISH_STATE = (process.env.PUBLISH_STATE || "live") === "live"; // true = published immediately
@@ -29,15 +29,31 @@ const pickAuthor = () => AUTHORS[Math.floor(Math.random() * AUTHORS.length)];
 // Map niche intent → blog_posts.category (allowed: verkauf, kauf, bewertung, nachfolge, ratgeber)
 const CATEGORY = { verkaufen: "verkauf", kaufen: "kauf", bewerten: "bewertung", nachfolge: "nachfolge", ablauf: "ratgeber" };
 
-// ── 09:00 Europe/Berlin time-guard (DST-safe) ──────────────────────────────
-const berlinHour = () => parseInt(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Berlin", hour: "2-digit", hour12: false }).format(new Date()), 10);
-if (process.env.FORCE_RUN !== "true" && berlinHour() !== 9) {
-  console.log(`Not 09:00 in Berlin (currently ${berlinHour()}:00). Exiting.`);
-  setOutput("published", "false"); process.exit(0);
-}
-
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+// ── Idempotent daily guard (replaces the old fixed 09:00 hour-guard) ────────
+// Publish at most ONE post per Europe/Berlin day, and ONLY if today has none yet.
+// This removes the dependency on the run firing at an exact clock time: it no
+// longer matters whether the scheduled run lands at 09:00, arrives hours late,
+// or is a backstop retry — the first run of the day publishes, every later run
+// that day is a cheap no-op. Resilient to GitHub Actions dropping/delaying cron
+// triggers, and never needs an interactive Claude session. FORCE_RUN=true
+// bypasses the guard for manual recovery.
+const berlinDay = (d) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(new Date(d));
+if (process.env.FORCE_RUN !== "true") {
+  const { data: lastPost, error: guardErr } = await supabase
+    .from("blog_posts").select("created_at").eq("published", true)
+    .order("created_at", { ascending: false }).limit(1);
+  // Fail safe: if we cannot confirm today's state, do NOT publish (avoids dupes).
+  if (guardErr) { console.error("Guard check failed, aborting to stay idempotent:", guardErr.message); setOutput("published", "false"); process.exit(0); }
+  const last = lastPost?.[0]?.created_at;
+  if (last && berlinDay(last) === berlinDay(new Date())) {
+    console.log(`Already published today (${berlinDay(last)} Berlin). Skipping — idempotent.`);
+    setOutput("published", "false"); process.exit(0);
+  }
+  console.log(`No post yet for ${berlinDay(new Date())} Berlin — proceeding to generate.`);
+}
 
 function readJSON(p, fb) { try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return fb; } }
 function setOutput(k, v) { if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `${k}=${v}\n`); }
@@ -128,9 +144,18 @@ const queue = readJSON(QUEUE, []);
 const published = readJSON(PUBLISHED, []);
 const done = new Set(published.map(p => p.slug));
 
-// What's already live, used to block near-duplicates.
+// What's already live, used to block near-duplicates. Seed from published.json
+// AND from the live Supabase table, so a post created outside this script (e.g.
+// by a manual/recovery run) still blocks regenerating the same industry.
 const publishedBranchen = new Set(published.map(p => (p.branche || "").toLowerCase()).filter(Boolean));
 const publishedTitles = published.map(p => p.title || "");
+try {
+  const { data: liveRows } = await supabase.from("blog_posts").select("title, slug").eq("published", true);
+  for (const r of liveRows || []) {
+    if (r.title) publishedTitles.push(r.title);
+    if (r.slug) done.add(r.slug);
+  }
+} catch (e) { console.error("Could not load live posts for dedupe (non-fatal):", e instanceof Error ? e.message : e); }
 const SIMILARITY_MAX = 0.5; // title-token Jaccard above this = too similar, skip
 
 // Too similar if the same industry (Branche) already has an article, or the title overlaps heavily.
