@@ -97,7 +97,7 @@ export default function KaeuferForm() {
             <label className="kf-l">Worauf achten Sie? <span className="kf-hint">(optional)</span></label>
             <textarea className="kf-in kf-ta" value={note} onChange={(e) => setNote(e.target.value)} placeholder="z. B. wiederkehrende Umsätze, Standort, Nachfolgeregelung …" />
 
-            <button className="kf-cta" type="submit">In das Käufer-Netzwerk aufnehmen →</button>
+            <button className="kf-cta" type="submit">Kostenlos ins Käufer-Netzwerk →</button>
             <p className="kf-disc">Kostenlos & unverbindlich. Wir melden uns nur mit passenden Unternehmen.</p>
           </form>
         ) : (
@@ -146,7 +146,9 @@ export default function KaeuferForm() {
         .kf-chips{display:flex;flex-wrap:wrap;gap:8px}
         .kf-chip{background:#fff;border:1.5px solid #e3e0d6;border-radius:18px;padding:8px 13px;font-size:13px;color:#46564d;font-weight:600;cursor:pointer;font-family:inherit;transition:all .12s}
         .kf-chip.on{background:#1a3329;border-color:#1a3329;color:#fff}
-        .kf-cta{display:block;width:100%;text-align:center;background:#1a3329;color:#fff;border:none;border-radius:12px;padding:16px;font-family:inherit;font-size:16px;font-weight:700;margin-top:24px;cursor:pointer}
+        .kf-cta{display:block;width:100%;text-align:center;background:#16a34a;color:#fff;border:none;border-radius:12px;padding:17px;font-family:inherit;font-size:16px;font-weight:700;margin-top:24px;cursor:pointer;box-shadow:0 8px 22px -8px rgba(22,163,74,.55);transition:transform .15s ease,background .18s ease}
+        .kf-cta:hover{background:#128a3e;transform:translateY(-1px)}
+        .kf-cta:active{transform:translateY(1px)}
         .kf-disc{font-size:12px;color:#6b7d72;margin-top:12px;text-align:center}
         .kf-done{text-align:center;padding:48px 26px}
         .kf-check{width:54px;height:54px;border-radius:50%;background:#e7f1ea;color:#2d5a3d;font-size:26px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
