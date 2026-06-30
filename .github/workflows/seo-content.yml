@@ -1,19 +1,26 @@
-name: SEO Content — 2 Artikel täglich (09:00 Berlin)
+name: SEO Content — täglich 1 Artikel (idempotent, self-healing)
 
-# GitHub Actions runs in UTC and cannot follow DST. We trigger at BOTH 07:00
-# and 08:00 UTC, and the generator exits immediately unless the current
-# Europe/Berlin local hour is 09 — so exactly one run proceeds, at 09:00 Berlin,
-# all year round (no seasonal drift).
+# Self-healing daily content engine.
+# The generator (scripts/generate-articles.mjs) is now IDEMPOTENT: it publishes
+# at most one post per Europe/Berlin day, and only if today has none yet. So it
+# no longer matters exactly WHEN a run fires — we trigger several times a day and
+# the first run with no post-for-today publishes; every later run that day is a
+# cheap no-op (npm install + one Supabase check, then exit).
+#
+# Why several triggers: GitHub Actions frequently delays or silently drops a
+# single scheduled cron under load. Firing 4× spreads the risk — as long as ANY
+# one fires, the day self-heals. Times are UTC (GitHub cannot follow DST); the
+# idempotent guard means the Berlin clock-hour is irrelevant.
 on:
   schedule:
-    - cron: "0 7,8 * * *"
-  workflow_dispatch:           # allow manual runs from the Actions tab
+    - cron: "0 6,8,11,14 * * *"   # ~08:00 / 10:00 / 13:00 / 16:00 Berlin (DST-agnostic)
+  workflow_dispatch:               # allow manual runs from the Actions tab
     inputs:
       count:
         description: "How many articles to generate this run"
-        default: "2"
+        default: "1"
       force:
-        description: "Ignore the 09:00 Berlin time-guard (true/false)"
+        description: "Ignore the idempotent one-per-day guard (true/false)"
         default: "false"
 
 concurrency:
@@ -45,7 +52,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          ARTICLE_COUNT: ${{ github.event.inputs.count || '2' }}
+          ARTICLE_COUNT: ${{ github.event.inputs.count || '1' }}
           FORCE_RUN: ${{ github.event.inputs.force || 'false' }}
           PUBLISH_STATE: live
           MODEL: claude-sonnet-4-6
