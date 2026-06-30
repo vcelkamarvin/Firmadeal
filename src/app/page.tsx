@@ -7,11 +7,10 @@ import ListingGridCard from "@/components/ListingGridCard";
 import type { Listing } from "@/lib/types";
 
 /* ──────────────────────────────────────────────────────────────────────────
-   Firmadeal — Homepage (redesign)
+   Firmadeal — Homepage (redesign, succession + financial repositioning)
    Self-contained client component. Navbar/Footer/SEO metadata come from
    layout.tsx and are intentionally NOT rendered here.
-   Listings section uses live Supabase data (real photos) via ListingGridCard,
-   falling back to example cards only while data loads / if empty.
+   Listings section uses live Supabase data (real photos) via ListingGridCard.
    ────────────────────────────────────────────────────────────────────────── */
 
 const SECTORS: { label: string; m: number }[] = [
@@ -110,14 +109,14 @@ export default function Home() {
         <header className="fd-hero">
           <div className="fd-wrap fd-hero-grid">
             <div className="fd-reveal">
-              <span className="fd-eyebrow">Diskret · Direkt · 0 % Provision</span>
+              <span className="fd-eyebrow">Nachfolge · Diskret · 0 % Provision</span>
               <h1 className="fd-h1">
-                Unternehmen verkaufen ohne Makler — <em>diskret und direkt.</em>
+                Wir finden den richtigen Nachfolger — <em>für Ihr Lebenswerk.</em>
               </h1>
               <p className="fd-sub">
-                Wir stellen Ihr Unternehmen vertraulich geprüften Käufern aus unserem
-                DACH-Netzwerk vor. Sie bleiben anonym, bis Sie selbst entscheiden. Keine
-                Erfolgsprovision.
+                Die diskrete Plattform für Unternehmensnachfolge im Mittelstand. Wir bringen
+                geprüfte Käufer an den Tisch und begleiten die Finanzierung — ohne Makler,
+                0 % Provision. So behalten Sie mehr von Ihrem Verkaufspreis.
               </p>
               <div className="fd-cta-row">
                 <Link href="/sell" className="fd-btn fd-btn-cta">Unternehmen einreichen →</Link>
@@ -191,16 +190,16 @@ export default function Home() {
           </div>
         </header>
 
-        {/* PRESS */}
+        {/* FINANCING STRIP (replaces press strip) — financing routes for buyers */}
         <div className="fd-press">
           <div className="fd-wrap">
             <div className="fd-press-inner">
-              <span className="fd-press-label">Bekannt aus</span>
-              <span className="fd-press-logo">Handelsblatt</span>
-              <span className="fd-press-logo">Forbes</span>
-              <span className="fd-press-logo">Gründerszene</span>
-              <span className="fd-press-logo">manager&nbsp;magazin</span>
-              <span className="fd-press-logo">FAZ</span>
+              <span className="fd-press-label">Finanzierung für Käufer über</span>
+              <span className="fd-press-logo">KfW</span>
+              <span className="fd-press-logo">Bürgschaftsbanken</span>
+              <span className="fd-press-logo">Sparkassen</span>
+              <span className="fd-press-logo">Volksbanken</span>
+              <span className="fd-press-logo">Förderbanken</span>
             </div>
           </div>
         </div>
