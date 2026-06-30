@@ -6,8 +6,7 @@ import { usePathname } from "next/navigation";
 
 const LINKS = [
   { href: "/listings", label: "Auswahl" },
-  { href: "/unternehmenswert", label: "Bewertung" },
-  { href: "/kaeufer", label: "Für Käufer" },
+  { href: "/pricing", label: "Preise" },  { href: "/kaeufer", label: "Für Käufer" },
   { href: "/blog", label: "Blog" },
 ];
 
