@@ -111,14 +111,13 @@ export default function Home() {
         <header className="fd-hero">
           <div className="fd-wrap fd-hero-grid">
             <div className="fd-reveal">
-              <span className="fd-eyebrow">Nachfolge · Diskret · 0 % Provision</span>
+              <span className="fd-eyebrow">Unternehmensnachfolge · DACH</span>
               <h1 className="fd-h1">
-                Wir finden den richtigen Nachfolger — <em>für Ihr Lebenswerk.</em>
+                Unternehmen verkaufen — <em>diskret und ohne Makler.</em>
               </h1>
               <p className="fd-sub">
-                Die diskrete Plattform für Unternehmensnachfolge im Mittelstand. Wir bringen
-                geprüfte Käufer an den Tisch und begleiten die Finanzierung — ohne Makler,
-                0 % Provision. So behalten Sie mehr von Ihrem Verkaufspreis.
+                Stellen Sie Ihr Unternehmen vertraulich geprüften Käufern vor. Anonym bis
+                zum Abschluss, 0 % Provision, einmalig 87 €.
               </p>
               <div className="fd-cta-row">
                 <Link href="/sell" className="fd-btn fd-btn-cta">Unternehmen einreichen →</Link>
@@ -274,31 +273,6 @@ export default function Home() {
               <div className="fd-vitem"><div className="fd-bignum">0 %</div><p>Erfolgsprovision. Einmalig 87 € zum Inserieren — sonst nichts.</p></div>
               <div className="fd-vitem"><div className="fd-bignum">DE · AT · CH</div><p>Geprüftes Käufer-Netzwerk im gesamten DACH-Raum.</p></div>
               <div className="fd-vitem"><div className="fd-bignum">100 %</div><p>Anonym, bis Sie sich für ein Gespräch entscheiden.</p></div>
-            </div>
-          </div>
-        </section>
-
-        {/* TESTIMONIALS */}
-        <section className="fd-block">
-          <div className="fd-wrap">
-            <div className="fd-sec-head fd-center fd-reveal">
-              <span className="fd-eyebrow">Stimmen</span>
-              <h2 className="fd-h2">Was Unternehmer über Firmadeal sagen</h2>
-            </div>
-            <div className="fd-t-grid fd-reveal">
-              {TESTIMONIALS.map((t, i) => (
-                <div className="fd-tcard" key={i}>
-                  <div className="fd-stars">★★★★★</div>
-                  <p>{`„${t.quote}“`}</p>
-                  <div className="fd-tmeta">
-                    <div className="fd-tav">{t.initials}</div>
-                    <div>
-                      <div className="fd-tname">{t.name}</div>
-                      <div className="fd-trole">{t.role}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </section>
