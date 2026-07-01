@@ -894,7 +894,8 @@ function WizardShell() {
             {step === 3 && <Step3 />}
             {step === 4 && <Step4 />}
             {step === 5 && (authed ? <Step5 /> : <Step0Auth onComplete={() => setAuthed(true)} defaultEmail={leadEmail} />)}
-          </>$1$2}
+          </>
+          }
       </div>
     </div>
   );
