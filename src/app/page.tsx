@@ -90,24 +90,30 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const els = document.querySelectorAll<HTMLElement>(".fd-reveal");
+    const els = Array.from(document.querySelectorAll<HTMLElement>(".fd-reveal"));
+    const reveal = (el: Element) => el.classList.add("fd-in");
+    const vh = window.innerHeight || 800;
+    // Paint anything already at/near the fold immediately — no JS-dependent blank
+    els.forEach((el) => { if (el.getBoundingClientRect().top < vh * 1.1) reveal(el); });
     if (!("IntersectionObserver" in window)) {
-      els.forEach((el) => el.classList.add("fd-in"));
+      els.forEach(reveal);
       return;
     }
     const io = new IntersectionObserver(
       (entries: IntersectionObserverEntry[]) => {
         entries.forEach((e) => {
           if (e.isIntersecting) {
-            e.target.classList.add("fd-in");
+            reveal(e.target as Element);
             io.unobserve(e.target);
           }
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
     );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    els.forEach((el) => { if (!el.classList.contains("fd-in")) io.observe(el); });
+    // Failsafe: never leave content hidden if the observer stalls
+    const failsafe = window.setTimeout(() => els.forEach(reveal), 2500);
+    return () => { io.disconnect(); window.clearTimeout(failsafe); };
   }, []);
 
   return (
