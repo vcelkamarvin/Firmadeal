@@ -35,8 +35,8 @@ const LISTINGS: { cat: string; loc: string; title: string; umsatz: string; marge
 
 const STEPS: { n: string; h: string; p: string }[] = [
   { n: "1", h: "Vertraulich einreichen", p: "Eckdaten in wenigen Minuten anonym einreichen. Einmalig 87 € — keine Erfolgsprovision." },
-  { n: "2", h: "Wir suchen den Nachfolger", p: "Wir sprechen passende Käufer aus unserem Netzwerk gezielt an — Nachfolger, Family Offices, strategische Käufer." },
-  { n: "3", h: "Anonym kennenlernen", p: "Interessenten erreichen Sie direkt — Sie geben Details für jeden einzeln frei." },
+  { n: "2", h: "Wir matchen", p: "Wir stellen Ihr Unternehmen passenden Nachfolgern aus unserem geprüften Netzwerk vor — Unternehmer, Investoren, Family Offices." },
+  { n: "3", h: "Anonym in Kontakt", p: "Interessenten erreichen Sie direkt — Sie geben Details für jeden einzeln frei." },
   { n: "4", h: "Übergabe", p: "Due Diligence, Vertrag, Übergabe. Vom Kontakt bis zur Unterschrift behalten Sie das Steuer." },
 ];
 
@@ -47,10 +47,10 @@ const TESTIMONIALS: { quote: string; initials: string; name: string; role: strin
 
 const FAQ: { q: string; a: string }[] = [
   { q: "Wie findet Firmadeal den passenden Nachfolger?", a: "Wir gleichen Ihr Profil aktiv mit geprüften Käufern aus unserem DACH-Netzwerk ab — Investoren, Nachfolger und strategische Käufer — und stellen Ihr Unternehmen passenden Interessenten gezielt vor. Das ist mehr als nur ein Inserat. Eine Garantie für einen Abschluss ist es nicht: Das hängt von Branche, Preisvorstellung und Marktlage ab." },
-  { q: "Helfen Sie Nachfolgern bei der Finanzierung?", a: "Ja. Reicht das Eigenkapital für die Übernahme nicht, verbinden wir Käufer mit etablierten Finanzierungswegen — KfW, Bürgschaftsbanken sowie Haus- und Förderbanken. Wir sind selbst kein Kreditvermittler und vergeben keine Kredite; wir zeigen die Wege und stellen Kontakte her." },
+  { q: "Begleiten Sie auch die Finanzierung?", a: "Ja — Nachfolger unterstützen wir dabei, die Übernahme zu finanzieren. Wir verbinden sie mit etablierten Finanzierungswegen wie KfW, Bürgschaftsbanken sowie Haus- und Förderbanken. Wir sind selbst kein Kreditvermittler und vergeben keine Kredite; wir zeigen die Wege und stellen Kontakte her." },
   { q: "Gibt es eine Provision?", a: "Nein. Firmadeal arbeitet ohne Erfolgsprovision. Sie zahlen einmalig 87 € für das Inserat — kein Makler, keine versteckten Kosten. Beim Makler werden sonst 5–10 % des Verkaufspreises fällig." },
-  { q: "Bleibt mein Unternehmen anonym?", a: "Ja. Wir veröffentlichen weder Firmenname noch Standort, bis Sie es ausdrücklich freigeben. Sie entscheiden für jeden Interessenten einzeln." },
-  { q: "Wie lange dauert eine Nachfolge?", a: "Das hängt von Branche, Größe und Preisvorstellung ab. Erste qualifizierte Anfragen erreichen viele Inserenten in den ersten Wochen." },
+  { q: "Bleibt mein Inserat anonym?", a: "Ja. Wir veröffentlichen weder Firmenname noch Standort, bis Sie es ausdrücklich freigeben. Sie entscheiden für jeden Interessenten einzeln." },
+  { q: "Wie lange dauert ein Verkauf?", a: "Das hängt von Branche, Größe und Preisvorstellung ab. Erste qualifizierte Anfragen erreichen viele Inserenten in den ersten Wochen." },
   { q: "Welche Unterlagen brauche ich?", a: "Fürs Inserat genügen Eckdaten wie Branche, Region, Umsatz und EBITDA. Detaillierte Unterlagen teilen Sie erst nach einer NDA." },
   { q: "Warum sehe ich nur wenige öffentliche Inserate?", a: "Die meisten Mandate laufen vertraulich off-market und werden gezielt passenden Käufern vorgestellt — nicht öffentlich ausgeschrieben." },
 ];
@@ -127,21 +127,21 @@ export default function Home() {
             <div className="fd-reveal">
               <span className="fd-eyebrow">Unternehmensnachfolge · DACH</span>
               <h1 className="fd-h1">
-                Ihr Lebenswerk — <em>in die richtigen Hände übergeben.</em>
+                Übergeben Sie Ihr Lebenswerk <em>in gute Hände.</em>
               </h1>
               <p className="fd-sub">
-                Wir helfen Ihnen in Ruhe, den passenden Nachfolger zu finden — jemanden,
-                der weiterführt, was Sie aufgebaut haben. Aus einem Netzwerk geprüfter
-                Käufer. Anonym, 0 % Provision, einmalig 87 €.
+                Wir helfen Ihnen in aller Ruhe, den passenden Nachfolger zu finden —
+                aus einem geprüften Netzwerk. Vertraulich und anonym bis zum Abschluss.
+                0 % Provision, einmalig 87 €.
               </p>
               <div className="fd-cta-row">
                 <Link href="/sell" className="fd-btn fd-btn-cta">Nachfolger finden →</Link>
-                <Link href="/listings" className="fd-btn fd-btn-ghost">Unternehmen zur Übernahme ansehen</Link>
+                <Link href="/listings" className="fd-btn fd-btn-ghost">Unternehmen entdecken</Link>
               </div>
               <div className="fd-hero-trust">
                 <div className="fd-gbadge">
                   <span style={{ fontSize: 24, fontWeight: 700, color: "var(--fd-accent)", letterSpacing: "-0.03em" }}>40+</span>
-                  <span className="fd-gr">aktive Mandate<small>geprüfte Käufer im DACH-Raum</small></span>
+                  <span className="fd-gr">aktive Mandate<small>geprüfte Nachfolger im DACH-Raum</small></span>
                 </div>
                 <span className="fd-trust-text">0 % Provision · anonym bis zum Abschluss</span>
               </div>
@@ -195,12 +195,12 @@ export default function Home() {
                 </Link>
                 <div className="fd-disc">Indikative Schätzung · keine Finanzberatung · Marktdaten 2025</div>
               </div>
-              <div className="fd-hero-proof"><ShieldIcon /> Geprüfte Käufer im Netzwerk · diskret &amp; anonym bis zum Abschluss</div>
+              <div className="fd-hero-proof"><ShieldIcon /> Geprüfte Nachfolger im Netzwerk · diskret &amp; anonym bis zum Abschluss</div>
             </div>
           </div>
         </header>
 
-        {/* FINANCING STRIP — financing routes for successors (real institutions, informational) */}
+        {/* FINANCING STRIP — financing routes for buyers (real institutions, informational) */}
         <div className="fd-press">
           <div className="fd-wrap">
             <div className="fd-press-inner">
@@ -263,7 +263,7 @@ export default function Home() {
           <div className="fd-wrap">
             <div className="fd-sec-head fd-center fd-reveal">
               <span className="fd-eyebrow">So funktioniert&rsquo;s</span>
-              <h2 className="fd-h2">In vier Schritten zur Übergabe</h2>
+              <h2 className="fd-h2">In vier Schritten zur Nachfolge</h2>
             </div>
             <div className="fd-steps fd-reveal">
               {STEPS.map((s) => (
@@ -282,11 +282,11 @@ export default function Home() {
           <div className="fd-wrap">
             <div className="fd-sec-head fd-reveal">
               <span className="fd-eyebrow fd-eyebrow-light">Warum Firmadeal</span>
-              <h2 className="fd-h2 fd-h2-light">Die richtige Nachfolge — in Ruhe und ohne Provision.</h2>
+              <h2 className="fd-h2 fd-h2-light">Der richtige Nachfolger. Volle Kontrolle. Keine versteckten Kosten.</h2>
             </div>
             <div className="fd-stats3 fd-reveal">
               <div className="fd-vitem"><div className="fd-bignum">0 %</div><p>Erfolgsprovision. Einmalig 87 € zum Inserieren — sonst nichts.</p></div>
-              <div className="fd-vitem"><div className="fd-bignum">DE · AT · CH</div><p>Geprüftes Käufer-Netzwerk im gesamten DACH-Raum.</p></div>
+              <div className="fd-vitem"><div className="fd-bignum">DE · AT · CH</div><p>Geprüftes Netzwerk aus Nachfolgern im gesamten DACH-Raum.</p></div>
               <div className="fd-vitem"><div className="fd-bignum">100 %</div><p>Anonym, bis Sie sich für ein Gespräch entscheiden.</p></div>
             </div>
           </div>
@@ -316,7 +316,7 @@ export default function Home() {
         <section className="fd-block fd-final">
           <div className="fd-wrap">
             <span className="fd-eyebrow fd-eyebrow-cta">Bereit?</span>
-            <h2 className="fd-h2 fd-h2-light">Regeln Sie Ihre Nachfolge — in aller Ruhe.</h2>
+            <h2 className="fd-h2 fd-h2-light">Finden Sie den richtigen Nachfolger — vertraulich.</h2>
             <p className="fd-final-p">Einmalig 87 € · Anonym · 0 % Provision · Kein Makler</p>
             <div className="fd-cta-row fd-center-row">
               <Link href="/sell" className="fd-btn fd-btn-cta">Nachfolger finden →</Link>
