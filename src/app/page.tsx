@@ -62,6 +62,7 @@ export default function Home() {
   const [ebitda, setEbitda] = useState<number>(120000);
   const [openFaq, setOpenFaq] = useState<number>(0);
   const [listings, setListings] = useState<Listing[]>([]);
+  const [showBar, setShowBar] = useState<boolean>(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -80,6 +81,13 @@ export default function Home() {
   const result = m
     ? `${fmt((ebitda * (m - 0.5)) / 1000)}k – ${fmt((ebitda * (m + 0.5)) / 1000)}k €`
     : "Branche wählen";
+
+  useEffect(() => {
+    const onScroll = () => setShowBar(window.scrollY > 480);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const els = document.querySelectorAll<HTMLElement>(".fd-reveal");
@@ -309,6 +317,14 @@ export default function Home() {
             </div>
           </div>
         </section>
+      {showBar && (
+          <div className="fd-mobilebar">
+            <Link href="/sell" className="fd-mobilebar-btn">
+              Unternehmen einreichen
+              <span className="fd-mobilebar-note">Einmalig 87 € · 0 % Provision</span>
+            </Link>
+          </div>
+        )}
       </div>
     </>
   );
@@ -454,4 +470,13 @@ const cssString = `
 .fd-press-logo{animation:fd-breathe 5s ease-in-out infinite;}
 .fd-press-logo:nth-child(3){animation-delay:.5s}.fd-press-logo:nth-child(4){animation-delay:1s}.fd-press-logo:nth-child(5){animation-delay:1.5s}.fd-press-logo:nth-child(6){animation-delay:2s}.fd-press-logo:nth-child(7){animation-delay:2.5s}.fd-press-logo:nth-child(8){animation-delay:3s}.fd-press-logo:nth-child(9){animation-delay:3.5s}
 @media(prefers-reduced-motion:reduce){.fd-reveal{opacity:1;transform:none;transition:none;}.fd-hero::before,.fd-btn-cta::after,.fd-press-logo{animation:none!important;}}
+.fd-mobilebar{display:none;}
+@media(max-width:768px){
+.fd-mobilebar{display:block;position:fixed;left:0;right:0;bottom:0;z-index:120;background:rgba(255,255,255,.93);backdrop-filter:saturate(160%) blur(10px);-webkit-backdrop-filter:saturate(160%) blur(10px);border-top:1px solid var(--fd-border);padding:10px 16px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -6px 22px -10px rgba(13,31,23,.3);animation:fd-barup .28s cubic-bezier(.16,1,.3,1) both;}
+.fd-mobilebar-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;background:var(--fd-cta);color:#fff;border-radius:12px;padding:11px 16px;font-size:16px;font-weight:700;text-decoration:none;line-height:1.15;box-shadow:0 6px 18px -6px rgba(22,163,74,.5);}
+.fd-mobilebar-note{font-size:11px;font-weight:500;opacity:.9;}
+.fd-home{padding-bottom:calc(74px + env(safe-area-inset-bottom));}
+}
+@keyframes fd-barup{from{transform:translateY(100%);}to{transform:translateY(0);}}
+@media(prefers-reduced-motion:reduce){.fd-mobilebar{animation:none;}}
 `;
