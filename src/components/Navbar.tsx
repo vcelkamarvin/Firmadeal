@@ -108,7 +108,7 @@ export default function Navbar() {
             </Link>
 
             {/* Primary CTA */}
-            <Link href="/sell" className="fd-nav-cta" style={{
+            <Link href="/sell" className="fd-nav-cta desktop-only" style={{
               background: "#1a3329", color: "white",
               padding: "0 18px", height: 40, borderRadius: 10,
               fontSize: 14, fontWeight: 700, textDecoration: "none",
@@ -124,7 +124,7 @@ export default function Navbar() {
               onClick={() => setMenuOpen(v => !v)}
               style={{
                 background: "none", border: "none", cursor: "pointer",
-                width: 40, height: 40, display: "flex",
+                width: 44, height: 44, display: "flex",
                 alignItems: "center", justifyContent: "center",
                 borderRadius: 8, flexShrink: 0, color: "#333",
               }}
@@ -154,7 +154,7 @@ export default function Navbar() {
             background: "white",
             zIndex: 199,
             overflowY: "auto",
-            padding: "12px 20px 28px",
+            padding: "12px 20px calc(28px + env(safe-area-inset-bottom))",
             display: "flex",
             flexDirection: "column",
           }}
