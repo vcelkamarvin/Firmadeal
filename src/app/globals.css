@@ -651,3 +651,32 @@ input, select, textarea {
   scrollbar-width: none;
 }
 .testimonials-scroll::-webkit-scrollbar { display: none; }
+
+
+/* ─── MOBILE CRO PASS (2026-07) — additive homepage + wizard overrides ─── */
+
+/* Homepage hero + final CTA: full-width, stacked CTAs on mobile (bigger tap targets) */
+@media (max-width: 768px) {
+  .fd-cta-row { flex-direction: column !important; gap: 10px !important; }
+  .fd-cta-row .fd-btn { width: 100% !important; padding: 15px 22px !important; }
+  .fd-wrap { padding-left: 18px !important; padding-right: 18px !important; }
+}
+
+/* Homepage hero paints immediately (no opacity:0-until-JS) -> better mobile LCP. */
+.fd-hero .fd-reveal {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: fd-hero-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes fd-hero-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fd-hero .fd-reveal { animation: none !important; }
+}
+
+/* Sell wizard step 1: keep the 6 transaction-type cards 2-up on small phones. */
+@media (max-width: 400px) {
+  .wizard-op-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
