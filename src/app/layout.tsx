@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import "./ui-refresh.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -16,26 +15,26 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Firmadeal.de — Unternehmen verkaufen ohne Makler",
+    default: "Firmadeal.de — Unternehmensnachfolge: den richtigen Nachfolger finden",
     template: "%s | Firmadeal.de",
   },
   description:
-    "Diskreter Unternehmensverkauf mit privatem Investoren-Netzwerk. Anonym, 0% Provision, €87 einmalig — keine öffentliche Ausschreibung ohne Ihre Freigabe.",
+    "Übergeben Sie Ihr Lebenswerk in die richtigen Hände. Firmadeal hilft Ihnen diskret, den passenden Nachfolger zu finden — aus einem Netzwerk geprüfter Käufer. Nachfolgern helfen wir beim Zugang zu Übernahmefinanzierung. Ohne Makler, 0 % Provision, €87 einmalig.",
   keywords: [
+    "Unternehmensnachfolge",
+    "Nachfolger finden",
+    "Nachfolge Unternehmen",
+    "Betriebsübergabe",
+    "Unternehmen übergeben",
+    "Unternehmen übernehmen",
+    "Nachfolge ohne Makler",
+    "Übernahmefinanzierung",
     "Firma verkaufen",
     "Unternehmen verkaufen",
     "Unternehmensverkauf ohne Makler",
-    "Firma verkaufen Deutschland",
-    "Betrieb verkaufen",
-    "Nachfolger finden",
-    "Unternehmensübertragung",
-    "Firma verkaufen Bayern",
-    "Unternehmen kaufen Deutschland",
-    "Firmadeal",
     "GmbH verkaufen",
-    "Mittelstand verkaufen",
-    "Unternehmensnachfolge",
-    "Betriebsübergabe",
+    "Mittelstand Nachfolge",
+    "Firmadeal",
   ],
   robots: {
     index: true,
@@ -49,8 +48,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Firmadeal.de — Unternehmen verkaufen ohne Makler | Deutschland",
-    description: "Diskreter Unternehmensverkauf mit privatem Investoren-Netzwerk. Anonym, 0% Provision, €87 einmalig.",
+    title: "Firmadeal.de — Unternehmensnachfolge: den richtigen Nachfolger finden",
+    description: "Ihr Lebenswerk in die richtigen Hände: diskret den passenden Nachfolger finden — Netzwerk geprüfter Käufer, Finanzierungshilfe für Nachfolger. Ohne Makler, 0 % Provision.",
     url: "https://www.firmadeal.de",
     siteName: "Firmadeal.de",
     locale: "de_DE",
@@ -59,13 +58,13 @@ export const metadata: Metadata = {
       url: "https://www.firmadeal.de/opengraph-image.png",
       width: 1200,
       height: 630,
-      alt: "Firmadeal — Unternehmen verkaufen ohne Makler",
+      alt: "Firmadeal — Unternehmensnachfolge, den richtigen Nachfolger finden",
     }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Firmadeal.de — Unternehmen verkaufen ohne Makler",
-    description: "Diskreter Unternehmensverkauf. Anonym, 0% Provision, €87 einmalig.",
+    title: "Firmadeal.de — Unternehmensnachfolge: den richtigen Nachfolger finden",
+    description: "Ihr Lebenswerk in die richtigen Hände. Diskret den passenden Nachfolger finden — ohne Makler, 0 % Provision.",
     images: ["https://www.firmadeal.de/opengraph-image.png"],
   },
   alternates: {
@@ -94,7 +93,7 @@ export default function RootLayout({
     "@type": "WebSite",
     name: "Firmadeal.de",
     url: "https://www.firmadeal.de",
-    description: "Deutscher Marktplatz für Unternehmensverkäufe",
+    description: "Marktplatz für Unternehmensnachfolge in Deutschland, Österreich und der Schweiz",
     potentialAction: {
       "@type": "SearchAction",
       target: "https://www.firmadeal.de/listings?q={search_term}",
@@ -108,7 +107,7 @@ export default function RootLayout({
     name: "Firmadeal.de",
     url: "https://www.firmadeal.de",
     logo: "https://www.firmadeal.de/logo.png",
-    description: "Unternehmensmarktplatz für Deutschland — Unternehmen kaufen und verkaufen ohne Provision.",
+    description: "Marktplatz für Unternehmensnachfolge in DACH — Nachfolger finden, Unternehmen übergeben und übernehmen, ohne Provision.",
     contactPoint: {
       "@type": "ContactPoint",
       email: "info@firmadeal.de",
@@ -123,16 +122,16 @@ export default function RootLayout({
       <head>
         {/* GA4 Consent Mode v2 defaults — must run before gtag.js loads */}
         <script dangerouslySetInnerHTML={{ __html: `
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('consent', 'default', {
-  'analytics_storage': 'denied',
-  'ad_storage': 'denied',
-  'ad_user_data': 'denied',
-  'ad_personalization': 'denied',
-  'wait_for_update': 500
-});
-`}} />
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('consent', 'default', {
+            'analytics_storage': 'denied',
+            'ad_storage': 'denied',
+            'ad_user_data': 'denied',
+            'ad_personalization': 'denied',
+            'wait_for_update': 500
+          });
+        `}} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}

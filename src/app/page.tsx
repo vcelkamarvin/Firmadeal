@@ -1,488 +1,938 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { createClient } from "@/lib/supabase";
+import { useState, useMemo, useEffect } from "react";
+import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import ListingCard from "@/components/ListingCard";
 import ListingGridCard from "@/components/ListingGridCard";
+import { CATEGORIES } from "@/lib/types";
 import type { Listing } from "@/lib/types";
+import { createClient } from "@/lib/supabase";
+import Link from "next/link";
+import type { BusinessStatus } from "@/lib/types";
+import ValuationCalculator from "@/components/ValuationCalculator";
+import KaufgesucheSection from "@/components/KaufgesucheSection";
 
-/* ──────────────────────────────────────────────────────────────────────────
-   Firmadeal — Homepage (redesign, succession + financial repositioning)
-   Self-contained client component. Navbar/Footer/SEO metadata come from
-   layout.tsx and are intentionally NOT rendered here.
-   Listings section uses live Supabase data (real photos) via ListingGridCard.
-   ────────────────────────────────────────────────────────────────────────── */
+// ── Constants ──────────────────────────────────────────────────────────────────
 
-const SECTORS: { label: string; m: number }[] = [
-  { label: "Branche wählen…", m: 0 },
-  { label: "Gastronomie", m: 2.6 },
-  { label: "IT & Software", m: 4.6 },
-  { label: "Handwerk", m: 3.0 },
-  { label: "Gesundheit", m: 4.1 },
-  { label: "E-Commerce", m: 3.6 },
-  { label: "Produktion", m: 3.8 },
-  { label: "Dienstleistungen", m: 3.3 },
+const BIZ_TYPES = ["Handwerksbetrieb", "Gastronomiebetrieb", "IT-Unternehmen", "Produktionsbetrieb", "Dienstleister", "Online-Business"];
+
+const ANON_LISTINGS = [
+  { id: 1, cat: "Gastronomie",   city: "München",   revenue: "€420k", ebitda: "€85k",  price: "€280k",       emp: 8,  years: 12 },
+  { id: 2, cat: "IT & Software", city: "Hamburg",   revenue: "€680k", ebitda: "€190k", price: "€1,1M",       emp: 5,  years: 7  },
+  { id: 3, cat: "Handwerk",      city: "Berlin",    revenue: "€310k", ebitda: "€62k",  price: "€195k",       emp: 6,  years: 18 },
+  { id: 4, cat: "Einzelhandel",  city: "Frankfurt", revenue: "€520k", ebitda: "€78k",  price: "Auf Anfrage", emp: 12, years: 9  },
 ];
 
-const LISTINGS: { cat: string; loc: string; title: string; umsatz: string; marge: string; price: string }[] = [
-  { cat: "IT & Tech", loc: "Hannover · Niedersachsen", title: "SEO-Agentur mit 18 Retainer-Kunden", umsatz: "620k €", marge: "35 %", price: "825k €" },
-  { cat: "Gastronomie", loc: "Hamburg", title: "Etablierter Biergarten mit direkter Wasserlage", umsatz: "920k €", marge: "23 %", price: "480k €" },
-  { cat: "Dienstleistungen", loc: "Hannover · Niedersachsen", title: "Unternehmensberatung für KMU mit Industriefokus", umsatz: "850k €", marge: "25 %", price: "680k €" },
-  { cat: "Finanzen", loc: "Bielefeld · NRW", title: "Buchhaltungs- & Lohnbüro mit digitaler Struktur", umsatz: "320k €", marge: "30 %", price: "285k €" },
-  { cat: "Gesundheit", loc: "Leipzig · Sachsen", title: "Naturkosmetik Leipzig – Bio-zertifiziert", umsatz: "115k €", marge: "18 %", price: "42k €" },
-  { cat: "Medien", loc: "Rostock · MV", title: "Werbeagentur und Druckerei in Rostock", umsatz: "650k €", marge: "4 %", price: "95k €" },
-];
+const CAT_PILLS = ["Alle", "Gastronomie", "IT & Software", "Handwerk", "Einzelhandel", "Produktion", "Dienstleistung"];
 
-const STEPS: { n: string; h: string; p: string }[] = [
-  { n: "1", h: "Vertraulich einreichen", p: "Eckdaten in wenigen Minuten anonym einreichen. Einmalig 87 € — keine Erfolgsprovision." },
-  { n: "2", h: "Wir matchen", p: "Wir sprechen passende Käufer aus unserem Netzwerk gezielt an — Private Equity, Family Offices, Nachfolger." },
-  { n: "3", h: "Anonym in Kontakt", p: "Interessenten erreichen Sie direkt — Sie geben Details für jeden einzeln frei." },
-  { n: "4", h: "Abschluss", p: "Due Diligence, Vertrag, Übergabe. Vom Kontakt bis zur Unterschrift behalten Sie das Steuer." },
-];
+// ── Inline catalog ─────────────────────────────────────────────────────────────
 
-const TESTIMONIALS: { quote: string; initials: string; name: string; role: string }[] = [
-  { quote: "Innerhalb von zwei Wochen drei ernsthafte Anfragen — ganz ohne Makler und ohne dass mein Firmenname öffentlich wurde.", initials: "MK", name: "Michael K.", role: "Maschinenbau · Bayern" },
-  { quote: "Die Anonymität war für mich entscheidend. Meine Mitarbeiter sollten nichts mitbekommen — das hat einwandfrei funktioniert.", initials: "SB", name: "Sabine B.", role: "Dienstleistung · NRW" },
-];
-
-const FAQ: { q: string; a: string }[] = [
-  { q: "Wie findet Firmadeal den passenden Nachfolger?", a: "Wir gleichen Ihr Profil aktiv mit geprüften Käufern aus unserem DACH-Netzwerk ab — Investoren, Nachfolger und strategische Käufer — und stellen Ihr Unternehmen passenden Interessenten gezielt vor. Das ist mehr als nur ein Inserat. Eine Garantie für einen Abschluss ist es nicht: Das hängt von Branche, Preisvorstellung und Marktlage ab." },
-  { q: "Begleiten Sie auch die Finanzierung?", a: "Wir verbinden Käufer mit etablierten Finanzierungswegen — KfW, Bürgschaftsbanken sowie Haus- und Förderbanken. Wir sind selbst kein Kreditvermittler und vergeben keine Kredite; wir zeigen die Wege und stellen Kontakte her." },
-  { q: "Gibt es eine Provision?", a: "Nein. Firmadeal arbeitet ohne Erfolgsprovision. Sie zahlen einmalig 87 € für das Inserat — kein Makler, keine versteckten Kosten. Beim Makler werden sonst 5–10 % des Verkaufspreises fällig." },
-  { q: "Bleibt mein Inserat anonym?", a: "Ja. Wir veröffentlichen weder Firmenname noch Standort, bis Sie es ausdrücklich freigeben. Sie entscheiden für jeden Interessenten einzeln." },
-  { q: "Wie lange dauert ein Verkauf?", a: "Das hängt von Branche, Größe und Preisvorstellung ab. Erste qualifizierte Anfragen erreichen viele Inserenten in den ersten Wochen." },
-  { q: "Welche Unterlagen brauche ich?", a: "Fürs Inserat genügen Eckdaten wie Branche, Region, Umsatz und EBITDA. Detaillierte Unterlagen teilen Sie erst nach einer NDA." },
-  { q: "Warum sehe ich nur wenige öffentliche Inserate?", a: "Die meisten Mandate laufen vertraulich off-market und werden gezielt passenden Käufern vorgestellt — nicht öffentlich ausgeschrieben." },
-];
-
-const fmt = (n: number) => new Intl.NumberFormat("de-DE").format(Math.round(n));
-
-export default function Home() {
-  const [sector, setSector] = useState<number>(0);
-  const [ebitda, setEbitda] = useState<number>(120000);
-  const [openFaq, setOpenFaq] = useState<number>(0);
+function InlineCatalog({ lang }: { lang: string }) {
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState("");
+  const [priceMax, setPriceMax] = useState("");
+  const [status, setStatus] = useState<BusinessStatus | "">("");
+  const [sort, setSort] = useState("newest");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [listings, setListings] = useState<Listing[]>([]);
-  const [showBar, setShowBar] = useState<boolean>(false);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase
+    createClient()
       .from("listings")
       .select("*")
       .eq("status", "active")
       .order("created_at", { ascending: false })
-      .limit(12)
-      .then(({ data }) => {
-        if (data) setListings(data);
-      });
+      .limit(200)
+      .then(({ data }) => { if (data) setListings(data); });
   }, []);
 
-  const m = SECTORS[sector].m;
-  const result = m
-    ? `${fmt((ebitda * (m - 0.5)) / 1000)}k – ${fmt((ebitda * (m + 0.5)) / 1000)}k €`
-    : "Branche wählen";
-
-  useEffect(() => {
-    const onScroll = () => setShowBar(window.scrollY > 480);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    const els = Array.from(document.querySelectorAll<HTMLElement>(".fd-reveal"));
-    const reveal = (el: Element) => el.classList.add("fd-in");
-    const vh = window.innerHeight || 800;
-    // Paint anything already at/near the fold immediately — no JS-dependent blank
-    els.forEach((el) => { if (el.getBoundingClientRect().top < vh * 1.1) reveal(el); });
-    if (!("IntersectionObserver" in window)) {
-      els.forEach(reveal);
-      return;
+  const filtered = useMemo(() => {
+    let list = [...listings];
+    if (q) {
+      const lq = q.toLowerCase();
+      list = list.filter((l) => l.title.toLowerCase().includes(lq) || l.city.toLowerCase().includes(lq) || l.category.toLowerCase().includes(lq));
     }
-    const io = new IntersectionObserver(
-      (entries: IntersectionObserverEntry[]) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            reveal(e.target as Element);
-            io.unobserve(e.target);
-          }
-        });
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
-    );
-    els.forEach((el) => { if (!el.classList.contains("fd-in")) io.observe(el); });
-    // Failsafe: never leave content hidden if the observer stalls
-    const failsafe = window.setTimeout(() => els.forEach(reveal), 2500);
-    return () => { io.disconnect(); window.clearTimeout(failsafe); };
-  }, []);
+    if (cat)      list = list.filter((l) => l.category === cat);
+    if (status)   list = list.filter((l) => l.status_business === status);
+    if (priceMax) list = list.filter((l) => l.price_confidential || (l.asking_price !== null && l.asking_price <= parseInt(priceMax) * 1000));
+
+    switch (sort) {
+      case "price_asc":  list.sort((a, b) => (a.asking_price ?? Infinity) - (b.asking_price ?? Infinity)); break;
+      case "price_desc": list.sort((a, b) => (b.asking_price ?? -Infinity) - (a.asking_price ?? -Infinity)); break;
+      case "popular":    list.sort((a, b) => b.views_count - a.views_count); break;
+      default:           list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+    return list;
+  }, [q, cat, status, priceMax, sort, listings]);
+
+  const shown = filtered.slice(0, 12);
+  const hasMore = filtered.length > 12;
+  const hasFilters = q || cat || status || priceMax;
+
+  const EmptyState = () => (
+    <div className="py-16 text-center max-w-lg mx-auto px-4">
+      <div className="text-4xl mb-4">🔒</div>
+      <h3 className="font-sans text-[18px] font-bold text-[var(--ink)] mb-3">
+        {lang === "de" ? "Die meisten Mandate sind vertraulich" : "Most mandates are confidential"}
+      </h3>
+      <p className="font-sans text-[14px] text-[var(--muted)] leading-relaxed mb-6">
+        {lang === "de"
+          ? "Aus Diskretionsgründen zeigen wir nur einen kleinen, kuratierten Teil unserer Mandate öffentlich. Suchen Sie etwas Bestimmtes? Hinterlegen Sie Ihr Suchprofil — wir melden uns, sobald ein passendes Unternehmen verfügbar ist."
+          : "For discretion reasons, only a small curated portion of our mandates are shown publicly. Looking for something specific? Leave your search profile and we'll reach out when a match becomes available."}
+      </p>
+      <Link
+        href="/sell"
+        className="inline-flex items-center justify-center gap-2 bg-[var(--accent)] text-white font-sans font-bold px-6 py-3 rounded-xl hover:bg-[var(--accent-hover)] transition-colors text-[14px]"
+      >
+        {lang === "de" ? "Unternehmen vertraulich einreichen" : "Submit your business confidentially"}
+      </Link>
+    </div>
+  );
 
   return (
-    <>
-      <style>{cssString}</style>
-
-      <div className="fd-home">
-        {/* HERO */}
-        <header className="fd-hero">
-          <div className="fd-wrap fd-hero-grid">
-            <div className="fd-reveal">
-              <span className="fd-eyebrow">Unternehmensnachfolge · DACH</span>
-              <h1 className="fd-h1">
-                Unternehmen verkaufen — <em>diskret und ohne Makler.</em>
-              </h1>
-              <p className="fd-sub">
-                Stellen Sie Ihr Unternehmen vertraulich geprüften Käufern vor. Anonym bis
-                zum Abschluss, 0 % Provision, einmalig 87 €.
-              </p>
-              <div className="fd-cta-row">
-                <Link href="/sell" className="fd-btn fd-btn-cta">Unternehmen einreichen →</Link>
-                <Link href="/listings" className="fd-btn fd-btn-ghost">Angebote ansehen</Link>
-              </div>
-              <div className="fd-hero-trust">
-                <div className="fd-gbadge">
-                  <span style={{ fontSize: 24, fontWeight: 700, color: "var(--fd-accent)", letterSpacing: "-0.03em" }}>40+</span>
-                  <span className="fd-gr">aktive Mandate<small>geprüfte Käufer im DACH-Raum</small></span>
-                </div>
-                <span className="fd-trust-text">0 % Provision · anonym bis zum Abschluss</span>
-              </div>
-              <div className="fd-pills">
-                <span className="fd-pill"><CheckIcon /> 0 % Erfolgsprovision</span>
-                <span className="fd-pill"><LockIcon /> Anonym bis zum Abschluss</span>
-              </div>
-            </div>
-
-            <div className="fd-hero-visual fd-reveal">
-              {/* Working valuation calculator — hero centerpiece */}
-              <div className="fd-calc" id="bewertung">
-                <div className="fd-calc-h">
-                  <span className="fd-calc-t">Kostenlose Bewertung</span>
-                  <span className="fd-calc-free">60 Sek. · ohne Anmeldung</span>
-                </div>
-                <h3 className="fd-calc-title">Was ist Ihr Unternehmen wert?</h3>
-                <div className="fd-field">
-                  <label htmlFor="fd-branche">Branche</label>
-                  <select
-                    id="fd-branche"
-                    value={sector}
-                    onChange={(e) => setSector(Number(e.target.value))}
-                  >
-                    {SECTORS.map((s, i) => (
-                      <option key={i} value={i}>{s.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="fd-field">
-                  <div className="fd-ebrow">
-                    <label htmlFor="fd-ebitda">EBITDA / Jahresgewinn</label>
-                    <span className="fd-eval">{fmt(ebitda)} €</span>
-                  </div>
-                  <input
-                    id="fd-ebitda"
-                    type="range"
-                    min={20000}
-                    max={2000000}
-                    step={10000}
-                    value={ebitda}
-                    onChange={(e) => setEbitda(Number(e.target.value))}
-                  />
-                </div>
-                <div className="fd-calc-out">
-                  <span className="fd-calc-lbl">Indikativer Unternehmenswert</span>
-                  <span className="fd-calc-num">{result}</span>
-                </div>
-                <Link href="/sell" className="fd-btn fd-btn-cta fd-calc-go">
-                  Genaue Bewertung erhalten →
-                </Link>
-                <div className="fd-disc">Indikative Schätzung · keine Finanzberatung · Marktdaten 2025</div>
-              </div>
-              <div className="fd-hero-proof"><ShieldIcon /> Geprüfte Käufer im Netzwerk · diskret &amp; anonym bis zum Abschluss</div>
-            </div>
+    <section id="listings" className="bg-[var(--bg)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        {/* Section header */}
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+          <div>
+            <p className="font-sans text-[11px] font-bold text-[var(--accent)] uppercase tracking-[0.2em] mb-1">
+              {lang === "de" ? "Kuratierte Auswahl" : "Curated selection"}
+            </p>
+            <h2 className="font-sans text-[24px] font-bold text-[var(--ink)] tracking-tight">
+              {lang === "de" ? "Öffentliche Mandate" : "Public mandates"}
+            </h2>
           </div>
-        </header>
-
-        {/* FINANCING STRIP — financing routes for buyers (real institutions, informational) */}
-        <div className="fd-press">
-          <div className="fd-wrap">
-            <div className="fd-press-inner">
-              <span className="fd-press-label">Finanzierung für Käufer über</span>
-              <span className="fd-press-logo">KfW</span>
-              <span className="fd-press-logo">Sparkassen</span>
-              <span className="fd-press-logo">Volksbanken</span>
-              <span className="fd-press-logo">Bürgschaftsbanken</span>
-              <span className="fd-press-logo">Commerzbank</span>
-              <span className="fd-press-logo">Deutsche&nbsp;Bank</span>
-              <span className="fd-press-logo">ING</span>
-              <span className="fd-press-logo">DZ&nbsp;Bank</span>
-              <span className="fd-press-logo">Förderbanken</span>
+          <div className="flex items-center gap-3">
+            <div style={{ display: "flex", gap: 4 }}>
+              <button
+                onClick={() => setViewMode("grid")}
+                aria-label="Kachelansicht"
+                aria-pressed={viewMode === "grid"}
+                title="Kachelansicht"
+                style={{ width: 34, height: 34, borderRadius: 6, border: "1px solid #e5e5e5", background: viewMode === "grid" ? "#2d5a3d" : "transparent", color: viewMode === "grid" ? "white" : "#888", cursor: "pointer", fontSize: 16 }}
+              >⊞</button>
+              <button
+                onClick={() => setViewMode("list")}
+                aria-label="Listenansicht"
+                aria-pressed={viewMode === "list"}
+                title="Listenansicht"
+                style={{ width: 34, height: 34, borderRadius: 6, border: "1px solid #e5e5e5", background: viewMode === "list" ? "#2d5a3d" : "transparent", color: viewMode === "list" ? "white" : "#888", cursor: "pointer", fontSize: 16 }}
+              >☰</button>
             </div>
+            <Link href="/sell" className="font-sans text-[13px] font-semibold text-[var(--accent)] hover:underline">
+              {lang === "de" ? "Unternehmen vertraulich einreichen" : "Submit your business"}
+            </Link>
           </div>
         </div>
 
-        {/* LISTINGS — live Supabase data (real photos) with example fallback */}
-        <section className="fd-block" id="listings">
-          <div className="fd-wrap">
-            <div className="fd-sec-head fd-row fd-reveal">
-              <div>
-                <span className="fd-eyebrow">Kuratierte Auswahl</span>
-                <h2 className="fd-h2">Unternehmen, die gerade verkauft werden</h2>
-                <p className="fd-sec-p">Ein öffentlicher Auszug. Die meisten Mandate laufen vertraulich off-market.</p>
+        {/* Filter bar */}
+        <div className="bg-white border border-[var(--border)] rounded-xl p-4 mb-1">
+          <input
+            type="text"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={lang === "de" ? "Suchen..." : "Search..."}
+            className="w-full px-3 py-2.5 mb-3 font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)]"
+          />
+          <div className="flex flex-wrap gap-2 items-center">
+            <select value={cat} onChange={(e) => setCat(e.target.value)} className="flex-1 min-w-[120px] px-3 py-2 font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white">
+              <option value="">{lang === "de" ? "Alle Branchen" : "All industries"}</option>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={sort} onChange={(e) => setSort(e.target.value)} className="flex-1 min-w-[100px] px-3 py-2 font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white">
+              <option value="newest">{lang === "de" ? "Neueste" : "Newest"}</option>
+              <option value="price_asc">{lang === "de" ? "Preis ↑" : "Price ↑"}</option>
+              <option value="price_desc">{lang === "de" ? "Preis ↓" : "Price ↓"}</option>
+              <option value="popular">{lang === "de" ? "Beliebteste" : "Most viewed"}</option>
+            </select>
+            <button
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className={`flex items-center gap-2 px-3 py-2 font-sans border rounded-lg transition-colors whitespace-nowrap ${filtersOpen ? "border-[var(--accent)] bg-[var(--accent-light)] text-[var(--accent)]" : "border-[var(--border)] text-[var(--muted)]"}`}
+            >
+              <SlidersHorizontal size={14} />
+              <span className="hidden sm:inline">{lang === "de" ? "Mehr Filter" : "More filters"}</span>
+            </button>
+            {hasFilters && (
+              <button onClick={() => { setQ(""); setCat(""); setStatus(""); setPriceMax(""); }} className="flex items-center gap-1 font-mono text-[11px] text-[var(--muted)] hover:text-[var(--red)]">
+                <X size={12} /> {lang === "de" ? "Reset" : "Reset"}
+              </button>
+            )}
+          </div>
+          {filtersOpen && (
+            <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-[var(--border)]">
+              <select value={status} onChange={(e) => setStatus(e.target.value as BusinessStatus | "")} className="px-3 py-2 text-sm font-sans border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)] bg-white">
+                <option value="">{lang === "de" ? "Alle Status" : "All statuses"}</option>
+                <option value="active_profitable">{lang === "de" ? "Aktiv & Profitabel" : "Active & Profitable"}</option>
+                <option value="in_development">{lang === "de" ? "In Entwicklung" : "In development"}</option>
+                <option value="restructuring">{lang === "de" ? "Sanierungsbedarf" : "Needs restructuring"}</option>
+              </select>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[11px] text-[var(--muted)]">{lang === "de" ? "Max. Preis" : "Max price"}</span>
+                <input type="number" value={priceMax} onChange={(e) => setPriceMax(e.target.value)} placeholder="T€" className="w-24 px-3 py-2 text-sm font-mono border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent)]" />
               </div>
-              <Link href="/listings" className="fd-link-more">Alle Angebote ansehen →</Link>
             </div>
-            <div className="fd-grid fd-reveal">
-              {listings.length > 0
-                ? listings.slice(0, 12).map((l, i) => (
-                    <ListingGridCard key={l.id} listing={l} priority={i < 3} />
-                  ))
-                : LISTINGS.map((l, i) => (
-                    <Link href="/listings" key={i} className="fd-card">
-                      <div className={`fd-card-top fd-grad-${i % 4}`}>
-                        <span className="fd-card-cat">{l.cat}</span>
-                        <span className="fd-card-eg">Beispiel</span>
-                        <span className="fd-card-loc">{l.loc}</span>
-                      </div>
-                      <div className="fd-card-body">
-                        <div className="fd-card-title">{l.title}</div>
-                        <div className="fd-card-stats">
-                          <div className="fd-stat"><div className="fd-stat-l">Umsatz</div><div className="fd-stat-v">{l.umsatz}</div></div>
-                          <div className="fd-stat"><div className="fd-stat-l">Marge</div><div className="fd-stat-v">{l.marge}</div></div>
-                        </div>
-                        <div className="fd-card-foot">
-                          <span className="fd-card-price">{l.price}</span>
-                          <span className="fd-card-go">Details →</span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-            </div>
-          </div>
-        </section>
+          )}
+        </div>
 
-        {/* HOW */}
-        <section className="fd-block fd-surface" id="how">
-          <div className="fd-wrap">
-            <div className="fd-sec-head fd-center fd-reveal">
-              <span className="fd-eyebrow">So funktioniert&rsquo;s</span>
-              <h2 className="fd-h2">In vier Schritten zum Abschluss</h2>
+        {/* Grid or list rendering */}
+        {viewMode === "grid" ? (
+          <>
+            {shown.length === 0 ? (
+              <EmptyState />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+                {shown.map((l, i) => <ListingGridCard key={l.id} listing={l} priority={i < 4} />)}
+              </div>
+            )}
+            {hasMore && (
+              <div className="text-center mt-8">
+                <Link href="/listings" className="inline-flex items-center gap-2 border border-[var(--accent)] text-[var(--accent)] font-sans font-semibold px-8 py-3 rounded-full hover:bg-[var(--accent)] hover:text-white transition-all">
+                  {lang === "de" ? `Alle ${filtered.length} ansehen →` : `View all ${filtered.length} →`}
+                </Link>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="hidden md:flex items-center gap-4 px-5 py-2">
+              <div className="w-14 flex-shrink-0" />
+              <div className="flex-1 font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">{lang === "de" ? "Unternehmen" : "Business"}</div>
+              <div className="w-[90px] text-right font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">{lang === "de" ? "Umsatz" : "Revenue"}</div>
+              <div className="w-[96px] font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">EBITDA</div>
+              <div className="w-[100px] text-right font-sans text-[10px] font-bold text-[var(--muted)] uppercase tracking-widest">{lang === "de" ? "Preis" : "Price"}</div>
+              <div className="w-[22px]" />
             </div>
-            <div className="fd-steps fd-reveal">
-              {STEPS.map((s) => (
-                <div className="fd-step" key={s.n}>
-                  <div className="fd-step-n">{s.n}</div>
-                  <h3 className="fd-step-h">{s.h}</h3>
-                  <p className="fd-step-p">{s.p}</p>
-                </div>
-              ))}
+            <div className="bg-white border border-[var(--border)] rounded-xl overflow-hidden">
+              {shown.length === 0 ? <EmptyState /> : shown.map((l) => <ListingCard key={l.id} listing={l} />)}
             </div>
-          </div>
-        </section>
-
-        {/* VALUE BAND */}
-        <section className="fd-block fd-valueband">
-          <div className="fd-wrap">
-            <div className="fd-sec-head fd-reveal">
-              <span className="fd-eyebrow fd-eyebrow-light">Warum Firmadeal</span>
-              <h2 className="fd-h2 fd-h2-light">Direkter Verkauf, volle Kontrolle, keine versteckten Kosten.</h2>
-            </div>
-            <div className="fd-stats3 fd-reveal">
-              <div className="fd-vitem"><div className="fd-bignum">0 %</div><p>Erfolgsprovision. Einmalig 87 € zum Inserieren — sonst nichts.</p></div>
-              <div className="fd-vitem"><div className="fd-bignum">DE · AT · CH</div><p>Geprüftes Käufer-Netzwerk im gesamten DACH-Raum.</p></div>
-              <div className="fd-vitem"><div className="fd-bignum">100 %</div><p>Anonym, bis Sie sich für ein Gespräch entscheiden.</p></div>
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section className="fd-block fd-surface">
-          <div className="fd-wrap">
-            <div className="fd-sec-head fd-center fd-reveal">
-              <span className="fd-eyebrow">FAQ</span>
-              <h2 className="fd-h2">Häufige Fragen</h2>
-            </div>
-            <div className="fd-faq fd-reveal">
-              {FAQ.map((f, i) => (
-                <div className={`fd-faq-item${openFaq === i ? " fd-open" : ""}`} key={i}>
-                  <button className="fd-faq-q" onClick={() => setOpenFaq(openFaq === i ? -1 : i)}>
-                    {f.q}<span className="fd-ic">+</span>
-                  </button>
-                  <div className="fd-faq-a">{f.a}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* FINAL CTA */}
-        <section className="fd-block fd-final">
-          <div className="fd-wrap">
-            <span className="fd-eyebrow fd-eyebrow-cta">Bereit?</span>
-            <h2 className="fd-h2 fd-h2-light">Starten Sie vertraulich — in wenigen Minuten.</h2>
-            <p className="fd-final-p">Einmalig 87 € · Anonym · 0 % Provision · Kein Makler</p>
-            <div className="fd-cta-row fd-center-row">
-              <Link href="/sell" className="fd-btn fd-btn-cta">Unternehmen einreichen →</Link>
-              <Link href="/pricing" className="fd-btn fd-btn-ghost fd-btn-ghost-dark">Preise ansehen</Link>
-            </div>
-          </div>
-        </section>
-      {showBar && (
-          <div className="fd-mobilebar">
-            <Link href="/sell" className="fd-mobilebar-btn">
-              Unternehmen einreichen
-              <span className="fd-mobilebar-note">Einmalig 87 € · 0 % Provision</span>
-            </Link>
-          </div>
+            {hasMore && (
+              <div className="text-center mt-4">
+                <Link href="/listings" className="inline-flex items-center gap-2 border border-[var(--accent)] text-[var(--accent)] font-sans font-semibold px-8 py-3 rounded-full hover:bg-[var(--accent)] hover:text-white transition-all">
+                  {lang === "de" ? `Alle ${filtered.length} →` : `All ${filtered.length} →`}
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </div>
-    </>
+    </section>
   );
 }
 
-/* ── Inline icons (no external dependency) ───────────────────────────────── */
-function CheckIcon() {
-  return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>);
-}
-function LockIcon() {
-  return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><rect x="4" y="11" width="16" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>);
-}
-function ShieldIcon() {
-  return (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z" /><path d="M9 12l2 2 4-4" /></svg>);
+// ── Blog teaser ─────────────────────────────────────────────────────────────────
+
+const CATEGORY_COLORS: Record<string, string> = {
+  verkauf: "#2d5a3d", kauf: "#1d4ed8", bewertung: "#7c3aed", nachfolge: "#d97706", ratgeber: "#0891b2",
+};
+
+function BlogTeaser({ lang }: { lang: string }) {
+  const [posts, setPosts] = useState<{ id: string; slug: string; title: string; excerpt: string; category: string; reading_time_minutes: number }[]>([]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("blog_posts")
+      .select("id, slug, title, excerpt, category, reading_time_minutes")
+      .eq("published", true)
+      .order("published_at", { ascending: false })
+      .limit(3)
+      .then(({ data }) => { if (data) setPosts(data); });
+  }, []);
+
+  if (posts.length === 0) return null;
+
+  return (
+    <section className="bg-[var(--bg)] border-t border-[var(--border)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="flex items-end justify-between mb-8">
+          <div>
+            <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-1">
+              {lang === "de" ? "Wissen & Ratgeber" : "Guides & Knowledge"}
+            </p>
+            <h2 className="font-sans text-[24px] font-bold text-[var(--ink)] tracking-tight">
+              {lang === "de" ? "Aktuelle Ratgeber-Artikel" : "Latest guides"}
+            </h2>
+          </div>
+          <Link href="/blog" className="font-sans text-[13px] text-[var(--accent)] font-semibold hover:underline whitespace-nowrap">
+            {lang === "de" ? "Alle Artikel →" : "All articles →"}
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          {posts.map((post) => (
+            <Link key={post.id} href={`/blog/${post.slug}`} className="group bg-white border border-[var(--border)] rounded-xl overflow-hidden hover:shadow-md hover:border-[var(--accent)] transition-all flex flex-col">
+              <div className="h-1.5" style={{ background: CATEGORY_COLORS[post.category] ?? "#2d5a3d" }} />
+              <div className="p-5 flex flex-col flex-1">
+                <h3 className="font-sans text-[15px] font-bold text-[var(--ink)] leading-snug mb-2 group-hover:text-[var(--accent)] transition-colors flex-1">{post.title}</h3>
+                <p className="font-sans text-[12px] text-[var(--muted)] line-clamp-2 mb-3">{post.excerpt}</p>
+                <span className="font-sans text-[11px] text-[var(--muted)]">{post.reading_time_minutes} Min. Lesezeit</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
 
-/* ── Styles (scoped under .fd-home) ──────────────────────────────────────── */
-const cssString = `
-.fd-home{--fd-accent:#1a3329;--fd-accent2:#0d1f17;--fd-cta:#16a34a;--fd-cta-h:#128a3e;--fd-g50:#f2faf5;--fd-g100:#e8f5ed;--fd-g400:#6dbf87;--fd-g500:#4e9a66;--fd-g700:#2d5a3d;--fd-bg:#fafaf8;--fd-ink:#141414;--fd-muted:#777;--fd-n600:#555;--fd-n700:#2a2a2a;--fd-border:#e7e7e3;--fd-gold:#f5a623;--fd-r-sm:8px;--fd-r-md:12px;--fd-r-lg:18px;--fd-r-xl:26px;background:var(--fd-bg);color:var(--fd-ink);}
-.fd-home *{box-sizing:border-box;}
-.fd-wrap{max-width:1200px;margin:0 auto;padding:0 28px;}
-.fd-home h1,.fd-home h2,.fd-home h3{font-weight:700;letter-spacing:-0.035em;line-height:1.04;color:var(--fd-accent);margin:0;}
-.fd-eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--fd-cta);}
-.fd-eyebrow-light{color:#fff;}.fd-eyebrow-cta{color:var(--fd-g400);}
-.fd-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-weight:600;border:none;cursor:pointer;border-radius:100px;font-size:15px;transition:transform .15s cubic-bezier(.16,1,.3,1),background .18s;text-decoration:none;}
-.fd-btn:active{transform:translateY(1px) scale(.99);}
-.fd-btn-cta{background:var(--fd-cta);color:#fff;padding:15px 28px;box-shadow:0 6px 18px -6px rgba(22,163,74,.5);}
-.fd-btn-cta:hover{background:var(--fd-cta-h);transform:translateY(-1px);}
-.fd-btn-ghost{background:#fff;color:var(--fd-accent);padding:14px 26px;border:1.5px solid var(--fd-border);}
-.fd-btn-ghost:hover{border-color:var(--fd-accent);}
-.fd-btn-ghost-dark{background:transparent;color:#fff;border-color:rgba(255,255,255,.3);}
-.fd-hero{position:relative;overflow:hidden;}
-.fd-hero::before{content:"";position:absolute;top:-180px;right:-160px;width:560px;height:560px;border-radius:50%;background:radial-gradient(circle,var(--fd-g50),transparent 68%);}
-.fd-hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center;padding:60px 0 76px;position:relative;z-index:1;}
-.fd-h1{font-size:clamp(34px,4.6vw,56px);margin:18px 0 18px;}
-.fd-h1 em{font-style:normal;color:var(--fd-cta);}
-.fd-sub{font-size:clamp(16px,1.7vw,19px);color:var(--fd-n600);max-width:500px;margin-bottom:28px;line-height:1.55;}
-.fd-cta-row{display:flex;gap:13px;flex-wrap:wrap;margin-bottom:24px;}
-.fd-center-row{justify-content:center;}
-.fd-hero-trust{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
-.fd-gbadge{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--fd-border);border-radius:100px;padding:7px 16px 7px 14px;box-shadow:0 2px 10px -4px rgba(0,0,0,.12);}
-.fd-stars{color:var(--fd-gold);font-size:13px;letter-spacing:1px;}
-.fd-gr{font-size:13px;font-weight:600;color:var(--fd-ink);line-height:1.15;display:block;}
-.fd-gr small{display:block;font-weight:400;color:var(--fd-muted);font-size:11px;}
-.fd-trust-text{font-size:14px;color:var(--fd-n600);font-weight:500;}
-.fd-pills{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px;}
-.fd-pill{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--fd-border);border-radius:100px;padding:8px 14px;font-size:13px;font-weight:500;color:var(--fd-n700);}
-.fd-pill svg{width:15px;height:15px;color:var(--fd-cta);}
-.fd-hero-visual{position:relative;display:flex;flex-direction:column;}
-.fd-calc{position:relative;width:100%;max-width:450px;margin:0 auto;background:#fff;border:1px solid var(--fd-border);border-radius:var(--fd-r-lg);box-shadow:0 24px 50px -22px rgba(13,31,23,.4);padding:24px;z-index:5;}
-.fd-calc-title{font-size:20px;margin:2px 0 16px;color:var(--fd-accent);}
-.fd-hero-proof{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px auto 0;font-size:13px;color:var(--fd-n600);max-width:450px;text-align:center;}
-.fd-hero-proof svg{width:15px;height:15px;color:var(--fd-cta);flex-shrink:0;}
-.fd-calc-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.fd-calc-t{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--fd-cta);}
-.fd-calc-free{font-size:11px;font-weight:600;color:var(--fd-muted);}
-.fd-field{margin-bottom:13px;}
-.fd-field label{display:block;font-size:12px;font-weight:600;color:var(--fd-n600);margin-bottom:6px;}
-.fd-field select{width:100%;height:42px;border:1px solid var(--fd-border);border-radius:var(--fd-r-sm);padding:0 12px;font-size:14px;background:#fff;color:var(--fd-ink);}
-.fd-ebrow{display:flex;justify-content:space-between;align-items:baseline;}
-.fd-eval{font-size:14px;font-weight:700;color:var(--fd-accent);font-variant-numeric:tabular-nums;}
-.fd-field input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:#e5e5e5;outline:none;cursor:pointer;}
-.fd-field input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--fd-cta);cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.25);}
-.fd-field input[type=range]::-moz-range-thumb{width:20px;height:20px;border:none;border-radius:50%;background:var(--fd-cta);cursor:pointer;}
-.fd-calc-out{margin-top:6px;background:var(--fd-g50);border:1px solid var(--fd-g100);border-radius:var(--fd-r-md);padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.fd-calc-lbl{font-size:12px;color:var(--fd-n600);font-weight:600;}
-.fd-calc-num{font-size:23px;font-weight:700;color:var(--fd-accent);font-variant-numeric:tabular-nums;letter-spacing:-0.02em;}
-.fd-calc-go{margin-top:13px;width:100%;}
-.fd-disc{margin-top:9px;font-size:11px;color:var(--fd-muted);text-align:center;}
-.fd-press{background:#fff;border-top:1px solid var(--fd-border);border-bottom:1px solid var(--fd-border);padding:24px 0;}
-.fd-press-inner{display:flex;align-items:center;gap:30px;flex-wrap:wrap;justify-content:center;}
-.fd-press-label{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--fd-muted);}
-.fd-press-logo{font-size:18px;font-weight:700;color:#bdbdb8;letter-spacing:-0.02em;font-family:Georgia,'Times New Roman',serif;}
-.fd-block{padding:74px 0;}
-.fd-surface{background:#fff;border-top:1px solid var(--fd-border);border-bottom:1px solid var(--fd-border);}
-.fd-sec-head{margin-bottom:36px;}
-.fd-sec-head.fd-center{text-align:center;}
-.fd-sec-head.fd-row{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;}
-.fd-h2{font-size:clamp(26px,3.2vw,38px);margin-top:9px;}
-.fd-h2-light{color:#fff;}
-.fd-sec-p{color:var(--fd-n600);font-size:16px;max-width:540px;margin-top:9px;}
-.fd-link-more{font-weight:600;color:var(--fd-cta);font-size:15px;white-space:nowrap;text-decoration:none;}
-.fd-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
-.fd-card{background:#fff;border:1px solid var(--fd-border);border-radius:var(--fd-r-lg);overflow:hidden;transition:.2s;display:flex;flex-direction:column;text-decoration:none;}
-.fd-card:hover{box-shadow:0 16px 40px -20px rgba(13,31,23,.3);transform:translateY(-3px);}
-.fd-card-top{height:120px;position:relative;display:flex;align-items:flex-end;padding:13px;}
-.fd-grad-0{background:linear-gradient(135deg,#2d5a3d,#1a3329);}
-.fd-grad-1{background:linear-gradient(135deg,#1a3329,#0d1f17);}
-.fd-grad-2{background:linear-gradient(135deg,#3d7a52,#23402f);}
-.fd-grad-3{background:linear-gradient(135deg,#23402f,#13251b);}
-.fd-card-cat{position:absolute;top:13px;left:13px;background:rgba(255,255,255,.92);color:var(--fd-accent);font-size:11px;font-weight:700;padding:4px 10px;border-radius:100px;}
-.fd-card-eg{position:absolute;top:13px;right:13px;background:var(--fd-g100);color:var(--fd-g700);font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;letter-spacing:.04em;text-transform:uppercase;}
-.fd-card-loc{position:relative;z-index:2;color:#fff;font-size:13px;font-weight:500;}
-.fd-card-body{padding:15px 17px 17px;display:flex;flex-direction:column;flex:1;}
-.fd-card-title{font-size:15px;font-weight:600;color:var(--fd-ink);line-height:1.32;margin-bottom:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:39px;}
-.fd-card-stats{display:flex;gap:6px;margin-bottom:15px;}
-.fd-stat{flex:1;background:#f5f5f3;border-radius:var(--fd-r-sm);padding:8px;text-align:center;}
-.fd-stat-l{font-size:10px;color:var(--fd-muted);font-weight:600;letter-spacing:.03em;text-transform:uppercase;}
-.fd-stat-v{font-size:15px;font-weight:700;color:var(--fd-accent);margin-top:2px;font-variant-numeric:tabular-nums;}
-.fd-card-foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;}
-.fd-card-price{font-size:18px;font-weight:700;color:var(--fd-ink);font-variant-numeric:tabular-nums;}
-.fd-card-go{font-size:13px;font-weight:600;color:var(--fd-cta);}
-.fd-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;}
-.fd-step{padding:0 26px;position:relative;}
-.fd-step:not(:last-child)::after{content:"";position:absolute;top:18px;right:0;width:100%;height:2px;background:linear-gradient(90deg,var(--fd-g100),transparent);}
-.fd-step-n{width:38px;height:38px;border-radius:11px;background:var(--fd-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;margin-bottom:16px;position:relative;z-index:1;}
-.fd-step-h{font-size:17px;margin-bottom:7px;}
-.fd-step-p{font-size:14px;color:var(--fd-n600);line-height:1.5;}
-.fd-valueband{background:var(--fd-accent);}
-.fd-stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;}
-.fd-vitem{border-left:2px solid var(--fd-g500);padding-left:18px;}
-.fd-bignum{font-size:clamp(34px,4.4vw,50px);font-weight:700;letter-spacing:-0.04em;color:var(--fd-g400);}
-.fd-vitem p{color:rgba(255,255,255,.74);font-size:15px;margin-top:6px;}
-.fd-t-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
-.fd-tcard{background:#fff;border:1px solid var(--fd-border);border-radius:var(--fd-r-lg);padding:25px;}
-.fd-tcard p{font-size:15px;color:var(--fd-n700);line-height:1.6;margin:12px 0 18px;}
-.fd-tmeta{display:flex;align-items:center;gap:11px;}
-.fd-tav{width:42px;height:42px;border-radius:50%;background:var(--fd-g100);color:var(--fd-g700);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;}
-.fd-tname{font-weight:600;font-size:14px;color:var(--fd-ink);}
-.fd-trole{font-size:12px;color:var(--fd-muted);}
-.fd-faq{max-width:780px;margin:0 auto;}
-.fd-faq-item{border-bottom:1px solid var(--fd-border);}
-.fd-faq-q{width:100%;background:none;border:none;text-align:left;padding:22px 0;font-size:17px;font-weight:600;color:var(--fd-accent);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;font-family:inherit;}
-.fd-faq-q .fd-ic{font-size:22px;color:var(--fd-cta);transition:.2s;flex-shrink:0;}
-.fd-faq-a{font-size:15px;color:var(--fd-n600);line-height:1.6;padding:0 0 22px;display:none;}
-.fd-faq-item.fd-open .fd-faq-a{display:block;}
-.fd-faq-item.fd-open .fd-ic{transform:rotate(45deg);}
-.fd-final{background:linear-gradient(165deg,#1a3329,#0d1f17);text-align:center;}
-.fd-final-p{color:rgba(255,255,255,.74);margin:13px 0 28px;font-size:16px;}
-.fd-reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s cubic-bezier(.16,1,.3,1);}
-.fd-reveal.fd-in{opacity:1;transform:none;}
-@media(max-width:940px){.fd-hero-grid{grid-template-columns:1fr;gap:38px;padding:36px 0 52px;}.fd-calc{margin-top:8px;}}
-@media(max-width:880px){.fd-grid{grid-template-columns:repeat(2,1fr);}.fd-t-grid{grid-template-columns:1fr;}}
-@media(max-width:820px){.fd-steps{grid-template-columns:1fr;gap:8px;}.fd-step{padding:0 0 0 56px;}.fd-step:not(:last-child)::after{display:none;}.fd-step-n{position:absolute;left:0;top:0;}}
-@media(max-width:640px){.fd-stats3{grid-template-columns:1fr;gap:26px;}}
-@media(max-width:560px){.fd-grid{grid-template-columns:1fr;}}
-@keyframes fd-drift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(-26px,18px) scale(1.07);}}
-.fd-hero::before{animation:fd-drift 16s ease-in-out infinite;}
-.fd-btn-cta{position:relative;overflow:hidden;}
-@keyframes fd-sheen{0%{transform:translateX(-150%) skewX(-18deg);}55%,100%{transform:translateX(260%) skewX(-18deg);}}
-.fd-btn-cta::after{content:"";position:absolute;top:0;left:0;width:36%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);animation:fd-sheen 5s ease-in-out infinite;pointer-events:none;}
-@keyframes fd-breathe{0%,100%{opacity:.5;}50%{opacity:.95;}}
-.fd-press-logo{animation:fd-breathe 5s ease-in-out infinite;}
-.fd-press-logo:nth-child(3){animation-delay:.5s}.fd-press-logo:nth-child(4){animation-delay:1s}.fd-press-logo:nth-child(5){animation-delay:1.5s}.fd-press-logo:nth-child(6){animation-delay:2s}.fd-press-logo:nth-child(7){animation-delay:2.5s}.fd-press-logo:nth-child(8){animation-delay:3s}.fd-press-logo:nth-child(9){animation-delay:3.5s}
-@media(prefers-reduced-motion:reduce){.fd-reveal{opacity:1;transform:none;transition:none;}.fd-hero::before,.fd-btn-cta::after,.fd-press-logo{animation:none!important;}}
-.fd-mobilebar{display:none;}
-@media(max-width:768px){
-.fd-mobilebar{display:block;position:fixed;left:0;right:0;bottom:0;z-index:120;background:rgba(255,255,255,.93);backdrop-filter:saturate(160%) blur(10px);-webkit-backdrop-filter:saturate(160%) blur(10px);border-top:1px solid var(--fd-border);padding:10px 16px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -6px 22px -10px rgba(13,31,23,.3);animation:fd-barup .28s cubic-bezier(.16,1,.3,1) both;}
-.fd-mobilebar-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;background:var(--fd-cta);color:#fff;border-radius:12px;padding:11px 16px;font-size:16px;font-weight:700;text-decoration:none;line-height:1.15;box-shadow:0 6px 18px -6px rgba(22,163,74,.5);}
-.fd-mobilebar-note{font-size:11px;font-weight:500;opacity:.9;}
-.fd-home{padding-bottom:calc(74px + env(safe-area-inset-bottom));}
+// ── Tab switcher section ────────────────────────────────────────────────────────
+
+function TabSwitcherSection({ lang }: { lang: string }) {
+  const [tab, setTab] = useState<"verkaufen" | "kaufen">("verkaufen");
+  const [catFilter, setCatFilter] = useState("Alle");
+  const [searchQ, setSearchQ] = useState("");
+
+  const filteredAnon = ANON_LISTINGS.filter((l) => {
+    if (catFilter !== "Alle" && l.cat !== catFilter) return false;
+    if (searchQ && !l.cat.toLowerCase().includes(searchQ.toLowerCase()) && !l.city.toLowerCase().includes(searchQ.toLowerCase())) return false;
+    return true;
+  });
+
+  return (
+    <section className="bg-white border-b border-[var(--border)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        <div className="flex justify-center mb-10">
+          <div className="flex bg-[var(--surface2)] rounded-xl p-1 gap-1">
+            {(["verkaufen", "kaufen"] as const).map((id) => (
+              <button
+                key={id}
+                onClick={() => setTab(id)}
+                className={`font-sans font-semibold text-[14px] sm:text-[15px] px-5 sm:px-8 py-3 rounded-lg transition-all duration-200 ${
+                  tab === id ? "bg-[var(--accent)] text-white shadow-sm" : "text-[var(--muted)] hover:text-[var(--ink)]"
+                }`}
+              >
+                {id === "verkaufen"
+                  ? (lang === "de" ? "Ich möchte übergeben" : "I want to hand over")
+                  : (lang === "de" ? "Ich möchte übernehmen" : "I want to take over")}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* VERKAUFEN tab */}
+        {tab === "verkaufen" && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div>
+              <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-2">
+                {lang === "de" ? "Für Inhaber" : "For owners"}
+              </p>
+              <h2 className="font-sans text-[26px] sm:text-[34px] font-bold text-[var(--ink)] tracking-tight leading-tight mb-4">
+                {lang === "de"
+                  ? "Den richtigen Nachfolger finden — in aller Ruhe."
+                  : "Find the right successor — calmly."}
+              </h2>
+              <p className="font-sans text-[15px] text-[var(--muted)] leading-relaxed mb-6">
+                {lang === "de"
+                  ? "Wir sprechen passende Nachfolger aus unserem Netzwerk gezielt an — anonym, ohne Makler, 0 % Provision."
+                  : "We reach out to matching successors from our network — anonymous, no broker, 0% commission."}
+              </p>
+              <div className="grid grid-cols-3 gap-3 mb-8">
+                {[
+                  { stat: "0%",    label: lang === "de" ? "Provision" : "Commission" },
+                  { stat: "100%",  label: lang === "de" ? "Anonym"    : "Anonymous"  },
+                  { stat: "DSGVO", label: lang === "de" ? "Konform"   : "Compliant"  },
+                ].map((k) => (
+                  <div key={k.stat} className="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-3 text-center">
+                    <div className="font-sans text-[18px] font-bold text-[var(--accent)]">{k.stat}</div>
+                    <div className="font-sans text-[11px] text-[var(--muted)] mt-0.5">{k.label}</div>
+                  </div>
+                ))}
+              </div>
+              <Link
+                href="/sell"
+                className="inline-flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-bold px-7 py-4 rounded-xl hover:bg-[var(--accent-hover)] transition-colors text-[15px]"
+              >
+                {lang === "de" ? "Nachfolge vertraulich starten →" : "Start succession confidentially →"}
+              </Link>
+              <p className="font-sans text-[12px] text-[var(--muted)] mt-2">
+                {lang === "de" ? "Einmalig €87 · 0 % Provision · Anonym, bis Sie es wollen" : "One-time €87 · 0% commission · Anonymous until you choose"}
+              </p>
+            </div>
+            <div className="hidden lg:block">
+              <div className="bg-[var(--surface2)] rounded-2xl p-6 space-y-3">
+                {[
+                  { step: lang === "de" ? "Vertraulich einreichen" : "Submit confidentially", done: true },
+                  { step: lang === "de" ? "Wir finden passende Nachfolger" : "We find matching successors", done: true },
+                  { step: lang === "de" ? "Anonym kennenlernen" : "Meet anonymously", done: true },
+                  { step: lang === "de" ? "Übergabe" : "Handover", done: false },
+                ].map((s, i) => (
+                  <div key={s.step} className="flex items-center gap-4 bg-white rounded-xl p-4 border border-[var(--border)] shadow-sm">
+                    <div className="w-8 h-8 rounded-full bg-[var(--accent)] text-white font-bold text-[13px] flex items-center justify-center flex-shrink-0">{i + 1}</div>
+                    <span className="font-sans text-[14px] text-[var(--ink)] font-medium flex-1">{s.step}</span>
+                    {s.done
+                      ? <span className="font-sans text-[11px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full whitespace-nowrap">{lang === "de" ? "Erledigt" : "Done"}</span>
+                      : <span className="font-sans text-[11px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full whitespace-nowrap">{lang === "de" ? "Ausstehend" : "Pending"}</span>
+                    }
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* KAUFEN tab */}
+        {tab === "kaufen" && (
+          <div>
+            <div className="text-center mb-8">
+              <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-2">
+                {lang === "de" ? "Für Nachfolger" : "For successors"}
+              </p>
+              <h2 className="font-sans text-[26px] sm:text-[34px] font-bold text-[var(--ink)] tracking-tight leading-tight mb-3">
+                {lang === "de" ? "Ein Unternehmen übernehmen" : "Take over a business"}
+              </h2>
+              <p className="font-sans text-[15px] text-[var(--muted)]">
+                {lang === "de"
+                  ? "Aktuelle Unternehmen zur Nachfolge in Deutschland — direkt, ohne Makler. Und wenn das Eigenkapital fehlt, helfen wir beim Zugang zu Übernahmefinanzierung."
+                  : "Current businesses ready for succession across Germany — direct, no broker. And if equity is short, we help you access acquisition financing."}
+              </p>
+            </div>
+
+            <div className="max-w-xl mx-auto mb-5">
+              <input
+                type="text"
+                value={searchQ}
+                onChange={(e) => setSearchQ(e.target.value)}
+                placeholder={lang === "de" ? "Branche oder Stadt suchen…" : "Search industry or city…"}
+                className="w-full px-4 py-3.5 border-2 border-[var(--border)] rounded-xl font-sans text-[15px] outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </div>
+
+            <div className="flex gap-2 overflow-x-auto pb-3 mb-6" style={{ scrollbarWidth: "none" }}>
+              {CAT_PILLS.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCatFilter(p)}
+                  className={`flex-shrink-0 font-sans text-[13px] font-medium px-4 py-2 rounded-full border transition-all ${
+                    catFilter === p
+                      ? "bg-[var(--accent)] text-white border-[var(--accent)]"
+                      : "bg-white text-[var(--muted)] border-[var(--border)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {filteredAnon.length === 0 ? (
+                <div className="col-span-full text-center py-10">
+                  <p className="font-sans text-[14px] text-[var(--muted)]">
+                    {lang === "de" ? "Keine Ergebnisse." : "No results."}
+                  </p>
+                </div>
+              ) : filteredAnon.map((l) => (
+                <Link href="/listings" key={l.id} className="bg-white border border-[var(--border)] rounded-xl p-5 hover:border-[var(--accent)] hover:shadow-md transition-all flex flex-col">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-sans text-[11px] font-bold text-[var(--accent)] bg-[var(--accent-light)] px-2.5 py-1 rounded-full">{l.cat}</span>
+                    <span className="font-sans text-[11px] text-[var(--muted)]">Anonym</span>
+                  </div>
+                  <p className="font-sans text-[12px] text-[var(--muted)] mb-3">{l.city} · {l.years} {lang === "de" ? "Jahre" : "years"}</p>
+                  <div className="space-y-1.5 mb-4 flex-1">
+                    <div className="flex justify-between">
+                      <span className="font-sans text-[12px] text-[var(--muted)]">{lang === "de" ? "Umsatz" : "Revenue"}</span>
+                      <span className="font-sans text-[12px] font-semibold text-[var(--ink)]">{l.revenue}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-sans text-[12px] text-[var(--muted)]">EBITDA</span>
+                      <span className="font-sans text-[12px] font-semibold text-green-600">{l.ebitda}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-sans text-[12px] text-[var(--muted)]">{lang === "de" ? "Mitarbeiter" : "Employees"}</span>
+                      <span className="font-sans text-[12px] text-[var(--ink)]">{l.emp}</span>
+                    </div>
+                  </div>
+                  <div className="border-t border-[var(--border)] pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-sans text-[11px] text-[var(--muted)]">{lang === "de" ? "Kaufpreis" : "Asking price"}</span>
+                      <span className="font-sans text-[15px] font-bold text-[var(--ink)]">{l.price}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div className="text-center">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  href="/listings"
+                  className="inline-flex items-center justify-center gap-2 bg-[var(--accent)] text-white font-sans font-bold px-7 py-4 rounded-xl hover:bg-[var(--accent-hover)] transition-colors text-[15px]"
+                >
+                  {lang === "de" ? "Unternehmen ansehen →" : "Browse businesses →"}
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
-@keyframes fd-barup{from{transform:translateY(100%);}to{transform:translateY(0);}}
-@media(prefers-reduced-motion:reduce){.fd-mobilebar{animation:none;}}
-`;
+
+// ── Main page ──────────────────────────────────────────────────────────────────
+
+export default function HomePage() {
+  const { lang } = useLanguage();
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+  const [subError, setSubError] = useState("");
+  const [bizTypeIdx, setBizTypeIdx] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setBizTypeIdx((i) => (i + 1) % BIZ_TYPES.length), 2500);
+    return () => clearInterval(t);
+  }, []);
+
+  const faqs = lang === "de" ? [
+    { q: "Was kostet Firmadeal?",                            a: "Einmalig €87 für Ihr Inserat. 0 % Provision — Sie behalten 100 % des Verkaufspreises." },
+    { q: "Wie lange dauert eine Nachfolge?",                 a: "Im Schnitt 4–9 Monate, bis der passende Nachfolger gefunden und die Übergabe geregelt ist. Vollständige Zahlen beschleunigen es." },
+    { q: "Bleibt mein Unternehmen anonym?",                  a: "Ja. Sie entscheiden selbst, wann Sie Ihren Namen und Firmennamen freigeben." },
+    { q: "Helfen Sie Nachfolgern bei der Finanzierung?",     a: "Ja. Reicht das Eigenkapital für die Übernahme nicht, unterstützen wir Nachfolger beim Zugang zu Übernahmefinanzierung und Förderkrediten (z. B. KfW). Wir sind keine Bank und keine Finanzberatung, aber wir helfen auf den richtigen Weg." },
+    { q: "Wie komme ich mit einem Nachfolger in Kontakt?",   a: "Direkt über das Kontaktformular — anonym, ohne Makler, ohne Wartezeit." },
+    { q: "Welche Unterlagen brauche ich?",                   a: "BWA der letzten 3 Jahre, Jahresabschlüsse, anonymisierte Kundenliste, Mietverträge." },
+    { q: "Warum sehe ich nur wenige öffentliche Unternehmen?", a: "Die meisten Nachfolgen laufen vertraulich und werden nicht öffentlich gezeigt — das schützt Inhaber und Mitarbeiter. Öffentlich erscheint nur eine kuratierte Auswahl." },
+  ] : [
+    { q: "What does Firmadeal cost?",                        a: "One-time €87 for your listing. 0% commission — you keep 100% of the sale price." },
+    { q: "How long does succession take?",                  a: "On average 4–9 months to find the right successor and arrange the handover. Complete figures speed it up." },
+    { q: "Does my business stay anonymous?",                a: "Yes. You decide when to reveal your name and company." },
+    { q: "Do you help successors with financing?",          a: "Yes. If equity isn't enough for the takeover, we help successors access acquisition financing and development loans (e.g. KfW). We're not a bank or financial adviser, but we point you the right way." },
+    { q: "How do I contact a successor?",                   a: "Directly via the contact form — anonymous, no broker, no waiting." },
+    { q: "What documents do I need?",                        a: "P&L for last 3 years, annual accounts, anonymized customer list, rental agreements." },
+    { q: "Why do I see only a few public businesses?",       a: "Most successions run confidentially and aren't shown publicly — this protects owners and employees. Only a curated selection appears publicly." },
+  ];
+
+  return (
+    <div className="bg-[var(--bg)] home-page-wrapper">
+
+      {/* ── HERO ──────────────────────────────────────────────────────────────── */}
+      <section
+        className="hero-section"
+        style={{
+          background: "linear-gradient(135deg, #0d1f17 0%, #1a3329 60%, #2d5a3d 100%)",
+          minHeight: "90vh",
+          display: "flex",
+          alignItems: "center",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20 w-full" style={{ position: "relative", zIndex: 1 }}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+
+            {/* Left: copy */}
+            <div>
+              {/* Eyebrow */}
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "100px", padding: "6px 16px", marginBottom: "24px" }}>
+                <span style={{ color: "#6dbf87", fontSize: "12px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                  {lang === "de" ? "Unternehmensnachfolge · diskret · ohne Makler" : "Business succession · discreet · no broker"}
+                </span>
+              </div>
+
+              {/* Headline */}
+              <h1 className="hero-headline font-sans font-bold text-white tracking-tight mb-6" style={{ fontSize: "clamp(28px, 5vw, 58px)", lineHeight: 1.08 }}>
+                {lang === "de"
+                  ? "Übergeben Sie Ihr Lebenswerk in die richtigen Hände."
+                  : "Pass your life's work into the right hands."}
+              </h1>
+
+              <p className="font-sans text-white/75 mb-8" style={{ fontSize: "17px", lineHeight: 1.65, maxWidth: "480px" }}>
+                {lang === "de"
+                  ? "Wir helfen Ihnen in Ruhe, den passenden Nachfolger zu finden — jemanden, der weiterführt, was Sie aufgebaut haben. Aus einem Netzwerk geprüfter Käufer. Ohne Makler, 0 % Provision."
+                  : "We quietly help you find the right successor — someone to carry on what you built. From a network of vetted buyers. No broker, 0% commission."}
+              </p>
+
+              {/* Trust badges — clean, consistent, no emoji */}
+              <div className="flex flex-wrap gap-2.5 mb-8">
+                {[
+                  lang === "de" ? "Netzwerk geprüfter Nachfolger" : "Network of vetted successors",
+                  lang === "de" ? "Anonym, bis Sie es wollen" : "Anonymous, until you choose",
+                  lang === "de" ? "0 % Provision" : "0% commission",
+                ].map((label) => (
+                  <div key={label} style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: "100px", padding: "8px 16px" }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#6dbf87", flexShrink: 0 }} />
+                    <span className="font-sans text-white/80 text-[13px] font-medium">{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTAs */}
+              <div className="hero-cta-row flex flex-wrap gap-4 items-center mb-8">
+                <Link href="/sell" className="hero-cta-primary font-sans font-bold rounded-xl hover:opacity-90 transition-opacity" style={{ background: "#f3ece0", color: "#15281e", padding: "15px 30px", fontSize: "16px", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px", boxShadow: "0 12px 30px rgba(0,0,0,0.30)" }}>
+                  {lang === "de" ? "Nachfolger finden →" : "Find a successor →"}
+                </Link>
+                <Link href="/listings" className="hero-cta-secondary font-sans font-semibold text-white/80 hover:text-white transition-colors" style={{ fontSize: "16px" }}>
+                  {lang === "de" ? "Unternehmen zur Übernahme ansehen" : "See businesses to take over"}
+                </Link>
+              </div>
+
+              {/* Subtle reassurance — single clean line */}
+              <p className="font-sans text-[13px] mb-8" style={{ color: "rgba(255,255,255,0.6)" }}>
+                {lang === "de"
+                  ? "Einmalig €87 · keine Erfolgsprovision · Sie behalten die Kontrolle"
+                  : "One-time €87 · no success fee · you stay in control"}
+              </p>
+            </div>
+
+            {/* Right: hero calculator */}
+            <div className="hidden lg:block">
+              <ValuationCalculator variant="hero" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── TRUST BAR ── */}
+      <div className="bg-white border-b border-[var(--border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-7 sm:gap-x-9 gap-y-3.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-[var(--muted)]">
+              {lang === "de" ? "Sicher & vertraulich" : "Secure & confidential"}
+            </span>
+            {[
+              { label: "DSGVO-konform", icon: <path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6l7-3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /> },
+              { label: "SSL-verschlüsselt", icon: <><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.6" /><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" strokeWidth="1.6" /></> },
+              { label: lang === "de" ? "Sichere Zahlung · Stripe" : "Secure payment · Stripe", icon: <><rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.6" /><path d="M3 10h18" stroke="currentColor" strokeWidth="1.6" /></> },
+              { label: "DE · AT · CH", icon: <><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" /><path d="M3 12h18M12 3c2.6 2.5 2.6 15.5 0 18M12 3c-2.6 2.5-2.6 15.5 0 18" stroke="currentColor" strokeWidth="1.6" /></> },
+              { label: "0 % Provision", icon: <path d="M5 12l4.5 4.5L19 7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /> },
+            ].map((b) => (
+              <span key={b.label} className="flex items-center gap-2 font-sans text-[13px] font-medium text-[var(--ink)] whitespace-nowrap">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" className="text-[var(--accent)]">{b.icon}</svg>
+                {b.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── FÜR WEN (3 clear paths) ──────────────────────────────────────────── */}
+      <section className="bg-white border-b border-[var(--border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-2 text-center">
+            {lang === "de" ? "Für wen" : "Who it's for"}
+          </p>
+          <h2 className="font-sans text-[24px] font-bold text-[var(--ink)] tracking-tight text-center mb-10">
+            {lang === "de" ? "Für beide Seiten der Nachfolge" : "For both sides of succession"}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                tag: lang === "de" ? "Inhaber" : "Owners",
+                title: lang === "de" ? "Nachfolger finden" : "Find a successor",
+                body: lang === "de"
+                  ? "Anonym einreichen, kostenlos bewerten und den passenden Nachfolger aus unserem Netzwerk treffen. 0 % Provision, einmalig €87."
+                  : "Submit anonymously, value for free, and meet the right successor from our network. 0% commission, one-time €87.",
+                href: "/sell",
+                cta: lang === "de" ? "Nachfolge starten" : "Start succession",
+              },
+              {
+                tag: lang === "de" ? "Nachfolger" : "Successors",
+                title: lang === "de" ? "Unternehmen übernehmen" : "Take over a business",
+                body: lang === "de"
+                  ? "Geprüfte Unternehmen entdecken oder ein Suchprofil hinterlegen. Und wenn das Eigenkapital knapp ist: Wir helfen beim Zugang zu Übernahmefinanzierung (KfW & Co.)."
+                  : "Discover vetted businesses or leave a search profile. And if equity is tight: we help you access acquisition financing (KfW & co.).",
+                href: "/kaeufer",
+                cta: lang === "de" ? "Als Nachfolger starten" : "Start as successor",
+              },
+              {
+                tag: lang === "de" ? "Berater" : "Advisors",
+                title: lang === "de" ? "Mandate einbringen" : "Bring your mandates",
+                body: lang === "de"
+                  ? "Steuer- und M&A-Berater bringen Übergeber und Nachfolger zusammen — diskret, in ganz DACH."
+                  : "Tax & M&A advisors bring owners and successors together — discreetly, across DACH.",
+                href: "/sell",
+                cta: lang === "de" ? "Mandat einreichen" : "Submit mandate",
+              },
+            ].map((c) => (
+              <div key={c.tag} className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl p-6 flex flex-col">
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--accent)] mb-3">{c.tag}</span>
+                <h3 className="font-sans text-[17px] font-bold text-[var(--ink)] mb-2">{c.title}</h3>
+                <p className="font-sans text-[14px] text-[var(--muted)] leading-relaxed mb-5 flex-1">{c.body}</p>
+                <Link href={c.href} className="font-sans text-[14px] font-bold text-[var(--accent)] inline-flex items-center gap-1.5 hover:gap-2.5 transition-all">
+                  {c.cta} →
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── KAUFGESUCHE ──────────────────────────────────────────────────────── */}
+      <KaufgesucheSection />
+
+      {/* ── TAB SWITCHER ─────────────────────────────────────────────────────── */}
+      <TabSwitcherSection lang={lang} />
+
+      {/* ── INLINE CATALOG ───────────────────────────────────────────────────── */}
+      <InlineCatalog lang={lang} />
+
+      {/* ── HOW IT WORKS ─────────────────────────────────────────────────────── */}
+      <section className="bg-[var(--accent)] border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <p className="font-mono text-[11px] text-white/40 uppercase tracking-[0.2em] mb-2 text-center">
+            {lang === "de" ? "So funktioniert es" : "How it works"}
+          </p>
+          <h2 className="font-sans text-[22px] font-bold text-white tracking-tight text-center mb-10">
+            {lang === "de" ? "Von der Anfrage zur Übergabe" : "From first step to handover"}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              {
+                n: "01",
+                de: "Vertraulich einreichen",
+                en: "Submit confidentially",
+                de2: "Ihr Unternehmen in wenigen Minuten einreichen. Einmalig €87.",
+                en2: "Submit your business in a few minutes. One-time €87.",
+              },
+              {
+                n: "02",
+                de: "Wir suchen den Nachfolger",
+                en: "We find the successor",
+                de2: "Wir gleichen Ihr Profil mit unserem Netzwerk ab und sprechen passende Nachfolger an.",
+                en2: "We match your profile with our network and approach suitable successors.",
+              },
+              {
+                n: "03",
+                de: "Anonym kennenlernen",
+                en: "Meet anonymously",
+                de2: "Sie lernen Interessenten direkt kennen — anonym, ohne Makler dazwischen.",
+                en2: "You get to know prospects directly — anonymously, without a broker in between.",
+              },
+              {
+                n: "04",
+                de: "Übergabe",
+                en: "Handover",
+                de2: "Due Diligence, Vertrag, Übergabe — bei Bedarf mit Finanzierungshilfe für den Nachfolger.",
+                en2: "Due diligence, contract, handover — with financing help for the successor if needed.",
+              },
+            ].map((s) => (
+              <div key={s.n}>
+                <div className="font-mono text-[32px] font-bold text-white/10 mb-3">{s.n}</div>
+                <h3 className="font-sans text-[15px] font-bold text-white mb-2">{lang === "de" ? s.de : s.en}</h3>
+                <p className="font-sans text-[13px] text-white/50 leading-relaxed">{lang === "de" ? s.de2 : s.en2}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── ANONYMITY PROTECTION ─────────────────────────────────────────────── */}
+      <section className="bg-white border-t border-[var(--border)]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-2 text-center">
+            {lang === "de" ? "Datenschutz" : "Privacy"}
+          </p>
+          <h2 className="font-sans text-[20px] font-bold text-[var(--ink)] tracking-tight text-center mb-8">
+            {lang === "de" ? "So schützen wir Ihre Anonymität" : "How we protect your anonymity"}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                icon: "🔒",
+                de_t: "Kein Firmenname öffentlich",
+                en_t: "No company name public",
+                de_b: "Wir veröffentlichen Ihre Firma erst nach Ihrer ausdrücklichen Freigabe — kein Name, kein Standort.",
+                en_b: "We publish your company only after your explicit approval — no name, no location.",
+              },
+              {
+                icon: "🤝",
+                de_t: "Sie geben Kontakte einzeln frei",
+                en_t: "You approve each contact",
+                de_b: "Sie entscheiden für jeden Interessenten separat, welche Details Sie freigeben. Volle Kontrolle.",
+                en_b: "You decide individually for each prospect what details to share. Full control.",
+              },
+              {
+                icon: "📋",
+                de_t: "NDA vor Detailinfos",
+                en_t: "NDA before details",
+                de_b: "Vor der Übergabe vertraulicher Unterlagen wird eine NDA-Vereinbarung unterzeichnet.",
+                en_b: "Before sharing confidential documents, an NDA is signed.",
+              },
+            ].map((step) => (
+              <div key={step.de_t} className="bg-[var(--bg)] border border-[var(--border)] rounded-2xl p-6 text-center">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-[var(--accent)] mx-auto mb-3">
+                  <path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6l7-3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                  <path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <h3 className="font-sans text-[15px] font-bold text-[var(--ink)] mb-2">
+                  {lang === "de" ? step.de_t : step.en_t}
+                </h3>
+                <p className="font-sans text-[13px] text-[var(--muted)] leading-relaxed">
+                  {lang === "de" ? step.de_b : step.en_b}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ──────────────────────────────────────────────────────────────── */}
+      <section className="bg-[var(--surface2)] border-t border-[var(--border)]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <h2 className="font-sans text-[22px] font-bold text-[var(--ink)] tracking-tight text-center mb-8">
+            {lang === "de" ? "Häufige Fragen" : "Frequently asked questions"}
+          </h2>
+          <div className="space-y-2">
+            {faqs.map((faq, i) => (
+              <div key={i} className="bg-white border border-[var(--border)] rounded-xl overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between px-5 py-4 text-left"
+                >
+                  <span className="font-sans text-[14px] font-semibold text-[var(--ink)]">{faq.q}</span>
+                  <ChevronDown size={15} className={`text-[var(--muted)] flex-shrink-0 ml-4 transition-transform duration-200 ${openFaq === i ? "rotate-180" : ""}`} />
+                </button>
+                {openFaq === i && (
+                  <div className="faq-answer px-5 pb-5">
+                    <p className="font-sans text-[13px] text-[var(--muted)] leading-relaxed">{faq.a}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── BLOG TEASER ──────────────────────────────────────────────────────── */}
+      <BlogTeaser lang={lang} />
+
+      {/* ── NEWSLETTER ───────────────────────────────────────────────────────── */}
+      <section className="bg-white border-t border-[var(--border)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <p className="font-mono text-[11px] text-[var(--accent)] uppercase tracking-[0.2em] mb-3">
+                {lang === "de" ? "Käufer-Radar" : "Buyer radar"}
+              </p>
+              <h2 className="font-sans text-[22px] font-bold text-[var(--ink)] tracking-tight mb-3">
+                {lang === "de" ? "Passende Kaufgesuche & Mandate, sobald verfügbar" : "Matching buyer mandates, as soon as available"}
+              </h2>
+              <p className="font-sans text-[14px] text-[var(--muted)] leading-relaxed">
+                {lang === "de"
+                  ? "Hinterlegen Sie Ihr Suchprofil — wir informieren Sie, sobald passende Angebote vorliegen. Jederzeit abmeldbar."
+                  : "Leave your search profile — we'll notify you as soon as matching offers are available. Unsubscribe anytime."}
+              </p>
+            </div>
+            <div>
+              {subscribed ? (
+                <div className="bg-[var(--accent-light)] border border-[var(--accent)]/20 rounded-xl p-5">
+                  <p className="font-sans text-[15px] font-bold text-[var(--accent)]">
+                    {lang === "de" ? "Angemeldet!" : "Subscribed!"}
+                  </p>
+                  <p className="font-sans text-sm text-[var(--muted)] mt-1">
+                    {lang === "de" ? "Sie erhalten Ihre erste E-Mail diese Woche." : "You'll receive your first email this week."}
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  setSubError("");
+                  const res = await fetch("/api/newsletter", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email }),
+                  });
+                  if (res.ok) {
+                    setSubscribed(true);
+                  } else {
+                    const j = await res.json();
+                    setSubError(j.error === "duplicate" ? "Bereits registriert." : "Fehler. Bitte erneut versuchen.");
+                  }
+                }} className="flex flex-col gap-2">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setSubError(""); }}
+                      placeholder={lang === "de" ? "ihre@email.de" : "your@email.com"}
+                      required
+                      className="flex-1 px-4 py-3 border border-[var(--border)] rounded-xl text-sm font-sans outline-none focus:border-[var(--accent)]"
+                    />
+                    <button
+                      type="submit"
+                      className="px-5 py-3 bg-[var(--accent)] text-white font-sans font-semibold text-sm rounded-xl hover:bg-[var(--accent-hover)] transition-colors whitespace-nowrap"
+                      style={{ minHeight: 44 }}
+                    >
+                      {lang === "de" ? "Anmelden" : "Subscribe"}
+                    </button>
+                  </div>
+                  {subError && (
+                    <p className="font-sans text-[13px] text-[var(--red)]">{subError}</p>
+                  )}
+                </form>
+              )}
+              <p className="font-mono text-[10px] text-[var(--muted)] mt-2">
+                {lang === "de" ? "Kein Spam · DSGVO-konform" : "No spam · GDPR compliant"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FINAL CTA ────────────────────────────────────────────────────────── */}
+      <section className="bg-[var(--accent)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div>
+              <h2 className="font-sans text-[28px] font-bold text-white tracking-tight leading-tight mb-2">
+                {lang === "de" ? "Bereit, Ihre Nachfolge zu regeln?" : "Ready to arrange your succession?"}
+              </h2>
+              <p className="font-sans text-[15px] text-white/60">
+                {lang === "de"
+                  ? "Einmalig €87 · Anonym · 0% Provision · Kein Makler"
+                  : "One-time €87 · Anonymous · 0% commission · No broker"}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/sell"
+                className="flex items-center gap-2 bg-white text-[var(--accent)] font-sans font-bold px-8 py-3.5 rounded-full hover:bg-white/90 transition-colors"
+              >
+                {lang === "de" ? "Nachfolger finden →" : "Find a successor →"}
+              </Link>
+              <Link
+                href="/pricing"
+                className="flex items-center gap-2 border border-white/30 text-white font-sans font-semibold px-6 py-3.5 rounded-full hover:bg-white/10 transition-colors"
+              >
+                {lang === "de" ? "Preise ansehen" : "View pricing"}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── MOBILE STICKY CTA ─────────────────────────────────────────────────── */}
+      {/* Shown only on mobile (≤768px) via CSS class; hidden on desktop */}
+      <div
+        className="sticky-mobile-bar"
+        style={{
+          position: "fixed",
+          bottom: 0, left: 0, right: 0,
+          background: "white",
+          borderTop: "1px solid #e5e5e5",
+          padding: "12px 16px",
+          paddingBottom: "calc(12px + env(safe-area-inset-bottom))",
+          zIndex: 140,
+          alignItems: "center",
+          gap: 10,
+          boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
+        }}
+      >
+        <Link
+          href="/sell"
+          style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+            background: "#1a3329", color: "white",
+            borderRadius: 10, padding: "14px 16px",
+            fontSize: 15, fontWeight: 700, textDecoration: "none",
+            fontFamily: "inherit", minHeight: 52,
+          }}
+        >
+          {lang === "de" ? "Nachfolger finden →" : "Find a successor →"}
+        </Link>
+      </div>
+
+    </div>
+  );
+}
