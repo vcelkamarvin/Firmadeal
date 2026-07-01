@@ -82,10 +82,10 @@ const GOOGLE_SVG = (
 
 // ── Step 0 — Auth gate ────────────────────────────────────────────────────────
 
-function Step0Auth({ onComplete }: { onComplete: () => void }) {
+function Step0Auth({ onComplete, defaultEmail = "" }: { onComplete: () => void; defaultEmail?: string }) {
   const [mode, setMode] = useState<"register" | "login">("register");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState("");
   const [gdpr, setGdpr] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -140,7 +140,7 @@ function Step0Auth({ onComplete }: { onComplete: () => void }) {
           {mode === "register" ? "Konto erstellen" : "Anmelden"}
         </h2>
         <p className="font-sans text-[14px] text-[var(--muted)]">
-          {mode === "register" ? "Damit Ihr Inserat gespeichert wird und Käuferanfragen ankommen." : "Melden Sie sich an, um fortzufahren."}
+          {mode === "register" ? "Fast geschafft — Konto anlegen, damit Ihr Inserat gespeichert wird und Käuferanfragen ankommen." : "Melden Sie sich an, um fortzufahren."}
         </p>
       </div>
 
@@ -591,7 +591,7 @@ function Step4() {
         body: JSON.stringify({ email: userEmail }),
       });
     } catch { /* ignore */ }
-    trackEvent("email_captured");
+    try { localStorage.setItem("firmadeal_lead_email", userEmail); } catch {} trackEvent("email_captured");
     setEmailSent(true);
     setSending(false);
   };
@@ -676,7 +676,7 @@ function Step4() {
         <div className="flex items-center justify-between">
           <button onClick={() => setStep(3)} className="wizard-nav-back font-sans text-sm text-[var(--muted)] hover:text-[var(--ink)] transition-colors">← Zurück</button>
           <button
-            onClick={() => { trackStep(4, "bewertung_email"); setStep(5); }}
+            onClick={() => { try { if (userEmail) localStorage.setItem("firmadeal_lead_email", userEmail); } catch {} trackStep(4, "bewertung_email"); setStep(5); }}
             className="wizard-nav-next flex items-center gap-2 bg-[var(--accent)] text-white font-sans font-semibold px-6 py-3 rounded-full hover:bg-[var(--accent-hover)] transition-colors"
           >
             Aktiv vor Investoren bringen →
@@ -841,6 +841,7 @@ function WizardShell() {
   const { step, resetWizard } = useWizard();
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [showResumeBanner, setShowResumeBanner] = useState(false);
+  const [leadEmail, setLeadEmail] = useState("");
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setAuthed(!!data.user));
@@ -848,6 +849,7 @@ function WizardShell() {
 
   useEffect(() => {
     try {
+      try { const le = localStorage.getItem("firmadeal_lead_email"); if (le) setLeadEmail(le); } catch {}
       const raw = localStorage.getItem("firmadeal_wizard_draft");
       if (raw) {
         const parsed = JSON.parse(raw);
@@ -869,10 +871,8 @@ function WizardShell() {
   return (
     <div className="bg-[var(--bg)] min-h-screen">
       <div className="wizard-page-body max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {!authed ? (
-          <Step0Auth onComplete={() => setAuthed(true)} />
-        ) : (
-          <>
+        {
+              <>
             {showResumeBanner && (
               <div style={{ background: "#E8F5EE", border: "1px solid #1A5C3A", borderRadius: 10, padding: "12px 16px", marginBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
                 <span style={{ fontSize: 14, color: "#1A5C3A", fontFamily: "inherit" }}>
@@ -893,9 +893,8 @@ function WizardShell() {
             {step === 2 && <Step2 />}
             {step === 3 && <Step3 />}
             {step === 4 && <Step4 />}
-            {step === 5 && <Step5 />}
-          </>
-        )}
+            {step === 5 && (authed ? <Step5 /> : <Step0Auth onComplete={() => setAuthed(true)} defaultEmail={leadEmail} />)}
+          </>$1$2}
       </div>
     </div>
   );
