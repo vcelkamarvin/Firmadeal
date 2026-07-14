@@ -13,7 +13,10 @@ name: SEO Content — täglich 1 Artikel (idempotent, self-healing)
 # idempotent guard means the Berlin clock-hour is irrelevant.
 on:
   schedule:
-    - cron: "0 6,8,11,14 * * *"   # ~08:00 / 10:00 / 13:00 / 16:00 Berlin (DST-agnostic)
+    - cron: '17 5 * * *'    # 07:17 Berlin — primary (off top-of-hour)
+    - cron: '37 6 * * *'    # 08:37 Berlin — second attempt, before the 09:09 Berlin watchdog
+    - cron: '23 11 * * *'   # ~13:23 Berlin — midday backstop
+    - cron: '47 14 * * *'   # ~16:47 Berlin — afternoon backstop
   workflow_dispatch:               # allow manual runs from the Actions tab
     inputs:
       count:
