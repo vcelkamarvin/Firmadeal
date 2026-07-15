@@ -45,8 +45,10 @@ if (process.env.FORCE_RUN !== "true") {
   const { data: lastPost, error: guardErr } = await supabase
     .from("blog_posts").select("created_at").eq("published", true)
     .order("created_at", { ascending: false }).limit(1);
-  // Fail safe: if we cannot confirm today's state, do NOT publish (avoids dupes).
-  if (guardErr) { console.error("Guard check failed, aborting to stay idempotent:", guardErr.message); setOutput("published", "false"); process.exit(0); }
+  // Fail safe: if we cannot confirm today's state, do NOT publish (avoids dupes),
+  // but exit NON-ZERO so the workflow's failure alert fires — a blind engine that
+  // can't reach Supabase must be loud, not a silent no-op.
+  if (guardErr) { console.error("[seo-content] ALERT: guard check failed — cannot confirm today's state, aborting:", guardErr.message); setOutput("published", "false"); process.exit(1); }
   const last = lastPost?.[0]?.created_at;
   if (last && berlinDay(last) === berlinDay(new Date())) {
     console.log(`Already published today (${berlinDay(last)} Berlin). Skipping — idempotent.`);
@@ -187,7 +189,14 @@ if (candidates.length < COUNT) {
   }
 }
 
-if (!candidates.length) { console.log("Queue empty — refill content/queue.json."); setOutput("published","false"); process.exit(0); }
+// This is the failure that went unnoticed for weeks: we're past the "already
+// published today" guard (so today has NO post yet) AND the queue has nothing
+// eligible left. Exit NON-ZERO so the workflow alerts instead of silently no-op'ing.
+if (!candidates.length) {
+  console.error("[seo-content] ALERT: no post published today and the queue has no eligible niche left — refill content/queue.json.");
+  setOutput("published","false");
+  process.exit(1);
+}
 fs.mkdirSync(REVIEW_DIR, { recursive: true });
 
 const urls = [], slugs = [];
@@ -227,3 +236,10 @@ setOutput("published", slugs.length ? "true" : "false");
 setOutput("slugs", slugs.join(", "));
 setOutput("urls", urls.join(" "));
 console.log(`Done. Published ${slugs.length}/${candidates.length} to Supabase.`);
+
+// Past the daily guard we had candidates but published none (all failed the quality
+// gate or the insert errored). That's a real miss for the day → alert, don't hide it.
+if (!slugs.length) {
+  console.error(`[seo-content] ALERT: ${candidates.length} candidate(s) selected but none published (quality gate rejects or Supabase insert failures). See logs above.`);
+  process.exit(1);
+}

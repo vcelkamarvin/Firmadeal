@@ -82,3 +82,25 @@ jobs:
           SITE_ORIGIN: "https://www.firmadeal.de"
           NEW_URLS: ${{ steps.gen.outputs.urls }}
         run: node scripts/gsc-submit.mjs
+
+      # Any failed step above (generator exit 1 on empty queue / guard error / all
+      # articles rejected, or an API/network error) triggers this. Without it the
+      # engine failed silently for ~3 weeks. Needs RESEND_API_KEY + ALERT_EMAIL secrets;
+      # if they're unset it degrades to a workflow annotation instead of an email.
+      - name: Alert on failure
+        if: failure()
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$RESEND_API_KEY" ] || [ -z "$ALERT_EMAIL" ]; then
+            echo "::warning::SEO content run failed, but RESEND_API_KEY/ALERT_EMAIL are not set — no alert email sent."
+            exit 0
+          fi
+          html="The daily Firmadeal SEO content engine failed or published nothing today. Most common cause: the content queue is exhausted - refill content/queue.json. Run: $RUN_URL"
+          payload=$(printf '{"from":"Firmadeal <noreply@firmadeal.de>","to":"%s","subject":"⚠️ Firmadeal: daily SEO content run failed","html":"%s"}' "$ALERT_EMAIL" "$html")
+          code=$(curl -sS -o /tmp/resend.out -w "%{http_code}" -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" -H "Content-Type: application/json" -d "$payload")
+          echo "Resend HTTP $code"; cat /tmp/resend.out 2>/dev/null || true
+          if [ "$code" -ge 300 ]; then echo "::warning::Alert email send failed (HTTP $code)"; fi
