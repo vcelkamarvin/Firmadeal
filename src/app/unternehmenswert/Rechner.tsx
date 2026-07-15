@@ -25,8 +25,10 @@ export default function Rechner({ initialBranche, initialRegion, hideHero = fals
   const [disp, setDisp] = useState<[number, number]>([640000, 960000]);
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [touched, setTouched] = useState(false);
   const dispRef = useRef<[number, number]>([640000, 960000]);
   const rafRef = useRef<number>(0);
+  const loggedSig = useRef<string>("");
 
   const [m1, m2] = BRANCHEN[branche];
   const rf = REGIONEN[region];
@@ -35,6 +37,7 @@ export default function Rechner({ initialBranche, initialRegion, hideHero = fals
   const targetHi = Math.max(0, ebitda * m2 * rf * gf);
   const short = branche.split(" ")[0].replace("/", "");
   const brancheSlug = PSEO_BRANCHEN.find((b) => b.calc === branche)?.slug;
+  const regionSlug = PSEO_REGIONEN.find((r) => r.name === region)?.slug;
 
   useEffect(() => {
     cancelAnimationFrame(rafRef.current);
@@ -52,6 +55,29 @@ export default function Rechner({ initialBranche, initialRegion, hideHero = fals
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
   }, [targetLo, targetHi]);
+
+  // ── Persist genuine estimates → valuation_estimates (branche × region benchmark) ──
+  // Only after a real interaction (never the on-mount default, which would recreate
+  // the constant-default pollution the legacy calculator suffered), debounced, and
+  // deduped per settled input signature so slider drags don't spam rows.
+  useEffect(() => {
+    if (!touched || ebitda <= 0 || !brancheSlug || !regionSlug) return;
+    const sig = `${brancheSlug}|${regionSlug}|${ebitda}|${growth}`;
+    if (sig === loggedSig.current) return;
+    const timer = setTimeout(() => {
+      loggedSig.current = sig;
+      fetch("/api/valuation-estimate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          branche, region, brancheSlug, regionSlug,
+          ebitda, growth,
+          valueLow: Math.round(targetLo), valueHigh: Math.round(targetHi),
+        }),
+      }).catch(() => {});
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [touched, branche, region, brancheSlug, regionSlug, ebitda, growth, targetLo, targetHi]);
 
   const fmt = (n: number) => "€" + Math.round(n).toLocaleString("de-DE");
 
@@ -80,17 +106,17 @@ export default function Rechner({ initialBranche, initialRegion, hideHero = fals
         <div className="uw-card">
           <div className="uw-step">Ihre Angaben</div>
           <label className="uw-l">Branche</label>
-          <select className="uw-in" value={branche} onChange={(e) => setBranche(e.target.value)}>
+          <select className="uw-in" value={branche} onChange={(e) => { setBranche(e.target.value); setTouched(true); }}>
             {Object.keys(BRANCHEN).map((b) => <option key={b} value={b}>{b}</option>)}
           </select>
           <label className="uw-l">Region (Bundesland)</label>
-          <select className="uw-in" value={region} onChange={(e) => setRegion(e.target.value)}>
+          <select className="uw-in" value={region} onChange={(e) => { setRegion(e.target.value); setTouched(true); }}>
             {Object.keys(REGIONEN).map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
           <label className="uw-l">Gewinn / EBITDA pro Jahr (€)</label>
-          <input className="uw-in" type="number" min={0} step={10000} value={ebitda} onChange={(e) => setEbitda(+e.target.value)} />
+          <input className="uw-in" type="number" min={0} step={10000} value={ebitda} onChange={(e) => { setEbitda(+e.target.value); setTouched(true); }} />
           <label className="uw-l uw-slabel"><span>Jährliches Wachstum</span><span className="uw-sval">{growth}%</span></label>
-          <input className="uw-range" type="range" min={0} max={30} value={growth} onChange={(e) => setGrowth(+e.target.value)} />
+          <input className="uw-range" type="range" min={0} max={30} value={growth} onChange={(e) => { setGrowth(+e.target.value); setTouched(true); }} />
           <p className="uw-disc">Indikative Schätzung auf Basis branchenüblicher EBITDA-Multiplikatoren (DACH). Keine verbindliche Wertermittlung oder Finanzberatung.</p>
         </div>
 

@@ -84,20 +84,30 @@ export default function ValuationCalculator({ variant = "full" }: Props) {
     }
   }, [result, priceEdited]);
 
-  // Persist estimate to Supabase when category+ebitda are set
+  // Persist estimate to Supabase when category+ebitda are set.
+  // NOTE: the hero variant collects neither revenue nor years, so we persist NULL
+  // for those rather than the misleading defaults that previously wrote a constant
+  // 49232000 revenue and "unbekannt" on every row. Insert errors are logged, not
+  // silently swallowed. (This component is currently unmounted; the live benchmark
+  // writer is Rechner.tsx → /api/valuation-estimate.)
   useEffect(() => {
     if (!result || !category) return;
+    const isHero = variant === "hero";
     const timer = setTimeout(async () => {
       try {
         const supabase = createClient();
-        await supabase.from("valuation_estimates").insert({
+        const { error } = await supabase.from("valuation_estimates").insert({
           business_type: category,
-          years_in_operation: years || "unbekannt",
-          annual_revenue: Math.round(revenue * 100),
+          years_in_operation: isHero ? null : (years || null),
+          annual_revenue: isHero ? null : Math.round(revenue * 100),
           estimated_value_low: Math.round(result.lo * 100),
           estimated_value_high: Math.round(result.hi * 100),
+          source: "homepage",
         });
-      } catch { /* ignore */ }
+        if (error) console.error("[valuation-calculator] insert failed:", error.message);
+      } catch (e) {
+        console.error("[valuation-calculator] insert error:", e instanceof Error ? e.message : e);
+      }
     }, 2000);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
