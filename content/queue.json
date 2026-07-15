@@ -1,130 +1,145 @@
 [
   {
-    "title": "Pflegedienst verkaufen ohne Makler — Bewertung & Ablauf",
-    "branche": "Pflegedienst",
+    "title": "Was ist ein Fitnessstudio wert? Multiplikator und Rechenbeispiel",
+    "branche": "Fitnessstudio",
     "region": "Deutschland",
-    "intent": "verkaufen",
-    "score": 88,
-    "published": true
-  },
-  {
-    "title": "Arztpraxis mit Kassensitz verkaufen — was ist sie wert?",
-    "branche": "Arztpraxis",
-    "region": "Deutschland",
+    "type": "wert",
     "intent": "bewerten",
-    "score": 90,
-    "published": true
-  },
-  {
-    "title": "Bäckerei mit Café verkaufen in Bayern — Steuer & Nachfolge",
-    "branche": "Bäckerei",
-    "region": "Bayern",
-    "intent": "nachfolge",
-    "score": 84,
-    "published": true
-  },
-  {
-    "title": "Steuerkanzlei verkaufen — Mandantenstamm richtig bewerten",
-    "branche": "Steuerkanzlei",
-    "region": "Deutschland",
-    "intent": "bewerten",
-    "score": 86,
-    "published": true
-  },
-  {
-    "title": "KFZ-Werkstatt mit Immobilie verkaufen — Asset oder Share Deal?",
-    "branche": "KFZ-Werkstatt",
-    "region": "Deutschland",
-    "intent": "ablauf",
-    "score": 83,
+    "score": 93,
+    "specialist": false,
     "published": false
   },
   {
-    "title": "Physiotherapie-Praxis verkaufen — Nachfolge ohne Makler",
-    "branche": "Physiotherapie",
+    "title": "EBITDA-Multiplikator: Wie Unternehmen wirklich bewertet werden",
+    "branche": "Bewertungsmethoden",
     "region": "Deutschland",
-    "intent": "verkaufen",
-    "score": 81,
-    "published": true
-  },
-  {
-    "title": "Online-Shop verkaufen — Bewertung nach Umsatz und Marge",
-    "branche": "Online-Shop",
-    "region": "Deutschland",
+    "type": "konzept",
     "intent": "bewerten",
-    "score": 80,
-    "published": true
+    "score": 92,
+    "published": false
   },
   {
-    "title": "Friseursalon verkaufen in NRW — was zahlen Käufer?",
-    "branche": "Friseursalon",
-    "region": "NRW",
-    "intent": "bewerten",
-    "score": 78,
-    "published": true
-  },
-  {
-    "title": "Zahnarztpraxis: Nachfolger finden und Praxiswert sichern",
-    "branche": "Zahnarztpraxis",
+    "title": "Inhaberabhängigkeit senken: Warum Betriebe ohne den Chef mehr wert sind",
+    "branche": "Werttreiber",
     "region": "Deutschland",
-    "intent": "nachfolge",
+    "type": "konzept",
+    "intent": "bewerten",
     "score": 91,
     "published": false
   },
   {
-    "title": "Autohaus bewerten: Herstellerbindung als Werttreiber",
-    "branche": "Autohaus",
+    "title": "Firma verkaufen und Steuer: Freibetrag, §16 und §34 EStG erklärt",
+    "branche": "Steuer",
     "region": "Deutschland",
+    "type": "steuer",
+    "intent": "verkaufen",
+    "score": 90,
+    "published": false
+  },
+  {
+    "title": "Was ist ein Onlineshop wert? E-Commerce-Wert berechnen",
+    "branche": "Online-Shop",
+    "region": "Deutschland",
+    "type": "wert",
+    "intent": "bewerten",
+    "score": 88,
+    "specialist": false,
+    "published": false
+  },
+  {
+    "title": "Was ist eine Reinigungsfirma wert? Gebäudereinigung bewerten",
+    "branche": "Reinigungsfirma",
+    "region": "Deutschland",
+    "type": "wert",
     "intent": "bewerten",
     "score": 87,
+    "specialist": false,
     "published": false
   },
   {
-    "title": "Elektrobetrieb übergeben: Meisterpflicht und Auftragsbestand",
-    "branche": "Elektrobetrieb",
+    "title": "Was ist ein Restaurant wert? Multiplikator und Rechenbeispiel",
+    "branche": "Restaurant",
     "region": "Deutschland",
-    "intent": "ablauf",
+    "type": "wert",
+    "intent": "bewerten",
     "score": 86,
+    "specialist": false,
     "published": false
   },
   {
-    "title": "Hausverwaltung verkaufen: Verwaltungsbestand richtig ansetzen",
-    "branche": "Hausverwaltung",
+    "title": "Unternehmenswert berechnen: Ertragswert, Multiplikator und Substanzwert",
+    "branche": "Bewertungsmethoden",
     "region": "Deutschland",
-    "intent": "verkaufen",
+    "type": "konzept",
+    "intent": "bewerten",
     "score": 85,
     "published": false
   },
   {
-    "title": "Fahrschule verkaufen: Fahrlehrererlaubnis und Fuhrpark im Blick",
-    "branche": "Fahrschule",
+    "title": "Was ist ein Hotel wert? Zimmerpreis-Methode und EBITDA",
+    "branche": "Hotel",
     "region": "Deutschland",
-    "intent": "verkaufen",
+    "type": "wert",
+    "intent": "bewerten",
     "score": 84,
+    "specialist": false,
     "published": false
   },
   {
-    "title": "Tierarztpraxis übernehmen: Finanzierung und Kaufpreis",
-    "branche": "Tierarztpraxis",
+    "title": "Was ist eine Physiotherapie-Praxis wert? Praxiswert berechnen",
+    "branche": "Physiotherapie",
     "region": "Deutschland",
-    "intent": "kaufen",
+    "type": "wert",
+    "intent": "bewerten",
     "score": 83,
+    "specialist": false,
     "published": false
   },
   {
-    "title": "Malerbetrieb verkaufen: Stammkunden und Mitarbeiter halten",
-    "branche": "Malerbetrieb",
+    "title": "Earn-Out beim Unternehmensverkauf: Chancen, Risiken, Rechenbeispiel",
+    "branche": "Kaufpreis",
     "region": "Deutschland",
+    "type": "konzept",
     "intent": "verkaufen",
     "score": 82,
     "published": false
   },
   {
-    "title": "Metzgerei mit Filialen: Nachfolge im Familienbetrieb regeln",
-    "branche": "Metzgerei",
+    "title": "Verkäuferdarlehen beim Unternehmensverkauf: Wann es sinnvoll ist",
+    "branche": "Kaufpreis",
     "region": "Deutschland",
+    "type": "konzept",
+    "intent": "verkaufen",
+    "score": 81,
+    "published": false
+  },
+  {
+    "title": "Unternehmensnachfolge ohne Makler: Ablauf in sieben Schritten",
+    "branche": "Nachfolge",
+    "region": "Deutschland",
+    "type": "ablauf",
     "intent": "nachfolge",
     "score": 80,
+    "published": false
+  },
+  {
+    "title": "Onlineshop verkaufen und Steuer: Veräußerungsgewinn richtig versteuern",
+    "branche": "Online-Shop",
+    "region": "Deutschland",
+    "type": "steuer",
+    "intent": "verkaufen",
+    "score": 76,
+    "specialist": false,
+    "published": false
+  },
+  {
+    "title": "Was ist eine Steuerkanzlei wert? Umsatzmethode und Mandantenstamm",
+    "branche": "Steuerkanzlei",
+    "region": "Deutschland",
+    "type": "wert",
+    "intent": "bewerten",
+    "score": 74,
+    "specialist": true,
     "published": false
   }
 ]

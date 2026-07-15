@@ -9,7 +9,7 @@ import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { runQualityGate } from "./quality-gate.mjs";
-import { brandMemory, eeatFacts, articleTemplate, externalSources, BANNED_PHRASES } from "./content-config.mjs";
+import { brandMemory, eeatFacts, externalSources, BANNED_PHRASES, CONTENT_TYPES, typeOf, categoryOf } from "./content-config.mjs";
 
 const ROOT = process.cwd();
 const QUEUE = path.join(ROOT, "content/queue.json");
@@ -25,9 +25,6 @@ const PUBLISH_STATE = (process.env.PUBLISH_STATE || "live") === "live"; // true 
 // Real team members only — invented bylines hurt E-E-A-T.
 const AUTHORS = ["Albert Laurin"];
 const pickAuthor = () => AUTHORS[Math.floor(Math.random() * AUTHORS.length)];
-
-// Map niche intent → blog_posts.category (allowed: verkauf, kauf, bewertung, nachfolge, ratgeber)
-const CATEGORY = { verkaufen: "verkauf", kaufen: "kauf", bewerten: "bewertung", nachfolge: "nachfolge", ablauf: "ratgeber" };
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
@@ -83,10 +80,18 @@ const ARTICLE_TOOL = {
 };
 
 function buildPrompt(niche) {
-  return `Du bist ein deutschsprachiger M&A-Fachredakteur für Firmadeal. Schreibe EINEN tiefgehenden Ratgeber-Artikel (Deep Dive) mit klarem Fokus auf genau diese Branche und Region.
+  const type = typeOf(niche);
+  const spec = CONTENT_TYPES[type];
+  const isKonzept = type === "konzept";
+  const scopeLine = isKonzept
+    ? `Typ: Konzept-Erklärartikel (branchenübergreifend) | Region: DACH`
+    : `Branche: ${niche.branche} | Region: ${niche.region || "DACH"} | Typ: ${type}`;
 
-NISCHE (genaue Suchintention): "${niche.title}"
-Branche: ${niche.branche} | Region: ${niche.region || "DACH"} | Intent: ${niche.intent}
+  return `Du bist ein deutschsprachiger M&A-Fachredakteur für Firmadeal. Schreibe EINEN tiefgehenden, informativen Deep-Dive-Artikel.
+
+ZIEL-SUCHBEGRIFF (Suchintention): ${spec.keyword}
+TITEL / NISCHE: "${niche.title}"
+${scopeLine}
 
 MARKENKONTEXT (Ton & Fakten — strikt):
 ${brandMemory}
@@ -97,22 +102,20 @@ ${eeatFacts(niche.branche)}
 AUTORITATIVE EXTERNE QUELLEN (als echte Markdown-Backlinks einbauen, wo passend):
 ${externalSources}
 
-STRUKTUR:
-${articleTemplate}
+FOKUS & AUFBAU FÜR DIESEN ARTIKELTYP:
+${spec.focus}
 
-PFLICHT-AUFBAU (in dieser Reihenfolge, durchgehend scannbar):
-1. Kurze, konkrete Einleitung (2–4 Sätze): worum es geht, für wen, und warum ${niche.branche}${niche.region ? " in " + niche.region : ""} ein Sonderfall ist — keine Allgemeinplätze, direkt in die Sache.
-2. "## Das Wichtigste in Kürze" — 3–5 Stichpunkte mit den zentralen Erkenntnissen (Wertspanne, Multiplikator, branchenspezifische Besonderheit, nächster Schritt).
-3. Mehrere ## H2-Hauptabschnitte, bei Bedarf in ### H3-Unterabschnitte gegliedert. Kurze Absätze, Aufzählungen wo sinnvoll — der Text muss überfliegbar sein.
-4. Ein konkret gerechnetes Bewertungsbeispiel für genau diese Nische (klar als "Rechenbeispiel" gekennzeichnet).
-5. "## Häufige Fragen" mit 4–6 Q&A am Ende.
+PFLICHT-AUFBAU (durchgehend scannbar):
+1. Direkte, konkrete Antwort in den ersten 2–4 Sätzen (für AI Overviews / Featured Snippet).
+2. "## Das Wichtigste in Kürze" — 3–5 Stichpunkte mit den zentralen Erkenntnissen.
+3. Mehrere ## H2-Hauptabschnitte (siehe Fokus oben), bei Bedarf in ### H3 gegliedert. Kurze Absätze, Aufzählungen — überfliegbar.
+4. "## Häufige Fragen" mit 4–6 Q&A am Ende.
 
 HARTE REGELN:
 - MINDESTENS 1500 Wörter. Echter Deep Dive, kein oberflächlicher Überblick.
-- ≥60% spezifisch für genau diese Branche + Region. Lokale und branchenspezifische Besonderheiten betonen (regionaler Markt, typische Käufer, rechtliche Eigenheiten).
-- Information Gain: etwas, das Top-Ergebnisse NICHT bieten (deutsche Besonderheit, Zahl, Beispiel).
+- Information Gain: etwas, das die Top-Ergebnisse NICHT bieten (deutsche Besonderheit, Zahl, gerechnetes Beispiel).
 - 2–4 **externe** Backlinks auf autoritative Quellen (IHK, KfW, Destatis, IDW, gesetze-im-internet.de) als Markdown-Links.
-- 1–2 **interne** Links als natürliche Markdown-Links im Fließtext: /unternehmenswert (Bewertungsrechner), /listings (Unternehmen zum Verkauf) oder /kaufgesuche (aktuelle Kaufgesuche). KEIN /#bewertung verwenden. (Weitere passende interne Links sowie ein Abschluss-CTA werden automatisch ergänzt — nicht doppeln.)
+- PFLICHT-interne-Links als natürliche Markdown-Links im Fließtext: /sell (Unternehmen vertraulich einreichen) UND /listings (Unternehmen zum Verkauf) müssen BEIDE vorkommen; zusätzlich /unternehmenswert (Bewertungsrechner) wo im Fokus genannt. KEIN /#bewertung verwenden.
 - Keine erfundenen Statistiken. Verbotene Phrasen: ${BANNED_PHRASES.join(", ")}.
 - Natürliches, professionelles Deutsch, variierende Satzlänge, keine KI-Floskeln, keine künstlichen Tippfehler.
 
@@ -149,7 +152,14 @@ const done = new Set(published.map(p => p.slug));
 // What's already live, used to block near-duplicates. Seed from published.json
 // AND from the live Supabase table, so a post created outside this script (e.g.
 // by a manual/recovery run) still blocks regenerating the same industry.
-const publishedBranchen = new Set(published.map(p => (p.branche || "").toLowerCase()).filter(Boolean));
+// Dedup key is (branche|type), not branche alone — Task D publishes multiple content
+// TYPES per branche (a "wert" guide and a "steuer" guide are not duplicates). Seeded
+// from published.json (legacy entries resolve to type "verkaufen") and the queue's own
+// published flags. Konzept pieces are branche-agnostic and skip this check entirely.
+const publishedKeys = new Set([
+  ...published.map(p => `${(p.branche || "").toLowerCase()}|${typeOf(p)}`),
+  ...queue.filter(n => n.published).map(n => `${(n.branche || "").toLowerCase()}|${typeOf(n)}`),
+].filter(k => !k.startsWith("|")));
 const publishedTitles = published.map(p => p.title || "");
 try {
   const { data: liveRows } = await supabase.from("blog_posts").select("title, slug").eq("published", true);
@@ -160,22 +170,29 @@ try {
 } catch (e) { console.error("Could not load live posts for dedupe (non-fatal):", e instanceof Error ? e.message : e); }
 const SIMILARITY_MAX = 0.5; // title-token Jaccard above this = too similar, skip
 
-// Too similar if the same industry (Branche) already has an article, or the title overlaps heavily.
+// Too similar if the same industry (Branche) already has an article, or the title
+// overlaps heavily. Konzept pieces are branche-agnostic explainers, so they are
+// only deduped by title — never blocked because "that Branche already exists".
 function tooSimilar(niche) {
-  if (publishedBranchen.has((niche.branche || "").toLowerCase())) return true;
+  if (typeOf(niche) !== "konzept" && niche.branche && publishedKeys.has(`${niche.branche.toLowerCase()}|${typeOf(niche)}`)) return true;
   return publishedTitles.some(t => jaccard(niche.title, t) >= SIMILARITY_MAX);
 }
+
+// Prioritise Branchen with no entrenched vertical specialist (Task D): a niche
+// flagged specialist:true (e.g. apotheke/friseur/kfz/steuerkanzlei have dedicated
+// portals) is nudged down but not excluded — concept pieces are specialist-agnostic.
+const effScore = (n) => (n.score || 0) - (n.specialist ? 8 : 0);
 
 const pool = queue
   .filter(n => !n.published && !done.has(slugify(n.title)))
   .filter(n => !tooSimilar(n))
-  .sort((a,b) => (b.score||0) - (a.score||0));
+  .sort((a,b) => effScore(b) - effScore(a));
 
 // Category-diverse pick: at most one article per category in a single run.
 const candidates = [];
 const usedCats = new Set();
 for (const n of pool) {
-  const cat = CATEGORY[n.intent] || "ratgeber";
+  const cat = categoryOf(n);
   if (usedCats.has(cat)) continue;
   candidates.push(n); usedCats.add(cat);
   if (candidates.length >= COUNT) break;
@@ -214,7 +231,7 @@ for (const niche of candidates) {
       title: a.title,
       excerpt: a.excerpt,
       content: a.content,
-      category: CATEGORY[niche.intent] || "ratgeber",
+      category: categoryOf(niche),
       author,
       reading_time_minutes: readingTime(a.content),
       published: PUBLISH_STATE,
@@ -224,7 +241,7 @@ for (const niche of candidates) {
     if (error) { console.error(`Supabase insert failed for "${a.slug}":`, error.message); continue; }
 
     niche.published = true;
-    published.push({ slug: a.slug, title: a.title, branche: niche.branche, author, date: row.published_at, score: gate.min });
+    published.push({ slug: a.slug, title: a.title, branche: niche.branche, type: typeOf(niche), author, date: row.published_at, score: gate.min });
     urls.push(`${SITE_ORIGIN}/blog/${a.slug}`); slugs.push(a.slug);
     console.log(`PUBLISHED → blog_posts: "${a.title}" (score ${gate.min}, published=${PUBLISH_STATE})`);
   } catch (e) { console.error(`Failed on "${niche.title}":`, e.message); }
