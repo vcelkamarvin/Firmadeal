@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { createClient } from "@supabase/supabase-js";
-import { BRANCHEN, REGIONEN } from "./unternehmenswert/pseoData";
+import { BRANCHEN, REGIONEN, INDEXABLE_REGION_SLUGS } from "./unternehmenswert/pseoData";
 
 const BASE = "https://www.firmadeal.de";
 
@@ -53,9 +53,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority:        0.6,
   }));
 
+  // Only list the indexable regional variants (Task A) — noindexed pages must not
+  // appear in the sitemap, or we invite Google to crawl what we told it to skip.
   const pseoRoutes: MetadataRoute.Sitemap = [];
   for (const b of BRANCHEN) {
     for (const r of REGIONEN) {
+      if (!INDEXABLE_REGION_SLUGS.has(r.slug)) continue;
       pseoRoutes.push({
         url:             `${BASE}/unternehmenswert/${b.slug}/${r.slug}`,
         lastModified:    new Date(),

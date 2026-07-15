@@ -1,11 +1,37 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import type { CSSProperties } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@supabase/supabase-js";
 import Rechner from "../../Rechner";
-import { BRANCHEN, REGIONEN, getBranche, getRegion } from "../../pseoData";
+import { BRANCHEN, REGIONEN, getBranche, getRegion, INDEXABLE_REGION_SLUGS, type Branche } from "../../pseoData";
 
 export const dynamicParams = false;
+
+// Task C: link each calculator page back to the matching blog guide.
+// Cached so the 240 static renders share one query; best-effort so a Supabase
+// hiccup at build time drops the link rather than failing the build.
+const normKw = (s: string) => s.toLowerCase().replace(/[^a-z0-9äöüß]/g, "");
+const getPublishedPosts = cache(async (): Promise<Array<{ slug: string; title: string }>> => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return [];
+  try {
+    const supabase = createClient(url, key, { auth: { persistSession: false } });
+    const { data } = await supabase.from("blog_posts").select("slug, title").eq("published", true);
+    return data ?? [];
+  } catch {
+    return [];
+  }
+});
+async function guideForBranche(b: Branche): Promise<{ slug: string; title: string } | null> {
+  const posts = await getPublishedPosts();
+  return posts.find((p) => {
+    const hay = normKw(`${p.title} ${p.slug}`);
+    return b.kw.some((k) => hay.includes(normKw(k)));
+  }) ?? null;
+}
 
 type Params = { branche: string; region: string };
 
@@ -29,11 +55,17 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const title = `${b.label} verkaufen in ${r.name}: Wert berechnen`;
   const description = `Was ist ein ${b.label} in ${r.name} wert? Kostenlose Sofort-Bewertung nach EBITDA-Multiplikator (${num(b.m[0])}–${num(b.m[1])}×), regional gewichtet. Anonym verkaufen — 0 % Provision, ohne Makler.`;
 
+  // Task A: keep only the largest markets indexable; the other Bundesländer are
+  // near-identical regional variants (doorway risk) → noindex,follow until they
+  // carry distinct benchmark data. follow keeps their internal links crawlable.
+  const indexable = INDEXABLE_REGION_SLUGS.has(r.slug);
+
   return {
     title,
     description,
     keywords: [`${b.label} verkaufen`, `${b.label} verkaufen ${r.name}`, `${b.label} Wert`, "Unternehmen verkaufen", "Unternehmensbewertung", "Nachfolge"],
     alternates: { canonical: url },
+    robots: indexable ? undefined : { index: false, follow: true },
     openGraph: { title, description, url, type: "website", siteName: "Firmadeal", locale: "de_DE" },
     twitter: { card: "summary_large_image", title, description },
   };
@@ -92,6 +124,7 @@ export default async function Page({ params }: { params: Promise<Params> }) {
 
   const otherRegions = REGIONEN.filter((x) => x.slug !== r.slug);
   const otherBranchen = BRANCHEN.filter((x) => x.slug !== b.slug);
+  const guide = await guideForBranche(b);
 
   const card: CSSProperties = { background: "#fff", border: "1px solid #e3e0d6", borderRadius: 16, padding: 22 };
   const stat: CSSProperties = { background: "#fff", border: "1px solid #e3e0d6", borderRadius: 14, padding: "18px 20px" };
@@ -183,6 +216,13 @@ export default async function Page({ params }: { params: Promise<Params> }) {
 
       {/* ── INTERNAL LINKS ── */}
       <section style={{ maxWidth: 1040, margin: "40px auto 0", padding: "0 20px 64px" }}>
+        {guide && (
+          <Link href={`/blog/${guide.slug}`}
+            style={{ display: "block", background: "#fff", border: "1px solid #e3e0d6", borderRadius: 14, padding: "18px 20px", marginBottom: 28, textDecoration: "none", color: "#15281e" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1, color: "#2d5a3d", textTransform: "uppercase", marginBottom: 6 }}>Ratgeber lesen</div>
+            <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-.3px" }}>{guide.title} →</div>
+          </Link>
+        )}
         <h2 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 12px" }}>{b.label} verkaufen in anderen Bundesländern</h2>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 28 }}>
           {otherRegions.map((x) => (

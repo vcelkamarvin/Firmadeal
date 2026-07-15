@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Tag, Calendar } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useLanguage } from "@/context/LanguageContext";
-import { BRANCHEN as PSEO_BRANCHEN, REGIONEN as PSEO_REGIONEN } from "../../unternehmenswert/pseoData";
+import { BRANCHEN as PSEO_BRANCHEN, REGIONEN as PSEO_REGIONEN, INDEXABLE_REGION_SLUGS, brancheForText } from "../../unternehmenswert/pseoData";
 
 interface BlogPost {
   id: string;
@@ -94,21 +94,31 @@ export default function BlogArticleClient() {
   const catInfo = CATEGORY_LABELS[post.category];
 
   // ── Auto contextual internal links (applies to every post, no per-post work) ──
-  // Detect the Branche + Region this post is about and deep-link to the matching
-  // programmatic valuation page; otherwise fall back to the hub.
+  // Detect the Branche this post is about (keyword match) and deep-link to its
+  // programmatic valuation page. Previously this only deep-linked when a Bundesland
+  // also appeared in the title (rare) — so the 240 /unternehmenswert/[branche]/[region]
+  // pages were orphaned from the blog. Now any Branche-matched post links straight
+  // into its calculator page (flagship market when the post names no region), plus
+  // chips to the top indexable regional variants.
+  const mBranche = brancheForText(`${post.title} ${post.slug} ${post.excerpt ?? ""}`);
   const hay = norm(`${post.title} ${post.slug} ${post.excerpt ?? ""}`);
-  const mBranche = PSEO_BRANCHEN.find((b) => hay.includes(norm(b.label)) || hay.includes(b.slug.replace(/-/g, "")));
   const mRegion = PSEO_REGIONEN.find((r) => hay.includes(norm(r.name)) || hay.includes(r.slug.replace(/-/g, "")));
-  const valHref = mBranche && mRegion ? `/unternehmenswert/${mBranche.slug}/${mRegion.slug}` : "/unternehmenswert";
-  const valLabel = mBranche && mRegion
+  const flagshipRegion = mRegion?.slug ?? "bayern";
+  const valHref = mBranche ? `/unternehmenswert/${mBranche.slug}/${flagshipRegion}` : "/unternehmenswert";
+  const valLabel = mBranche
     ? (lang === "de"
-        ? `Was ist ein ${mBranche.label} in ${mRegion.name} wert? – Sofort-Bewertung`
-        : `What is a ${mBranche.label} in ${mRegion.name} worth? – Instant valuation`)
+        ? `Was ist ein ${mBranche.label}${mRegion ? " in " + mRegion.name : ""} wert? – Sofort-Bewertung`
+        : `What is a ${mBranche.label}${mRegion ? " in " + mRegion.name : ""} worth? – Instant valuation`)
     : (lang === "de" ? "Unternehmenswert berechnen – kostenlose Sofort-Bewertung" : "Calculate your company value – free instant valuation");
+
+  // Regional deep-links for the matched Branche (only the indexable markets).
+  const regionChips = mBranche
+    ? PSEO_REGIONEN.filter((r) => INDEXABLE_REGION_SLUGS.has(r.slug))
+    : [];
 
   const relatedLinks: { href: string; label: string }[] = [
     { href: valHref, label: valLabel },
-    ...(mBranche && mRegion ? [{ href: "/unternehmenswert", label: lang === "de" ? "Unternehmenswert-Rechner (alle Branchen & Regionen)" : "Valuation calculator (all sectors & regions)" }] : []),
+    ...(mBranche ? [{ href: "/unternehmenswert", label: lang === "de" ? "Unternehmenswert-Rechner (alle Branchen & Regionen)" : "Valuation calculator (all sectors & regions)" }] : []),
     { href: "/kaufgesuche", label: lang === "de" ? "Aktuelle Kaufgesuche – wer sucht gerade ein Unternehmen?" : "Current buyer requests – who is looking right now?" },
     { href: "/listings", label: lang === "de" ? "Unternehmen zum Verkauf ansehen" : "Browse businesses for sale" },
   ];
@@ -173,6 +183,24 @@ export default function BlogArticleClient() {
                   </li>
                 ))}
               </ul>
+              {mBranche && regionChips.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-[var(--border)]">
+                  <div className="font-sans text-[11px] font-bold uppercase tracking-widest text-[var(--muted)] mb-2.5">
+                    {lang === "de" ? `${mBranche.label} bewerten nach Bundesland` : `Value a ${mBranche.label} by region`}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {regionChips.map((r) => (
+                      <Link
+                        key={r.slug}
+                        href={`/unternehmenswert/${mBranche.slug}/${r.slug}`}
+                        className="font-sans text-[13px] text-[var(--accent)] font-semibold border border-[var(--border)] rounded-full px-3 py-1 hover:border-[var(--accent)] transition-colors"
+                      >
+                        {mBranche.label} · {r.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* ── AUTO: end-of-article CTA ── */}
