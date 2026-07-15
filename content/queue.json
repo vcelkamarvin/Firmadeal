@@ -62,5 +62,69 @@
     "intent": "bewerten",
     "score": 78,
     "published": true
+  },
+  {
+    "title": "Zahnarztpraxis: Nachfolger finden und Praxiswert sichern",
+    "branche": "Zahnarztpraxis",
+    "region": "Deutschland",
+    "intent": "nachfolge",
+    "score": 91,
+    "published": false
+  },
+  {
+    "title": "Autohaus bewerten: Herstellerbindung als Werttreiber",
+    "branche": "Autohaus",
+    "region": "Deutschland",
+    "intent": "bewerten",
+    "score": 87,
+    "published": false
+  },
+  {
+    "title": "Elektrobetrieb übergeben: Meisterpflicht und Auftragsbestand",
+    "branche": "Elektrobetrieb",
+    "region": "Deutschland",
+    "intent": "ablauf",
+    "score": 86,
+    "published": false
+  },
+  {
+    "title": "Hausverwaltung verkaufen: Verwaltungsbestand richtig ansetzen",
+    "branche": "Hausverwaltung",
+    "region": "Deutschland",
+    "intent": "verkaufen",
+    "score": 85,
+    "published": false
+  },
+  {
+    "title": "Fahrschule verkaufen: Fahrlehrererlaubnis und Fuhrpark im Blick",
+    "branche": "Fahrschule",
+    "region": "Deutschland",
+    "intent": "verkaufen",
+    "score": 84,
+    "published": false
+  },
+  {
+    "title": "Tierarztpraxis übernehmen: Finanzierung und Kaufpreis",
+    "branche": "Tierarztpraxis",
+    "region": "Deutschland",
+    "intent": "kaufen",
+    "score": 83,
+    "published": false
+  },
+  {
+    "title": "Malerbetrieb verkaufen: Stammkunden und Mitarbeiter halten",
+    "branche": "Malerbetrieb",
+    "region": "Deutschland",
+    "intent": "verkaufen",
+    "score": 82,
+    "published": false
+  },
+  {
+    "title": "Metzgerei mit Filialen: Nachfolge im Familienbetrieb regeln",
+    "branche": "Metzgerei",
+    "region": "Deutschland",
+    "intent": "nachfolge",
+    "score": 80,
+    "published": false
   }
 ]
